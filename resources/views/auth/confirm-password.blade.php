@@ -4,8 +4,10 @@
             <x-authentication-card-logo />
         </x-slot>
 
-        <div class="mb-4 text-sm text-gray-600">
-            {{ __('This is a secure area of the application. Please confirm your password before continuing.') }}
+        <h2 class="text-2xl font-bold text-[#2C3E50] mb-2 text-center">{{ __('Secure Area') }}</h2>
+
+        <div class="mb-6 text-center">
+            <p class="text-sm text-[#34495E]">{{ __('This is a secure area of the application. Please confirm your password before continuing.') }}</p>
         </div>
 
         <x-validation-errors class="mb-4" />
@@ -13,13 +15,22 @@
         <form method="POST" action="{{ route('password.confirm') }}">
             @csrf
 
-            <div>
-                <x-label for="password" value="{{ __('Password') }}" />
-                <x-input id="password" class="block mt-1 w-full" type="password" name="password" required autocomplete="current-password" autofocus />
+            <div class="transform transition hover:scale-[1.01] duration-300">
+                <x-input
+                    label="{{ __('Password') }}"
+                    id="password" 
+                    type="password"
+                    name="password" 
+                    required 
+                    autocomplete="current-password" 
+                    autofocus
+                    class="mb-6" />
             </div>
 
-            <div class="flex justify-end mt-4">
-                <x-button class="ms-4">
+            <div class="flex items-center justify-end mb-4">
+                <x-button primary
+                          type="submit" 
+                          spinner="submit">
                     {{ __('Confirm') }}
                 </x-button>
             </div>

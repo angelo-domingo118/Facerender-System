@@ -4,38 +4,34 @@
             <x-authentication-card-logo />
         </x-slot>
 
-        <div class="mb-4 text-sm text-gray-600">
-            {{ __('Before continuing, could you verify your email address by clicking on the link we just emailed to you? If you didn\'t receive the email, we will gladly send you another.') }}
+        <h2 class="text-2xl font-bold text-[#2C3E50] mb-2 text-center">{{ __('Email Verification') }}</h2>
+
+        <div class="mb-6 text-center">
+            <p class="text-sm text-[#34495E]">
+                {{ __('Thanks for signing up! Before getting started, could you verify your email address by clicking on the link we just emailed to you? If you didn\'t receive the email, we will gladly send you another.') }}
+            </p>
         </div>
 
-        @if (session('status') == 'verification-link-sent')
-            <div class="mb-4 font-medium text-sm text-green-600">
-                {{ __('A new verification link has been sent to the email address you provided in your profile settings.') }}
+        @session('status')
+            <div class="mb-4 font-medium text-sm text-green-600 bg-green-50 p-3 rounded-lg border-l-4 border-green-500 animate-pulse">
+                {{ $value }}
             </div>
-        @endif
+        @endsession
 
-        <div class="mt-4 flex items-center justify-between">
-            <form method="POST" action="{{ route('verification.send') }}">
+        <div class="mt-4 flex flex-col items-center justify-center space-y-4">
+            <form method="POST" action="{{ route('verification.send') }}" class="w-full">
                 @csrf
-
-                <div>
-                    <x-button type="submit">
+                <div class="text-center transform transition hover:scale-[1.01] duration-300">
+                    <x-button primary type="submit" spinner="submit" class="w-full">
                         {{ __('Resend Verification Email') }}
                     </x-button>
                 </div>
             </form>
 
-            <div>
-                <a
-                    href="{{ route('profile.show') }}"
-                    class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                >
-                    {{ __('Edit Profile') }}</a>
-
+            <div class="text-center">
                 <form method="POST" action="{{ route('logout') }}" class="inline">
                     @csrf
-
-                    <button type="submit" class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 ms-2">
+                    <button type="submit" class="text-sm text-[#3498DB] hover:text-[#2980B9] transition-colors duration-300 hover:underline">
                         {{ __('Log Out') }}
                     </button>
                 </form>

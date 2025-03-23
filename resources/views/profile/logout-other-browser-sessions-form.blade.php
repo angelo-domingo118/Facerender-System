@@ -76,6 +76,7 @@
                                 placeholder="{{ __('Password') }}"
                                 x-ref="password"
                                 wire:model="password"
+                                id="logout_sessions_password"
                                 wire:keydown.enter="logoutOtherBrowserSessions" />
 
                     <x-input-error for="password" class="mt-2" />
