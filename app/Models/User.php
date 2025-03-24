@@ -4,6 +4,7 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
@@ -63,5 +64,21 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    /**
+     * Get the cases for the user.
+     */
+    public function cases(): HasMany
+    {
+        return $this->hasMany(CaseRecord::class);
+    }
+
+    /**
+     * Get the composites for the user.
+     */
+    public function composites(): HasMany
+    {
+        return $this->hasMany(Composite::class);
     }
 }
