@@ -9,12 +9,16 @@ class CaseCard extends Component
 {
     public $case;
     public $isExpanded = false;
-    public $confirmingDelete = false;
-    public $caseToDelete = null;
     
     public function mount($case)
     {
         $this->case = $case;
+    }
+    
+    // Get a unique identifier for this component instance
+    private function getComponentId()
+    {
+        return 'case-' . $this->case->id;
     }
     
     public function toggleExpand()
@@ -38,21 +42,26 @@ class CaseCard extends Component
     
     public function deleteCase()
     {
-        $this->confirmingDelete = true;
-        $this->caseToDelete = $this->case->id;
+        // Instead of showing a local modal, dispatch an event to the global modal manager
+        $this->dispatch('show-delete-modal', [
+            'title' => 'Delete Case',
+            'message' => 'Are you sure you want to delete this case? This action cannot be undone, and all associated data will be permanently removed.',
+            'confirmText' => 'Delete Case',
+            'id' => $this->getComponentId(),
+            'targetId' => $this->case->id,
+            'type' => 'case'
+        ]);
     }
     
-    public function confirmDelete()
+    #[On('confirm-delete')]
+    public function handleDelete($data)
     {
-        $case = $this->case;
-        $case->delete();
-        $this->dispatch('case-deleted');
-        $this->confirmingDelete = false;
-    }
-    
-    public function cancelDelete()
-    {
-        $this->confirmingDelete = false;
+        // Only process if this is the target component and it's a case
+        if ($data['id'] === $this->getComponentId() && $data['type'] === 'case' && $data['targetId'] === $this->case->id) {
+            $case = $this->case;
+            $case->delete();
+            $this->dispatch('case-deleted');
+        }
     }
     
     public function createComposite()
@@ -79,9 +88,10 @@ class CaseCard extends Component
     
     #[On('composite-deleted')]
     #[On('composite-updated')]
+    #[On('composite-created')]
     public function refreshData($eventData = null)
     {
-        // For composite deletion, only refresh if it's for this case
+        // For composite deletion/updates, only refresh if it's for this case
         if ($eventData && isset($eventData['caseId']) && $eventData['caseId'] !== $this->case->id) {
             return;
         }

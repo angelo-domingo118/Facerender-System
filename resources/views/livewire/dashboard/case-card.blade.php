@@ -1,7 +1,7 @@
-<div>
-    <div x-data="{ isExpanded: @entangle('isExpanded') }" class="transition-all duration-300 hover:translate-y-[-2px]">
+<div class="w-full">
+    <div x-data="{ isExpanded: @entangle('isExpanded') }" class="w-full transition-all duration-300">
         {{-- To attain knowledge, add things every day; To attain wisdom, subtract things every day. --}}
-        <x-card class="border-l-4 border-l-[#2C3E50] hover:shadow-xl transition-all duration-200 shadow-md overflow-hidden">
+        <x-card class="w-full border-l-4 border-l-[#2C3E50] transition-all duration-200 shadow-md overflow-hidden">
             <!-- Case Header -->
             <div class="flex flex-col space-y-3">
                 <div class="flex items-center justify-between">
@@ -187,7 +187,7 @@
                                 />
                             </div>
                         @else
-                            <div class="space-y-3">
+                            <div class="space-y-3" wire:key="composites-{{ $case->updated_at->timestamp }}">
                                 @foreach($case->composites as $composite)
                                     @livewire('dashboard.composite-card', ['composite' => $composite], key('composite-'.$composite->id))
                                 @endforeach
@@ -198,35 +198,5 @@
             </div>
         </x-card>
     </div>
-
-    <!-- Delete Confirmation Dialog -->
-    <x-modal wire:model.defer="confirmingDelete">
-        <x-card title="Delete Case">
-            <div class="flex flex-col items-center justify-center text-center">
-                <div class="rounded-full bg-red-100 p-3 mb-4">
-                    <x-icon name="exclamation-triangle" class="w-8 h-8 text-red-500" solid />
-                </div>
-                <p class="text-gray-600 mb-6">
-                    Are you sure you want to delete this case? This action cannot be undone, and all associated data will be permanently removed.
-                </p>
-            </div>
-
-            <x-slot name="footer">
-                <div class="flex justify-end gap-x-4">
-                    <x-button 
-                        wire:click="cancelDelete" 
-                        flat
-                        label="Cancel"
-                    />
-                    <x-button 
-                        wire:click="confirmDelete" 
-                        red
-                        spinner="confirmDelete" 
-                        label="Delete Case"
-                    />
-                </div>
-            </x-slot>
-        </x-card>
-    </x-modal>
 </div>
 

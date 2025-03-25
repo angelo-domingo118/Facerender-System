@@ -30,10 +30,10 @@
                 class="w-full bg-gray-50 border-gray-200"
             >
                 <x-select.option value="all" label="All Statuses" />
-                <x-select.option value="active">
+                <x-select.option value="open">
                     <div class="flex items-center">
                         <span class="h-2 w-2 rounded-full bg-green-500 mr-2"></span>
-                        Active
+                        Open
                     </div>
                 </x-select.option>
                 <x-select.option value="pending">
@@ -46,6 +46,12 @@
                     <div class="flex items-center">
                         <span class="h-2 w-2 rounded-full bg-gray-500 mr-2"></span>
                         Closed
+                    </div>
+                </x-select.option>
+                <x-select.option value="archived">
+                    <div class="flex items-center">
+                        <span class="h-2 w-2 rounded-full bg-purple-500 mr-2"></span>
+                        Archived
                     </div>
                 </x-select.option>
             </x-select>
@@ -78,24 +84,16 @@
                 </x-select.option>
             </x-select>
         </div>
-    </div>
-    
-    <!-- Quick Filters -->
-    <div class="mt-8">
-        <h3 class="text-sm font-medium text-gray-700 mb-3">Quick Filters</h3>
-        <div class="flex flex-wrap gap-2">
-            <button class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition-colors">
-                <x-icon name="bookmark" class="w-3 h-3 mr-1" />
-                Pinned
-            </button>
-            <button class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors">
-                <x-icon name="clock" class="w-3 h-3 mr-1" />
-                Recent
-            </button>
-            <button class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-purple-50 text-purple-700 hover:bg-purple-100 transition-colors">
-                <x-icon name="user" class="w-3 h-3 mr-1" />
-                My Cases
-            </button>
+        
+        <!-- Reset Filters Button -->
+        <div class="pt-4">
+            <x-button 
+                wire:click="$dispatch('quick-filter', { type: 'reset' })"
+                label="Reset Filters"
+                icon="x-mark"
+                negative
+                class="w-full justify-center"
+            />
         </div>
     </div>
 </div>

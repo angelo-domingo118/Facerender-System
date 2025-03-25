@@ -74,7 +74,7 @@
                     label="Update Case"
                     wire:click="save"
                     spinner="save"
-                    class="bg-[#3498DB] hover:bg-[#2980B9]"
+                    class="bg-[#2C3E50] hover:bg-[#34495E]"
                 />
             </div>
         </x-slot>

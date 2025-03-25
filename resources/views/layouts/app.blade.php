@@ -44,6 +44,9 @@
 
         @stack('modals')
         
+        <!-- Global Delete Modal Manager -->
+        @livewire('delete-modal-manager')
+        
         @livewireScripts
     </body>
 </html>

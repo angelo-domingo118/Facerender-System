@@ -1,7 +1,7 @@
 <div>
-    <div x-data="{ hovered: false }" @mouseenter="hovered = true" @mouseleave="hovered = false" class="transition-all duration-300 hover:translate-y-[-2px]">
+    <div x-data="{ hovered: false }" @mouseenter="hovered = true" @mouseleave="hovered = false" class="transition-all duration-300">
         <div class="flex items-start">
-            <x-card class="w-full border-l-4 border-l-[#2C3E50] hover:shadow-xl transition-all duration-200 border border-gray-300 shadow-md overflow-hidden">
+            <x-card class="w-full border-l-4 border-l-[#2C3E50] transition-all duration-200 border border-gray-300 shadow-md overflow-hidden">
                 <div class="flex space-x-4">
                     <!-- Image with hover effect -->
                     <div class="relative h-24 w-24 flex-shrink-0 rounded-md bg-gray-100 overflow-hidden border border-gray-300 group">
@@ -21,19 +21,6 @@
                                 <x-icon name="photo" class="h-8 w-8 text-gray-400" />
                             </div>
                         @endif
-                        
-                        <!-- Pin button overlay -->
-                        <button 
-                            wire:click="togglePin"
-                            class="absolute top-1 right-1 p-1.5 rounded-full bg-white bg-opacity-90 hover:bg-opacity-100 text-gray-500 hover:text-[#2C3E50] focus:outline-none transition-colors shadow-sm"
-                            x-tooltip="'{{ $composite->is_pinned ? 'Unpin Composite' : 'Pin Composite' }}'"
-                        >
-                            <x-icon 
-                                name="map-pin" 
-                                class="h-3 w-3 {{ $composite->is_pinned ? 'text-[#2C3E50]' : '' }}" 
-                                :solid="$composite->is_pinned"
-                            />
-                        </button>
                     </div>
                     
                     <!-- Info -->
@@ -42,9 +29,6 @@
                             <div class="flex items-center justify-between">
                                 <h4 class="font-semibold text-[#2C3E50] flex items-center">
                                     <span>{{ $composite->title }}</span>
-                                    @if($composite->is_pinned)
-                                        <span class="ml-2 text-xs bg-[#2C3E50]/20 text-[#2C3E50] px-2 py-0.5 rounded-full font-medium">Pinned</span>
-                                    @endif
                                 </h4>
                             </div>
                             
@@ -103,34 +87,4 @@
             </x-card>
         </div>
     </div>
-
-    <!-- Delete Confirmation Dialog -->
-    <x-modal wire:model.defer="confirmingDelete">
-        <x-card title="Delete Composite">
-            <div class="flex flex-col items-center justify-center text-center">
-                <div class="rounded-full bg-red-100 p-3 mb-4">
-                    <x-icon name="exclamation-triangle" class="w-8 h-8 text-red-500" solid />
-                </div>
-                <p class="text-gray-600 mb-6">
-                    Are you sure you want to delete this composite? This action cannot be undone.
-                </p>
-            </div>
-
-            <x-slot name="footer">
-                <div class="flex justify-end gap-x-4">
-                    <x-button 
-                        wire:click="cancelDelete" 
-                        flat
-                        label="Cancel"
-                    />
-                    <x-button 
-                        wire:click="confirmDelete" 
-                        red
-                        spinner="confirmDelete" 
-                        label="Delete Composite"
-                    />
-                </div>
-            </x-slot>
-        </x-card>
-    </x-modal>
 </div>

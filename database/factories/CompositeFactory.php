@@ -25,13 +25,21 @@ class CompositeFactory extends Factory
         $genders = ['Male', 'Female', 'Other'];
         $ethnicities = [
             'Filipino',
+            'Ilocano',
+            'Cebuano',
+            'Tagalog',
+            'Bicolano',
+            'Waray',
+            'Kapampangan',
+            'Pangasinense',
             'Chinese-Filipino',
             'Spanish-Filipino',
             'American-Filipino',
             'Japanese-Filipino',
             'Korean-Filipino',
             'Indian-Filipino',
-            'Middle Eastern-Filipino'
+            'Middle Eastern-Filipino',
+            'Foreign'
         ];
         $ageRanges = [
             '18-25',

@@ -30,7 +30,6 @@ class Composite extends Model
         'suspect_height',
         'suspect_body_build',
         'suspect_additional_notes',
-        'is_pinned',
     ];
 
     /**
@@ -41,7 +40,6 @@ class Composite extends Model
     protected $casts = [
         'canvas_width' => 'integer',
         'canvas_height' => 'integer',
-        'is_pinned' => 'boolean',
     ];
 
     /**

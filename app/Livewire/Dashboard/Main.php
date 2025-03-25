@@ -14,6 +14,9 @@ class Main extends Component
     public $search = '';
     public $statusFilter = 'all';
     public $sortBy = 'recent';
+    public $genderFilter = 'all';
+    public $ethnicityFilter = 'all';
+    public $ageRangeFilter = 'all';
     public $selectedCase = null;
     public $showCaseDetailsModal = false;
     
@@ -21,6 +24,9 @@ class Main extends Component
         'search' => ['except' => ''],
         'statusFilter' => ['except' => 'all'],
         'sortBy' => ['except' => 'recent'],
+        'genderFilter' => ['except' => 'all'],
+        'ethnicityFilter' => ['except' => 'all'],
+        'ageRangeFilter' => ['except' => 'all'],
     ];
     
     #[On('case-created')]
@@ -41,6 +47,52 @@ class Main extends Component
         $this->showCaseDetailsModal = true;
     }
     
+    #[On('gender-filter-updated')]
+    public function updatedGenderFilter($value)
+    {
+        $this->genderFilter = $value;
+        $this->resetPage();
+    }
+    
+    #[On('ethnicity-filter-updated')]
+    public function updatedEthnicityFilter($value)
+    {
+        $this->ethnicityFilter = $value;
+        $this->resetPage();
+    }
+    
+    #[On('age-range-filter-updated')]
+    public function updatedAgeRangeFilter($value)
+    {
+        $this->ageRangeFilter = $value;
+        $this->resetPage();
+    }
+    
+    #[On('quick-filter')]
+    public function handleQuickFilter($type)
+    {
+        if ($type === 'pinned') {
+            // Show only pinned cases
+            $this->statusFilter = 'all';
+            // Add logic to filter by pinned status only
+            // This is handled in the query by default, we just reset the other filters
+        } elseif ($type === 'recent') {
+            // Show recent cases and set the sort order
+            $this->sortBy = 'recent';
+            $this->statusFilter = 'all';
+        } elseif ($type === 'reset') {
+            // Reset all filters
+            $this->search = '';
+            $this->statusFilter = 'all';
+            $this->sortBy = 'recent';
+            
+            // Notify the left panel about the reset
+            $this->dispatch('filters-reset');
+        }
+        
+        $this->resetPage();
+    }
+    
     public function createNewCase()
     {
         $this->dispatch('create-new-case');
@@ -56,6 +108,27 @@ class Main extends Component
         $this->resetPage();
     }
     
+    #[On('search-updated')]
+    public function updatedSearchFromPanel($search)
+    {
+        $this->search = $search;
+        $this->resetPage();
+    }
+    
+    #[On('status-filter-updated')]
+    public function updatedStatusFilterFromPanel($statusFilter)
+    {
+        $this->statusFilter = $statusFilter;
+        $this->resetPage();
+    }
+    
+    #[On('sort-updated')]
+    public function updatedSortByFromPanel($sortBy)
+    {
+        $this->sortBy = $sortBy;
+        $this->resetPage();
+    }
+    
     public function getCasesProperty()
     {
         $query = CaseRecord::query()
@@ -68,29 +141,34 @@ class Main extends Component
                 return $query->where('status', $this->statusFilter);
             });
             
-        // Always order by pinned status first (pinned cases at the top)
-        $query->orderByDesc('is_pinned');
-            
+        // Apply the selected sort first
         switch ($this->sortBy) {
             case 'alphabetical':
-                $query->orderBy('title');
+                $query->orderBy('title')->orderByDesc('is_pinned');
                 break;
             case 'status':
-                $query->orderBy('status');
+                $query->orderBy('status')->orderByDesc('is_pinned');
                 break;
             case 'recent':
             default:
-                $query->latest('updated_at');
+                // For recent sorting, we still want pinned items at the top
+                $query->orderByDesc('is_pinned')->latest('updated_at');
                 break;
         }
         
         return $query->get();
     }
     
+    public function getTotalCasesCountProperty()
+    {
+        return CaseRecord::count();
+    }
+    
     public function render()
     {
         return view('livewire.dashboard.main', [
-            'cases' => $this->cases
+            'cases' => $this->cases,
+            'totalCasesCount' => $this->totalCasesCount
         ]);
     }
 }

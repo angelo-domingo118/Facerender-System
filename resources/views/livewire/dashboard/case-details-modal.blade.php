@@ -68,7 +68,13 @@
                                 <div class="text-center py-8">
                                     <x-icon name="photo" class="h-12 w-12 text-gray-300 mx-auto mb-3" />
                                     <p class="text-gray-500">No composites found for this case</p>
-                                    <x-button flat icon="plus" label="Create Composite" class="mt-3" />
+                                    <x-button 
+                                        flat 
+                                        icon="plus" 
+                                        label="Create Composite" 
+                                        class="mt-3"
+                                        wire:click="$dispatch('create-composite', { caseId: {{ $case->id }} })" 
+                                    />
                                 </div>
                             @else
                                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -103,7 +109,13 @@
                                 <div class="text-center py-8">
                                     <x-icon name="users" class="h-12 w-12 text-gray-300 mx-auto mb-3" />
                                     <p class="text-gray-500">No witnesses added to this case</p>
-                                    <x-button flat icon="plus" label="Add Witness" class="mt-3" />
+                                    <x-button 
+                                        flat 
+                                        icon="plus" 
+                                        label="Add Witness" 
+                                        class="mt-3"
+                                        wire:click="$dispatch('add-witness', { caseId: {{ $case->id }} })" 
+                                    />
                                 </div>
                             @else
                                 <div class="bg-white rounded-lg overflow-hidden">
@@ -200,7 +212,12 @@
                     <x-button flat label="Close" wire:click="close" />
                     <div class="flex space-x-3">
                         <x-button negative icon="trash" label="Delete Case" />
-                        <x-button positive icon="pencil" label="Edit Case" />
+                        <x-button 
+                            positive 
+                            icon="pencil" 
+                            label="Edit Case" 
+                            wire:click="$dispatch('edit-case', { caseId: {{ $case->id }} })" 
+                        />
                     </div>
                 </div>
             </x-slot>
