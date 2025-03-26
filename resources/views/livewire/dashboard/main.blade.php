@@ -29,7 +29,8 @@
                         'sortBy' => $sortBy,
                         'genderFilter' => $genderFilter,
                         'ethnicityFilter' => $ethnicityFilter,
-                        'ageRangeFilter' => $ageRangeFilter
+                        'ageRangeFilter' => $ageRangeFilter,
+                        'contentTypeFilter' => $contentTypeFilter
                     ])
                 </div>
             </div>
@@ -41,7 +42,20 @@
         <!-- Dashboard indicator -->
         <div class="bg-white rounded-lg shadow-md p-4 border border-gray-200">
             <div class="flex items-center justify-between">
-                <h2 class="text-lg font-medium text-[#2C3E50]">Dashboard</h2>
+                <div class="flex items-center space-x-2">
+                    <h2 class="text-lg font-medium text-[#2C3E50]">Dashboard</h2>
+                    @if($contentTypeFilter !== 'all')
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                            @if($contentTypeFilter === 'witnesses')
+                                <x-icon name="users" class="w-3 h-3 mr-1" />
+                                Witnesses View
+                            @elseif($contentTypeFilter === 'composites')
+                                <x-icon name="photo" class="w-3 h-3 mr-1" />
+                                Composites View
+                            @endif
+                        </span>
+                    @endif
+                </div>
                 <x-button 
                     primary 
                     label="New Case" 
@@ -79,11 +93,60 @@
                 />
             </div>
         @else
-            <div class="grid grid-cols-1 gap-5 w-full">
-                @foreach($cases as $case)
-                    @livewire('dashboard.case-card', ['case' => $case], key('case-'.$case->id))
-                @endforeach
-            </div>
+            <!-- Witness View -->
+            @if($contentTypeFilter === 'witnesses')
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 w-full">
+                    @foreach($cases as $case)
+                        @foreach($case->witnesses as $witness)
+                            <div class="bg-white p-3 rounded-lg border border-gray-200 hover:border-[#2C3E50]/50 transition-all duration-200 shadow-sm">
+                                <div class="flex justify-between mb-2">
+                                    <span class="text-xs bg-gray-100 px-2 py-1 rounded-md text-gray-600">
+                                        {{ $case->reference_number }} · {{ ucfirst($case->status) }}
+                                    </span>
+                                    <x-badge 
+                                        :label="$case->title" 
+                                        class="text-xs"
+                                        rounded="full"
+                                    />
+                                </div>
+                                <div class="mt-2">
+                                    @livewire('dashboard.witness-card', ['witness' => $witness], key('standalone-witness-'.$witness->id))
+                                </div>
+                            </div>
+                        @endforeach
+                    @endforeach
+                </div>
+            <!-- Composite View -->
+            @elseif($contentTypeFilter === 'composites')
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 w-full">
+                    @foreach($cases as $case)
+                        @foreach($case->composites as $composite)
+                            <div class="bg-white p-3 rounded-lg border border-gray-200 hover:border-[#2C3E50]/50 transition-all duration-200 shadow-sm">
+                                <div class="flex justify-between mb-2">
+                                    <span class="text-xs bg-gray-100 px-2 py-1 rounded-md text-gray-600">
+                                        {{ $case->reference_number }} · {{ ucfirst($case->status) }}
+                                    </span>
+                                    <x-badge 
+                                        :label="$case->title" 
+                                        class="text-xs"
+                                        rounded="full"
+                                    />
+                                </div>
+                                <div class="mt-2">
+                                    @livewire('dashboard.composite-card', ['composite' => $composite], key('standalone-composite-'.$composite->id))
+                                </div>
+                            </div>
+                        @endforeach
+                    @endforeach
+                </div>
+            <!-- Default Case View -->
+            @else
+                <div class="grid grid-cols-1 gap-5 w-full">
+                    @foreach($cases as $case)
+                        @livewire('dashboard.case-card', ['case' => $case], key('case-'.$case->id))
+                    @endforeach
+                </div>
+            @endif
         @endif
     </div>
     

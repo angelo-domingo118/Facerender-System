@@ -13,6 +13,12 @@ class CaseCard extends Component
     public function mount($case)
     {
         $this->case = $case;
+        
+        // Auto-expand based on URL query params if we're in witness or composite view mode
+        $contentTypeFilter = request()->query('contentTypeFilter', 'all');
+        if ($contentTypeFilter === 'witnesses' || $contentTypeFilter === 'composites') {
+            $this->isExpanded = true;
+        }
     }
     
     // Get a unique identifier for this component instance
@@ -89,14 +95,17 @@ class CaseCard extends Component
     #[On('composite-deleted')]
     #[On('composite-updated')]
     #[On('composite-created')]
+    #[On('witness-deleted')]
+    #[On('witness-added')]
+    #[On('witness-updated')]
     public function refreshData($eventData = null)
     {
-        // For composite deletion/updates, only refresh if it's for this case
+        // For composite/witness deletion/updates, only refresh if it's for this case
         if ($eventData && isset($eventData['caseId']) && $eventData['caseId'] !== $this->case->id) {
             return;
         }
         
-        // Refresh the case data from the database to reflect the updated composites
+        // Refresh the case data from the database to reflect the updated composites/witnesses
         $this->case->refresh();
     }
     

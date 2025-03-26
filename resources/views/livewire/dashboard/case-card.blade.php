@@ -154,7 +154,7 @@
                     @endif
                     
                     <!-- Composite Section -->
-                    <div class="mt-6 hover:bg-gray-100 p-2 rounded-lg transition-colors duration-200">
+                    <div class="mt-6 hover:bg-gray-100 p-2 rounded-lg transition-colors duration-200 {{ request()->query('contentTypeFilter') === 'composites' ? 'bg-blue-50 shadow-sm border border-blue-100' : '' }}">
                         <div class="flex items-center justify-between mb-3">
                             <h4 class="text-sm font-medium text-[#2C3E50] flex items-center">
                                 <x-icon name="photo" class="h-4 w-4 mr-2 text-[#2C3E50]" />
@@ -190,6 +190,48 @@
                             <div class="space-y-3" wire:key="composites-{{ $case->updated_at->timestamp }}">
                                 @foreach($case->composites as $composite)
                                     @livewire('dashboard.composite-card', ['composite' => $composite], key('composite-'.$composite->id))
+                                @endforeach
+                            </div>
+                        @endif
+                    </div>
+                    
+                    <!-- Witnesses Section -->
+                    <div class="mt-6 hover:bg-gray-100 p-2 rounded-lg transition-colors duration-200 {{ request()->query('contentTypeFilter') === 'witnesses' ? 'bg-blue-50 shadow-sm border border-blue-100' : '' }}">
+                        <div class="flex items-center justify-between mb-3">
+                            <h4 class="text-sm font-medium text-[#2C3E50] flex items-center">
+                                <x-icon name="users" class="h-4 w-4 mr-2 text-[#2C3E50]" />
+                                Witnesses <span class="ml-1 bg-white text-gray-700 text-xs py-0.5 px-2 rounded-full border border-gray-300">{{ $case->witnesses->count() }}</span>
+                            </h4>
+                            <x-button 
+                                wire:click="addWitness" 
+                                xs
+                                icon="plus" 
+                                label="Add Witness" 
+                                class="bg-[#2C3E50] hover:bg-[#34495E] text-white shadow-sm"
+                                rounded
+                            />
+                        </div>
+                        
+                        @if($case->witnesses->isEmpty())
+                            <div class="text-center py-6 bg-white rounded-lg border border-gray-300 transition-all duration-200 hover:border-[#2C3E50]/50">
+                                <div class="bg-[#2C3E50]/20 p-3 rounded-full inline-flex mb-2">
+                                    <x-icon name="users" class="h-6 w-6 text-[#2C3E50]" />
+                                </div>
+                                <p class="text-gray-600 text-sm">No witnesses yet</p>
+                                <x-button 
+                                    wire:click="addWitness" 
+                                    flat 
+                                    xs
+                                    icon="plus" 
+                                    label="Add First Witness" 
+                                    class="mt-2 text-[#2C3E50] hover:bg-[#2C3E50]/20" 
+                                    rounded
+                                />
+                            </div>
+                        @else
+                            <div class="space-y-3" wire:key="witnesses-{{ $case->updated_at->timestamp }}">
+                                @foreach($case->witnesses as $witness)
+                                    @livewire('dashboard.witness-card', ['witness' => $witness], key('witness-'.$witness->id))
                                 @endforeach
                             </div>
                         @endif

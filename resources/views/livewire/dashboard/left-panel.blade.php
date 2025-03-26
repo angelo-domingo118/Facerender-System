@@ -2,7 +2,7 @@
     <!-- Search Bar -->
     <div class="mb-6">
         <x-input 
-            placeholder="Search cases..." 
+            placeholder="{{ $contentTypeFilter === 'witnesses' ? 'Search witnesses...' : ($contentTypeFilter === 'composites' ? 'Search composites...' : 'Search cases...') }}" 
             wire:model.live="search"
             icon="magnifying-glass"
             class="w-full bg-gray-50 border-gray-200 focus:border-indigo-500 focus:ring-indigo-500"
@@ -21,6 +21,33 @@
     
     <!-- Filters Section -->
     <div class="space-y-6">
+        <!-- Content Type Filter -->
+        <div class="space-y-2">
+            <label class="text-sm font-medium text-gray-700">View Mode</label>
+            <x-select
+                placeholder="Select view mode"
+                wire:model.live="contentTypeFilter"
+                class="w-full bg-gray-50 border-gray-200"
+            >
+                <x-select.option value="all" label="Cases (Default)" />
+                <x-select.option value="witnesses">
+                    <div class="flex items-center">
+                        <x-icon name="users" class="w-4 h-4 mr-2 text-gray-500" />
+                        Witnesses Only
+                    </div>
+                </x-select.option>
+                <x-select.option value="composites">
+                    <div class="flex items-center">
+                        <x-icon name="photo" class="w-4 h-4 mr-2 text-gray-500" />
+                        Composites Only
+                    </div>
+                </x-select.option>
+            </x-select>
+            <p class="text-xs text-gray-500 italic">
+                Choose "Witnesses Only" or "Composites Only" to view specific items across all cases.
+            </p>
+        </div>
+        
         <!-- Status Filter -->
         <div class="space-y-2">
             <label class="text-sm font-medium text-gray-700">Status</label>

@@ -13,8 +13,9 @@ class LeftPanel extends Component
     public $genderFilter = 'all';
     public $ethnicityFilter = 'all';
     public $ageRangeFilter = 'all';
+    public $contentTypeFilter = 'all';
     
-    public function mount($search, $statusFilter, $sortBy, $genderFilter = 'all', $ethnicityFilter = 'all', $ageRangeFilter = 'all')
+    public function mount($search, $statusFilter, $sortBy, $genderFilter = 'all', $ethnicityFilter = 'all', $ageRangeFilter = 'all', $contentTypeFilter = 'all')
     {
         $this->search = $search;
         $this->statusFilter = $statusFilter;
@@ -22,6 +23,7 @@ class LeftPanel extends Component
         $this->genderFilter = $genderFilter;
         $this->ethnicityFilter = $ethnicityFilter;
         $this->ageRangeFilter = $ageRangeFilter;
+        $this->contentTypeFilter = $contentTypeFilter;
     }
     
     #[On('filters-reset')]
@@ -33,6 +35,7 @@ class LeftPanel extends Component
         $this->genderFilter = 'all';
         $this->ethnicityFilter = 'all';
         $this->ageRangeFilter = 'all';
+        $this->contentTypeFilter = 'all';
     }
     
     public function updatedSearch()
@@ -48,6 +51,11 @@ class LeftPanel extends Component
     public function updatedSortBy()
     {
         $this->dispatch('sort-updated', sortBy: $this->sortBy);
+    }
+    
+    public function updatedContentTypeFilter()
+    {
+        $this->dispatch('content-type-filter-updated', contentTypeFilter: $this->contentTypeFilter);
     }
     
     public function updatedGenderFilter()

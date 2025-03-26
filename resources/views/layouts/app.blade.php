@@ -44,9 +44,12 @@
 
         @stack('modals')
         
-        <!-- Global Delete Modal Manager -->
-        @livewire('delete-modal-manager')
-        
         @livewireScripts
+
+        @livewire('forms.edit-case-form')
+        @livewire('forms.add-witness-form')
+        @livewire('forms.edit-witness-form')
+        @livewire('forms.create-composite-form')
+        @livewire('delete-modal-manager')
     </body>
 </html>

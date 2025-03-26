@@ -17,6 +17,7 @@ class Main extends Component
     public $genderFilter = 'all';
     public $ethnicityFilter = 'all';
     public $ageRangeFilter = 'all';
+    public $contentTypeFilter = 'all';
     public $selectedCase = null;
     public $showCaseDetailsModal = false;
     
@@ -27,6 +28,7 @@ class Main extends Component
         'genderFilter' => ['except' => 'all'],
         'ethnicityFilter' => ['except' => 'all'],
         'ageRangeFilter' => ['except' => 'all'],
+        'contentTypeFilter' => ['except' => 'all'],
     ];
     
     #[On('case-created')]
@@ -68,6 +70,13 @@ class Main extends Component
         $this->resetPage();
     }
     
+    #[On('content-type-filter-updated')]
+    public function updatedContentTypeFilter($contentTypeFilter)
+    {
+        $this->contentTypeFilter = $contentTypeFilter;
+        $this->resetPage();
+    }
+    
     #[On('quick-filter')]
     public function handleQuickFilter($type)
     {
@@ -85,6 +94,7 @@ class Main extends Component
             $this->search = '';
             $this->statusFilter = 'all';
             $this->sortBy = 'recent';
+            $this->contentTypeFilter = 'all';
             
             // Notify the left panel about the reset
             $this->dispatch('filters-reset');
@@ -131,17 +141,64 @@ class Main extends Component
     
     public function getCasesProperty()
     {
-        $query = CaseRecord::query()
-            ->with(['composites', 'witnesses'])
-            ->when($this->search, function ($query) {
-                return $query->where('title', 'like', '%' . $this->search . '%')
-                    ->orWhere('reference_number', 'like', '%' . $this->search . '%');
-            })
-            ->when($this->statusFilter != 'all', function ($query) {
-                return $query->where('status', $this->statusFilter);
-            });
+        // Start with base query
+        $query = CaseRecord::query();
             
-        // Apply the selected sort first
+        // Add eager loading based on content type
+        if ($this->contentTypeFilter === 'witnesses') {
+            $query->with(['witnesses']);
+        } elseif ($this->contentTypeFilter === 'composites') {
+            $query->with(['composites']);
+        } else {
+            $query->with(['composites', 'witnesses']);
+        }
+            
+        // Handle content type filtering
+        if ($this->contentTypeFilter === 'witnesses') {
+            $query->whereHas('witnesses', function ($q) {
+                if ($this->search) {
+                    $q->where('name', 'like', '%' . $this->search . '%')
+                      ->orWhere('relationship_to_case', 'like', '%' . $this->search . '%');
+                }
+            });
+        } elseif ($this->contentTypeFilter === 'composites') {
+            $query->whereHas('composites', function ($q) {
+                if ($this->search) {
+                    $q->where('title', 'like', '%' . $this->search . '%')
+                      ->orWhere('description', 'like', '%' . $this->search . '%');
+                }
+            });
+        } else {
+            // Default search behavior for all content types
+            if ($this->search) {
+                $query->where(function ($q) {
+                    // Search in cases
+                    $q->where('title', 'like', '%' . $this->search . '%')
+                      ->orWhere('reference_number', 'like', '%' . $this->search . '%')
+                      ->orWhere('description', 'like', '%' . $this->search . '%')
+                      ->orWhere('location', 'like', '%' . $this->search . '%');
+                      
+                    // Search in witnesses
+                    $q->orWhereHas('witnesses', function ($wq) {
+                        $wq->where('name', 'like', '%' . $this->search . '%')
+                          ->orWhere('relationship_to_case', 'like', '%' . $this->search . '%');
+                    });
+                    
+                    // Search in composites
+                    $q->orWhereHas('composites', function ($cq) {
+                        $cq->where('title', 'like', '%' . $this->search . '%')
+                          ->orWhere('description', 'like', '%' . $this->search . '%');
+                    });
+                });
+            }
+        }
+        
+        // Apply status filter
+        if ($this->statusFilter != 'all') {
+            $query->where('status', $this->statusFilter);
+        }
+            
+        // Apply the selected sort
         switch ($this->sortBy) {
             case 'alphabetical':
                 $query->orderBy('title')->orderByDesc('is_pinned');
