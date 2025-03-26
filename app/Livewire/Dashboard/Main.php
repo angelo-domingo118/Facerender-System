@@ -81,10 +81,10 @@ class Main extends Component
     public function handleQuickFilter($type)
     {
         if ($type === 'pinned') {
-            // Show only pinned cases
+            // Remove pinned filter functionality
+            // Reset to showing all cases instead
             $this->statusFilter = 'all';
-            // Add logic to filter by pinned status only
-            // This is handled in the query by default, we just reset the other filters
+            $this->sortBy = 'recent';
         } elseif ($type === 'recent') {
             // Show recent cases and set the sort order
             $this->sortBy = 'recent';
@@ -201,15 +201,15 @@ class Main extends Component
         // Apply the selected sort
         switch ($this->sortBy) {
             case 'alphabetical':
-                $query->orderBy('title')->orderByDesc('is_pinned');
+                $query->orderBy('title');
                 break;
             case 'status':
-                $query->orderBy('status')->orderByDesc('is_pinned');
+                $query->orderBy('status');
                 break;
             case 'recent':
             default:
-                // For recent sorting, we still want pinned items at the top
-                $query->orderByDesc('is_pinned')->latest('updated_at');
+                // For recent sorting
+                $query->latest('updated_at');
                 break;
         }
         

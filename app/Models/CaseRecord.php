@@ -34,7 +34,6 @@ class CaseRecord extends Model
         'location',
         'notes',
         'user_id',
-        'is_pinned',
     ];
 
     /**
@@ -45,7 +44,6 @@ class CaseRecord extends Model
     protected $casts = [
         'incident_date' => 'date',
         'incident_time' => 'datetime',
-        'is_pinned' => 'boolean',
     ];
 
     /**

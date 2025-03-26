@@ -37,15 +37,6 @@ class CaseCard extends Component
         $this->dispatch('case-selected', caseId: $this->case->id);
     }
     
-    public function togglePin()
-    {
-        $this->case->is_pinned = !$this->case->is_pinned;
-        $this->case->save();
-        
-        // Dispatch case-updated event to refresh the list and maintain sort order
-        $this->dispatch('case-updated');
-    }
-    
     public function deleteCase()
     {
         // Instead of showing a local modal, dispatch an event to the global modal manager

@@ -6,26 +6,10 @@
             <div class="flex flex-col space-y-3">
                 <div class="flex items-center justify-between">
                     <div class="flex items-center space-x-3">
-                        <!-- Pin/Favorite Button -->
-                        <button 
-                            wire:click="togglePin" 
-                            class="text-gray-500 hover:text-[#2C3E50] focus:outline-none transition-colors duration-200 p-1.5 rounded-full hover:bg-gray-100"
-                            x-tooltip="'{{ $case->is_pinned ? 'Unpin Case' : 'Pin Case' }}'"
-                        >
-                            <x-icon 
-                                name="{{ $case->is_pinned ? 'map-pin' : 'map-pin' }}" 
-                                class="h-5 w-5 {{ $case->is_pinned ? 'text-[#2C3E50]' : '' }}" 
-                                :solid="$case->is_pinned"
-                            />
-                        </button>
-                        
                         <!-- Title and Reference Number -->
                         <div>
                             <div class="flex items-center">
                                 <h3 class="text-lg font-semibold text-[#2C3E50] group-hover:text-[#2C3E50]">{{ $case->title }}</h3>
-                                @if($case->is_pinned)
-                                    <span class="ml-2 text-xs bg-[#2C3E50]/20 text-[#2C3E50] px-2 py-0.5 rounded-full font-medium">Pinned</span>
-                                @endif
                             </div>
                             <p class="text-sm text-gray-600 flex items-center">
                                 <x-icon name="hashtag" class="h-3 w-3 mr-1 text-[#2C3E50]" />
@@ -189,7 +173,9 @@
                         @else
                             <div class="space-y-3" wire:key="composites-{{ $case->updated_at->timestamp }}">
                                 @foreach($case->composites as $composite)
-                                    @livewire('dashboard.composite-card', ['composite' => $composite], key('composite-'.$composite->id))
+                                    <div wire:key="composite-wrapper-{{ $composite->id }}">
+                                        @livewire('dashboard.composite-card', ['composite' => $composite], key('composite-'.$composite->id))
+                                    </div>
                                 @endforeach
                             </div>
                         @endif
@@ -231,7 +217,9 @@
                         @else
                             <div class="space-y-3" wire:key="witnesses-{{ $case->updated_at->timestamp }}">
                                 @foreach($case->witnesses as $witness)
-                                    @livewire('dashboard.witness-card', ['witness' => $witness], key('witness-'.$witness->id))
+                                    <div wire:key="witness-wrapper-{{ $witness->id }}">
+                                        @livewire('dashboard.witness-card', ['witness' => $witness], key('witness-'.$witness->id))
+                                    </div>
                                 @endforeach
                             </div>
                         @endif
