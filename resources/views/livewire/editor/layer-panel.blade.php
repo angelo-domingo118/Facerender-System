@@ -113,13 +113,15 @@
                 <label class="text-xs text-gray-600 mb-1 block">Blend Mode</label>
                 <x-native-select
                     :options="[
-                        'Normal',
-                        'Multiply',
-                        'Screen',
-                        'Overlay',
-                        'Darken',
-                        'Lighten',
+                        ['name' => 'Normal', 'value' => 'Normal'],
+                        ['name' => 'Multiply', 'value' => 'Multiply'],
+                        ['name' => 'Screen', 'value' => 'Screen'],
+                        ['name' => 'Overlay', 'value' => 'Overlay'],
+                        ['name' => 'Darken', 'value' => 'Darken'],
+                        ['name' => 'Lighten', 'value' => 'Lighten'],
                     ]"
+                    option-label="name"
+                    option-value="value"
                     wire:model.live="blendMode"
                 />
             </div>

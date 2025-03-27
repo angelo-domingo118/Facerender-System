@@ -29,10 +29,11 @@
                     <div>
                         <x-native-select
                             label="Witness"
-                            :options="[
-                                ['name' => 'John Doe', 'value' => '1'],
-                                ['name' => 'Jane Smith', 'value' => '2'],
-                            ]"
+                            :options="$witnesses->map(function($witness) {
+                                return ['name' => $witness->name, 'value' => $witness->id];
+                            })->toArray()"
+                            option-label="name"
+                            option-value="value"
                             placeholder="Select witness"
                             wire:model.live="witnessId"
                         />
@@ -50,10 +51,12 @@
                             <x-native-select
                                 label="Gender"
                                 :options="[
-                                    'Male',
-                                    'Female',
-                                    'Unknown',
+                                    ['name' => 'Male', 'value' => 'Male'],
+                                    ['name' => 'Female', 'value' => 'Female'],
+                                    ['name' => 'Unknown', 'value' => 'Unknown'],
                                 ]"
+                                option-label="name"
+                                option-value="value"
                                 placeholder="Select gender"
                                 wire:model.live="suspectGender"
                             />
@@ -76,12 +79,14 @@
                         <x-native-select
                             label="Body Build"
                             :options="[
-                                'Slim',
-                                'Average',
-                                'Athletic',
-                                'Large',
-                                'Muscular',
+                                ['name' => 'Slim', 'value' => 'Slim'],
+                                ['name' => 'Average', 'value' => 'Average'],
+                                ['name' => 'Athletic', 'value' => 'Athletic'],
+                                ['name' => 'Large', 'value' => 'Large'],
+                                ['name' => 'Muscular', 'value' => 'Muscular'],
                             ]"
+                            option-label="name"
+                            option-value="value"
                             placeholder="Select body build"
                             wire:model.live="suspectBodyBuild"
                         />
@@ -114,8 +119,8 @@
     <!-- Action Buttons -->
     <div class="p-3 border-t border-gray-200">
         <div class="flex justify-end space-x-2">
-            <x-button flat label="Reset" icon="refresh" />
-            <x-button primary label="Save" icon="check" class="bg-[#2C3E50] hover:bg-[#34495E]" />
+            <x-button flat label="Reset" wire:click="resetForm" />
+            <x-button primary label="Save" wire:click="saveComposite" icon="check" class="bg-[#2C3E50] hover:bg-[#34495E]" />
         </div>
     </div>
 </div>
