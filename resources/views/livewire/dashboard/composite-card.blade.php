@@ -63,6 +63,13 @@
                                     x-tooltip="'Edit this composite'"
                                 />
                                 <x-button 
+                                    href="{{ route('composite.editor', $composite->id) }}"
+                                    icon="pencil-square"
+                                    xs
+                                    class="bg-[#2C3E50] hover:bg-[#34495E] text-white transition-colors rounded-md"
+                                    x-tooltip="'Edit in Composite Editor'"
+                                />
+                                <x-button 
                                     wire:click="downloadComposite" 
                                     icon="arrow-down-tray"
                                     xs

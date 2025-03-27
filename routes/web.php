@@ -14,4 +14,9 @@ Route::middleware([
     Route::get('/dashboard', function () {
         return view('dashboard');
     })->name('dashboard');
+    
+    // Route for composite editor
+    Route::get('/composite-editor/{id}', function ($id) {
+        return view('composite-editor', ['compositeId' => $id]);
+    })->name('composite.editor');
 });
