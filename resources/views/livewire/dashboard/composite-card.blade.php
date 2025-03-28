@@ -45,49 +45,53 @@
                         </div>
                         
                         <!-- Action Buttons -->
-                        <div class="flex items-center justify-between mt-3 pt-2 border-t border-gray-200">
-                            <div class="flex space-x-1">
-                                <x-button 
-                                    wire:click="viewComposite" 
-                                    icon="eye"
-                                    xs
-                                    class="bg-[#2C3E50] hover:bg-[#34495E] text-white transition-colors rounded-md"
-                                    x-tooltip="'View this composite'"
-                                />
-                                <x-button 
-                                    wire:click="editComposite" 
-                                    icon="pencil"
-                                    xs
-                                    flat
-                                    class="text-[#2C3E50] hover:bg-[#2C3E50]/20 transition-colors rounded-md"
-                                    x-tooltip="'Edit this composite'"
-                                />
-                                <x-button 
-                                    href="{{ route('composite.editor', $composite->id) }}"
-                                    icon="pencil-square"
-                                    xs
-                                    class="bg-[#2C3E50] hover:bg-[#34495E] text-white transition-colors rounded-md"
-                                    x-tooltip="'Edit in Composite Editor'"
-                                />
-                                <x-button 
-                                    wire:click="downloadComposite" 
-                                    icon="arrow-down-tray"
-                                    xs
-                                    flat
-                                    class="text-[#2C3E50] hover:bg-[#2C3E50]/20 transition-colors rounded-md"
-                                    x-tooltip="'Download this composite'"
-                                />
+                        <div class="mt-3 pt-2 border-t border-gray-200">
+                            <div class="flex justify-between items-center">
+                                <!-- Left-aligned buttons -->
+                                <div class="flex space-x-2">
+                                    <x-button 
+                                        wire:click="viewComposite" 
+                                        icon="eye"
+                                        size="sm"
+                                        flat
+                                        class="text-[#6366F1] hover:bg-gray-100 transition-colors rounded-md"
+                                    >
+                                        View Details
+                                    </x-button>
+                                    
+                                    <x-button 
+                                        href="{{ route('composite.editor', $composite->id) }}"
+                                        icon="pencil-square"
+                                        size="sm"
+                                        class="bg-[#6366F1] hover:bg-[#4F46E5] text-white transition-colors rounded-md"
+                                    >
+                                        Composite Editor
+                                    </x-button>
+                                </div>
+                                
+                                <!-- Right-aligned buttons -->
+                                <div class="flex space-x-2">
+                                    <x-button 
+                                        wire:click="downloadComposite" 
+                                        icon="arrow-down-tray"
+                                        size="sm"
+                                        flat
+                                        class="text-[#6366F1] hover:bg-gray-100 transition-colors rounded-md"
+                                    >
+                                        Download
+                                    </x-button>
+                                    
+                                    <x-button 
+                                        wire:click="deleteComposite" 
+                                        icon="trash"
+                                        size="sm"
+                                        outline
+                                        class="text-red-600 border-red-300 hover:bg-red-50 transition-colors rounded-md"
+                                    >
+                                        Delete
+                                    </x-button>
+                                </div>
                             </div>
-                            
-                            <x-button 
-                                wire:click="deleteComposite" 
-                                icon="trash"
-                                xs
-                                outline
-                                :solid="true"
-                                class="text-gray-700 border-gray-300 hover:bg-gray-100 transition-colors rounded-md"
-                                x-tooltip="'Delete this composite'"
-                            />
                         </div>
                     </div>
                 </div>

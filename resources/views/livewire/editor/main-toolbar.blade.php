@@ -2,15 +2,7 @@
     <div class="flex justify-between items-center">
         <!-- Left side - Compact back button and feature library -->
         <div class="flex items-center space-x-3">
-            <!-- Back button (icon only with tooltip) -->
-            <a href="{{ route('dashboard') }}" class="p-1.5 rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors duration-200 flex items-center" x-tooltip="'Return to Dashboard'">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                </svg>
-                <span class="text-sm">Dashboard</span>
-            </a>
-            
-            <!-- Toggle Left Sidebar Button -->
+            <!-- Toggle Left Sidebar Button (moved before Dashboard) -->
             <button 
                 wire:click="$parent.toggleLeftSidebar"
                 class="p-1.5 rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors duration-200 flex items-center"
@@ -22,6 +14,14 @@
                 </svg>
                 <span class="text-sm">Feature Library</span>
             </button>
+            
+            <!-- Back button (now after Feature Library) -->
+            <a href="{{ route('dashboard') }}" class="p-1.5 rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors duration-200 flex items-center" x-tooltip="'Return to Dashboard'">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                <span class="text-sm">Dashboard</span>
+            </a>
         </div>
         
         <!-- Center section - File operations and title -->
@@ -53,10 +53,12 @@
             
             <div class="h-6 border-r border-gray-300 mx-2"></div>
             
-            <!-- Composite Title (moved to the center section) -->
+            <!-- Composite Title with vertically centered ID -->
             <div class="flex items-center">
                 <h2 class="text-lg font-medium text-[#2C3E50]">{{ isset($composite) ? $composite->title : 'Composite Editor' }}</h2>
-                <span class="ml-2 text-xs bg-gray-100 px-2 py-1 rounded-full text-gray-600">ID: {{ $compositeId }}</span>
+                <div class="flex items-center ml-2">
+                    <span class="text-xs bg-gray-100 px-2 py-1 rounded-full text-gray-600">ID: {{ $compositeId }}</span>
+                </div>
             </div>
         </div>
         
