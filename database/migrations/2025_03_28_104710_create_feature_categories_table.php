@@ -11,8 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('composites', function (Blueprint $table) {
-            $table->dropColumn('is_pinned');
+        Schema::create('feature_categories', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('feature_type_id')->constrained()->onDelete('cascade');
+            $table->string('name');
+            $table->timestamps();
         });
     }
 
@@ -21,8 +24,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('composites', function (Blueprint $table) {
-            $table->boolean('is_pinned')->default(false);
-        });
+        Schema::dropIfExists('feature_categories');
     }
 };

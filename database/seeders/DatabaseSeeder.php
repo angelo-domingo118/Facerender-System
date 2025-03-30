@@ -42,5 +42,9 @@ class DatabaseSeeder extends Seeder
                         ]);
                 });
             });
+
+        $this->call([
+            FeatureLibrarySeeder::class,
+        ]);
     }
 }

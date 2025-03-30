@@ -11,8 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('cases', function (Blueprint $table) {
-            $table->dropColumn('is_pinned');
+        Schema::create('feature_types', function (Blueprint $table) {
+            $table->id();
+            $table->string('name');
+            $table->timestamps();
         });
     }
 
@@ -21,8 +23,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('cases', function (Blueprint $table) {
-            $table->boolean('is_pinned')->default(false);
-        });
+        Schema::dropIfExists('feature_types');
     }
 };

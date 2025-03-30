@@ -54,7 +54,6 @@ class CreateCaseForm extends Component
             'status' => $this->status,
             'location' => $this->location ?: 'Unknown',
             'user_id' => Auth::id(),
-            'is_pinned' => false,
         ]);
 
         $this->dispatch('case-created', caseId: $case->id);

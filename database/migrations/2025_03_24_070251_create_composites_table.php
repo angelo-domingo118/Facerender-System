@@ -27,7 +27,6 @@ return new class extends Migration
             $table->string('suspect_height')->nullable();
             $table->string('suspect_body_build')->nullable();
             $table->text('suspect_additional_notes')->nullable();
-            $table->boolean('is_pinned')->default(false);
             $table->timestamps();
         });
     }

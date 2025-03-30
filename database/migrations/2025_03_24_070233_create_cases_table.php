@@ -23,7 +23,6 @@ return new class extends Migration
             $table->string('location');
             $table->text('notes')->nullable();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->boolean('is_pinned')->default(false);
             $table->timestamps();
         });
     }
