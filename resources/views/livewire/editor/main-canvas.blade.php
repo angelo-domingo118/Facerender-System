@@ -51,33 +51,15 @@
     </div>
     
     <!-- Canvas Area -->
-    <div class="flex-1 overflow-auto relative p-6 flex items-center justify-center">
+    <div class="flex-1 overflow-auto relative p-6 flex items-center justify-center bg-gray-200">
         <!-- Canvas background with grid -->
-        <div class="relative bg-white shadow-md" style="width: 800px; height: 600px;">
+        <div class="relative bg-white shadow-md" style="width: 600px; height: 600px;">
             <!-- Grid pattern overlay -->
             <div class="absolute inset-0 bg-grid opacity-10"></div>
             
             <!-- Canvas content -->
             <div class="absolute inset-0">
-                <!-- Placeholder text -->
-                <div class="flex items-center justify-center h-full">
-                    <div class="text-center">
-                        <p class="text-gray-400 text-sm">Canvas Area</p>
-                        <p class="text-gray-300 text-xs mt-1">Drag features from the library to add them to the canvas</p>
-                    </div>
-                </div>
-                
-                <!-- Sample placeholder feature -->
-                <div class="absolute" style="top: 100px; left: 350px; width: 100px; height: 100px; transform: rotate(0deg);">
-                    <div class="w-full h-full bg-[#2C3E50]/30 border-2 border-[#2C3E50] border-dashed flex items-center justify-center rounded-full">
-                        <span class="text-xs text-[#2C3E50]">Eyes</span>
-                    </div>
-                    <!-- Handles -->
-                    <div class="absolute w-3 h-3 bg-white border border-[#2C3E50] rounded-full -top-1.5 -left-1.5 cursor-nw-resize"></div>
-                    <div class="absolute w-3 h-3 bg-white border border-[#2C3E50] rounded-full -top-1.5 -right-1.5 cursor-ne-resize"></div>
-                    <div class="absolute w-3 h-3 bg-white border border-[#2C3E50] rounded-full -bottom-1.5 -left-1.5 cursor-sw-resize"></div>
-                    <div class="absolute w-3 h-3 bg-white border border-[#2C3E50] rounded-full -bottom-1.5 -right-1.5 cursor-se-resize"></div>
-                </div>
+                <!-- Blank canvas - no placeholders -->
             </div>
         </div>
     </div>

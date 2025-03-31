@@ -55,8 +55,8 @@
             
             <!-- Composite Title with vertically centered ID -->
             <div class="flex items-center">
-                <h2 class="text-lg font-medium text-[#2C3E50]">{{ isset($composite) ? $composite->title : 'Composite Editor' }}</h2>
-                <div class="flex items-center ml-2">
+                <h2 class="text-lg font-medium text-[#2C3E50] truncate max-w-md" title="{{ isset($composite) ? $composite->title : 'Composite Editor' }}">{{ isset($composite) ? $composite->title : 'Composite Editor' }}</h2>
+                <div class="flex-shrink-0 flex items-center ml-2">
                     <span class="text-xs bg-gray-100 px-2 py-1 rounded-full text-gray-600">ID: {{ $compositeId }}</span>
                 </div>
             </div>

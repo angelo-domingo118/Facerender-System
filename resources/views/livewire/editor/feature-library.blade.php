@@ -21,7 +21,7 @@
             <button 
                 @click="open = !open" 
                 type="button"
-                class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-left text-sm flex items-center justify-between hover:border-indigo-500 transition-colors duration-150"
+                class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-left text-sm flex items-center justify-between hover:border-indigo-500 transition-colors duration-150 feature-category-dropdown"
             >
                 <!-- Show selected category or placeholder -->
                 <span class="flex items-center">
@@ -224,19 +224,24 @@
     <div class="flex-1 overflow-y-auto p-3 feature-grid-container">
         @if(!$selectedCategory)
             <div class="flex flex-col items-center justify-center h-full text-center">
-                <div class="bg-gray-50 p-8 rounded-lg border border-gray-200 max-w-md">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-12 h-12 text-gray-400 mx-auto mb-3">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 6.75h12M8.25 12h12m-12 5.25h12M3.75 6.75h.007v.008H3.75V6.75zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zM3.75 12h.007v.008H3.75V12zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm-.375 5.25h.007v.008H3.75v-.008zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
-                    </svg>
-                    <h3 class="text-lg font-medium text-gray-700 mb-2">Select a feature category</h3>
-                    <p class="text-gray-500 mb-4">Please select a feature category from the dropdown above to view available features.</p>
-                    <div class="flex justify-center">
-                        <div class="animate-bounce rounded-full bg-indigo-50 p-2">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
-                            </svg>
-                        </div>
+                <div class="bg-white p-8 rounded-lg border border-gray-200 shadow-sm max-w-sm">
+                    <div class="bg-[#2C3E50]/10 rounded-full p-4 w-16 h-16 flex items-center justify-center mx-auto mb-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-[#2C3E50]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                        </svg>
                     </div>
+                    <h3 class="text-lg font-medium text-gray-800 mb-2">Select a feature category</h3>
+                    <p class="text-gray-600 mb-6">Please select a feature category from the dropdown above to view available facial features.</p>
+                    
+                    <button 
+                        @click="document.querySelector('.feature-category-dropdown').click()"
+                        class="inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-[#2C3E50] hover:bg-[#1e2c38] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#2C3E50] transition-colors duration-150 w-full"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" />
+                        </svg>
+                        Choose Category
+                    </button>
                 </div>
             </div>
         @else
@@ -266,18 +271,48 @@
                             <!-- Debug info to verify image path -->
                             <div class="hidden">Path: {{ $feature->image_path }}</div>
                             
-                            <!-- Feature image -->
-                            <img 
-                                src="{{ asset('storage/' . $feature->image_path) }}" 
-                                alt="{{ $feature->name }}" 
-                                class="absolute inset-0 w-full h-full object-contain p-2"
-                                onerror="this.src='{{ asset('images/placeholder.png') }}'; this.onerror=null; console.error('Failed to load image: {{ $feature->image_path }}')"
-                            >
+                            <!-- Feature image with lazy loading and fade-in effect -->
+                            <div class="absolute inset-0 w-full h-full bg-gray-200 animate-pulse feature-image-container">
+                                <img 
+                                    src="{{ asset('storage/' . $feature->image_path) }}" 
+                                    alt="{{ $feature->name }}" 
+                                    class="absolute inset-0 w-full h-full object-contain p-2 opacity-0 transition-opacity duration-300 feature-image"
+                                    loading="lazy"
+                                    onload="this.classList.remove('opacity-0'); this.parentElement.classList.remove('animate-pulse');"
+                                    onerror="this.src='{{ asset('images/placeholder.png') }}'; this.onerror=null; console.error('Failed to load image: {{ $feature->image_path }}')"
+                                >
+                            </div>
                             
                             <!-- Hover overlay -->
-                            <div class="absolute inset-0 bg-[#2C3E50]/60 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
-                                <button class="bg-white text-[#2C3E50] px-2 py-1 rounded-md text-xs font-medium">
+                            <div class="absolute inset-0 bg-[#2C3E50]/75 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col items-center justify-center gap-2">
+                                <!-- Primary action button (Select) -->
+                                <button 
+                                    wire:click="selectFeature({{ $feature->id }})"
+                                    class="bg-white text-[#2C3E50] px-4 py-1.5 rounded-md text-sm font-medium shadow-sm hover:bg-gray-100 transition-colors duration-150 w-28 flex items-center justify-center"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                    </svg>
                                     Select
+                                </button>
+                                
+                                <!-- View full image icon button -->
+                                <button 
+                                    type="button"
+                                    @click.stop="$dispatch('open-modal', {
+                                        id: 'view-full-image-{{ $feature->id }}', 
+                                        image: '{{ asset('storage/' . $feature->image_path) }}', 
+                                        name: '{{ $feature->name }}',
+                                        featureId: {{ $feature->id }}
+                                    })"
+                                    class="text-white bg-gray-700/50 hover:bg-gray-700/75 transition-colors duration-150 rounded-md flex items-center text-xs px-3 py-1.5"
+                                    title="View full image"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                    </svg>
+                                    Preview
                                 </button>
                             </div>
                         </div>
@@ -294,4 +329,138 @@
             </div>
         @endif
     </div>
+
+    <!-- Full Image Modal -->
+    <div 
+        x-data="{ 
+            open: false, 
+            imageUrl: '', 
+            featureName: '',
+            featureId: null,
+            init() {
+                window.addEventListener('open-modal', (event) => {
+                    if (event.detail.id.startsWith('view-full-image-')) {
+                        this.imageUrl = event.detail.image;
+                        this.featureName = event.detail.name;
+                        this.featureId = event.detail.featureId;
+                        this.open = true;
+                    }
+                });
+            }
+        }" 
+        x-show="open" 
+        x-cloak
+        @keydown.escape.window="open = false"
+        class="fixed inset-0 z-50 overflow-y-auto" 
+        aria-modal="true"
+    >
+        <div class="fixed inset-0 bg-black/60 transition-opacity" x-show="open" @click="open = false"></div>
+        
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div 
+                x-show="open"
+                x-transition:enter="transition ease-out duration-300"
+                x-transition:enter-start="opacity-0 scale-95"
+                x-transition:enter-end="opacity-100 scale-100"
+                x-transition:leave="transition ease-in duration-200"
+                x-transition:leave-start="opacity-100 scale-100"
+                x-transition:leave-end="opacity-0 scale-95"
+                class="bg-white rounded-lg overflow-hidden shadow-xl max-w-2xl max-h-full transform w-full"
+                @click.away="open = false"
+            >
+                <!-- Modal header -->
+                <div class="px-4 py-3 bg-gray-50 border-b border-gray-200 flex items-center justify-between">
+                    <h3 class="text-sm font-medium text-gray-700" x-text="featureName"></h3>
+                    <button @click="open = false" class="text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 rounded-full p-1">
+                        <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+                
+                <!-- Modal body -->
+                <div class="p-4 bg-gray-50">
+                    <div class="bg-white rounded-md p-2 shadow-sm">
+                        <div class="relative max-w-full max-h-[60vh] mx-auto bg-gray-200 animate-pulse modal-image-container">
+                            <img 
+                                :src="imageUrl" 
+                                :alt="featureName" 
+                                class="max-w-full max-h-[60vh] object-contain mx-auto opacity-0 transition-opacity duration-300 modal-image"
+                                loading="lazy"
+                                @load="$event.target.classList.remove('opacity-0'); $event.target.parentElement.classList.remove('animate-pulse')"
+                                onerror="this.src='{{ asset('images/placeholder.png') }}'; this.onerror=null;"
+                            >
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Modal footer -->
+                <div class="px-4 py-3 bg-gray-50 border-t border-gray-200 flex justify-end">
+                    <button 
+                        @click="open = false" 
+                        class="px-3 py-1.5 border border-gray-300 text-gray-700 text-sm rounded-md hover:bg-gray-50 transition-colors duration-150 mr-2"
+                    >
+                        Cancel
+                    </button>
+                    <button 
+                        @click="$wire.selectFeature(featureId); open = false"
+                        class="px-3 py-1.5 bg-[#2C3E50] border border-[#2C3E50] text-white text-sm rounded-md hover:bg-[#1e2c38] transition-colors duration-150 flex items-center"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                        </svg>
+                        Select Feature
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Alpine.js directive for hiding elements and image lazy loading styles -->
+    <style>
+        [x-cloak] { display: none !important; }
+        .feature-image.opacity-0 { opacity: 0; }
+        .feature-image:not(.opacity-0) { opacity: 1; }
+    </style>
 </div>
+
+<!-- Add script for intersection observer to further optimize image loading -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Use Intersection Observer to load images only when they're about to enter the viewport
+        const observer = new IntersectionObserver((entries, observer) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const container = entry.target;
+                    const img = container.querySelector('img');
+                    
+                    // Force browser to prioritize loading this image
+                    if (img && img.loading === 'lazy') {
+                        const rect = container.getBoundingClientRect();
+                        // If the element is actually visible (not just near viewport)
+                        if (
+                            rect.top >= 0 &&
+                            rect.left >= 0 &&
+                            rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
+                            rect.right <= (window.innerWidth || document.documentElement.clientWidth)
+                        ) {
+                            // Change loading priority for visible elements
+                            img.loading = 'eager';
+                        }
+                    }
+                    
+                    // Stop observing once in viewport
+                    observer.unobserve(container);
+                }
+            });
+        }, {
+            rootMargin: '200px 0px', // Start loading when image is 200px from viewport
+            threshold: 0.01
+        });
+
+        // Observe all feature image containers in the grid
+        document.querySelectorAll('.feature-image-container').forEach(container => {
+            observer.observe(container);
+        });
+    });
+</script>

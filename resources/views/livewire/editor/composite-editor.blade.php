@@ -9,7 +9,7 @@
         <!-- Left Sidebar - Feature Library -->
         <div 
             x-data="{ expanded: @entangle('leftSidebarExpanded') }"
-            :class="expanded ? 'w-64' : 'w-0'"
+            :class="expanded ? 'w-80' : 'w-0'"
             class="transition-all duration-300 flex-none border-r border-gray-200 overflow-hidden"
         >
             @if($leftSidebarExpanded)
@@ -25,7 +25,7 @@
         <!-- Right Sidebar - Layers, Adjustments, Details -->
         <div 
             x-data="{ expanded: @entangle('rightSidebarExpanded') }"
-            :class="expanded ? 'w-72' : 'w-0'"
+            :class="expanded ? 'w-96' : 'w-0'"
             class="transition-all duration-300 flex-none border-l border-gray-200 overflow-hidden"
         >
             @if($rightSidebarExpanded)
