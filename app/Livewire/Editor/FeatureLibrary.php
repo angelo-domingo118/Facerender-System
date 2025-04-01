@@ -35,9 +35,13 @@ class FeatureLibrary extends Component
             return collect();
         }
         
-        return FeatureCategory::whereHas('featureType', function ($query) {
-            $query->where('name', $this->selectedCategory);
-        })->get();
+        $featureType = FeatureType::where('name', $this->selectedCategory)->first();
+        
+        if (!$featureType) {
+            return collect();
+        }
+        
+        return FeatureCategory::where('feature_type_id', $featureType->id)->get();
     }
     
     /**
@@ -86,11 +90,7 @@ class FeatureLibrary extends Component
      */
     public function selectSubcategory($categoryId)
     {
-        if ($this->selectedSubcategory == $categoryId) {
-            $this->selectedSubcategory = null; // Toggle off if already selected
-        } else {
-            $this->selectedSubcategory = $categoryId;
-        }
+        $this->selectedSubcategory = $categoryId;
     }
     
     /**
@@ -98,10 +98,37 @@ class FeatureLibrary extends Component
      */
     public function selectFeature($featureId)
     {
-        Log::info("Feature selected: {$featureId}");
-        // Add logic for feature selection - this will be implemented later
-        // This would involve updating the composite canvas with the selected feature
-        $this->dispatch('feature-selected', featureId: $featureId);
+        // Get the feature details
+        $feature = \App\Models\FacialFeature::find($featureId);
+        
+        if (!$feature) {
+            \Illuminate\Support\Facades\Log::error("Feature not found: {$featureId}");
+            return;
+        }
+        
+        // Log feature selection for debugging
+        \Illuminate\Support\Facades\Log::info("Feature selected: {$featureId}", [
+            'name' => $feature->name,
+            'image_path' => $feature->image_path
+        ]);
+        
+        // Dispatch both events to ensure it's caught
+        $this->dispatch('feature-selected', $featureId);
+        
+        // Also dispatch a direct update-canvas event as a backup approach
+        $this->dispatch('direct-update-canvas', [
+            'feature' => [
+                'id' => $feature->id,
+                'image_path' => $feature->image_path,
+                'name' => $feature->name,
+                'position' => [
+                    'x' => 300,
+                    'y' => 300,
+                    'scale' => 1,
+                    'rotation' => 0
+                ]
+            ]
+        ]);
     }
     
     /**
@@ -123,9 +150,41 @@ class FeatureLibrary extends Component
     
     public function render()
     {
+        $query = FacialFeature::query();
+        
+        // Filter by search term if provided
+        if ($this->search) {
+            $query->where('name', 'like', '%' . $this->search . '%');
+        }
+        
+        // Filter by main category if selected
+        if ($this->selectedCategory) {
+            $featureType = FeatureType::where('name', $this->selectedCategory)->first();
+            
+            if ($featureType) {
+                $query->where('feature_type_id', $featureType->id);
+                
+                // Filter by subcategory if selected
+                if ($this->selectedSubcategory) {
+                    $query->where('feature_category_id', $this->selectedSubcategory);
+                }
+            }
+        }
+        
+        $features = $query->get();
+        
+        // Get subcategories for the selected main category
+        $subcategories = [];
+        if ($this->selectedCategory) {
+            $featureType = FeatureType::where('name', $this->selectedCategory)->first();
+            if ($featureType) {
+                $subcategories = FeatureCategory::where('feature_type_id', $featureType->id)->get();
+            }
+        }
+        
         return view('livewire.editor.feature-library', [
-            'features' => $this->features,
-            'subcategories' => $this->subcategories,
+            'features' => $features,
+            'subcategories' => $subcategories
         ]);
     }
 }

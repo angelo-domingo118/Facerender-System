@@ -51,5 +51,8 @@
         @livewire('forms.edit-witness-form')
         @livewire('forms.create-composite-form')
         @livewire('delete-modal-manager')
+        
+        <!-- Page-specific scripts -->
+        @stack('scripts')
     </body>
 </html>

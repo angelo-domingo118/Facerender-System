@@ -19,4 +19,9 @@ Route::middleware([
     Route::get('/composite-editor/{id}', function ($id) {
         return view('composite-editor', ['compositeId' => $id]);
     })->name('composite.editor');
+    
+    // Route for Fabric.js test page
+    Route::get('/fabric-test', function () {
+        return view('fabric-test');
+    })->name('fabric.test');
 });

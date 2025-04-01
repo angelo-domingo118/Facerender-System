@@ -264,6 +264,7 @@
             <div class="grid grid-cols-2 gap-3">
                 @forelse($features as $feature)
                     <div 
+                        wire:key="feature-{{ $feature->id }}"
                         wire:click="selectFeature({{ $feature->id }})" 
                         class="bg-white border border-gray-200 rounded-md overflow-hidden hover:border-[#2C3E50] transition-colors duration-200 cursor-pointer group"
                     >
@@ -272,14 +273,13 @@
                             <div class="hidden">Path: {{ $feature->image_path }}</div>
                             
                             <!-- Feature image with lazy loading and fade-in effect -->
-                            <div class="absolute inset-0 w-full h-full bg-gray-200 animate-pulse feature-image-container">
+                            <div class="absolute inset-0 w-full h-full bg-gray-200 feature-image-container">
                                 <img 
                                     src="{{ asset('storage/' . $feature->image_path) }}" 
                                     alt="{{ $feature->name }}" 
-                                    class="absolute inset-0 w-full h-full object-contain p-2 opacity-0 transition-opacity duration-300 feature-image"
-                                    loading="lazy"
-                                    onload="this.classList.remove('opacity-0'); this.parentElement.classList.remove('animate-pulse');"
-                                    onerror="this.src='{{ asset('images/placeholder.png') }}'; this.onerror=null; console.error('Failed to load image: {{ $feature->image_path }}')"
+                                    class="absolute inset-0 w-full h-full object-contain p-2 feature-image"
+                                    loading="eager"
+                                    onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjIwMCIgaGVpZ2h0PSIyMDAiIGZpbGw9IiNmMWYxZjEiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjI4IiBmaWxsPSIjYWFhYWFhIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5JbWFnZTwvdGV4dD48L3N2Zz4='; this.onerror=null;"
                                 >
                             </div>
                             
@@ -381,15 +381,15 @@
                 <!-- Modal body -->
                 <div class="p-4 bg-gray-50">
                     <div class="bg-white rounded-md p-2 shadow-sm">
-                        <div class="relative max-w-full max-h-[60vh] mx-auto bg-gray-200 animate-pulse modal-image-container">
+                        <div class="relative max-w-full max-h-[60vh] mx-auto bg-gray-200 modal-image-container">
                             <img 
                                 :src="imageUrl" 
                                 :alt="featureName" 
-                                class="max-w-full max-h-[60vh] object-contain mx-auto opacity-0 transition-opacity duration-300 modal-image"
-                                loading="lazy"
-                                @load="$event.target.classList.remove('opacity-0'); $event.target.parentElement.classList.remove('animate-pulse')"
-                                onerror="this.src='{{ asset('images/placeholder.png') }}'; this.onerror=null;"
+                                class="max-w-full max-h-[60vh] object-contain mx-auto modal-image"
+                                loading="eager"
+                                onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjIwMCIgaGVpZ2h0PSIyMDAiIGZpbGw9IiNmMWYxZjEiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjI4IiBmaWxsPSIjYWFhYWFhIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5JbWFnZTwvdGV4dD48L3N2Zz4='; this.onerror=null;"
                             >
+                            </img>
                         </div>
                     </div>
                 </div>
@@ -416,51 +416,8 @@
         </div>
     </div>
 
-    <!-- Add Alpine.js directive for hiding elements and image lazy loading styles -->
+    <!-- Add Alpine.js directive for hiding elements -->
     <style>
         [x-cloak] { display: none !important; }
-        .feature-image.opacity-0 { opacity: 0; }
-        .feature-image:not(.opacity-0) { opacity: 1; }
     </style>
 </div>
-
-<!-- Add script for intersection observer to further optimize image loading -->
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Use Intersection Observer to load images only when they're about to enter the viewport
-        const observer = new IntersectionObserver((entries, observer) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    const container = entry.target;
-                    const img = container.querySelector('img');
-                    
-                    // Force browser to prioritize loading this image
-                    if (img && img.loading === 'lazy') {
-                        const rect = container.getBoundingClientRect();
-                        // If the element is actually visible (not just near viewport)
-                        if (
-                            rect.top >= 0 &&
-                            rect.left >= 0 &&
-                            rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
-                            rect.right <= (window.innerWidth || document.documentElement.clientWidth)
-                        ) {
-                            // Change loading priority for visible elements
-                            img.loading = 'eager';
-                        }
-                    }
-                    
-                    // Stop observing once in viewport
-                    observer.unobserve(container);
-                }
-            });
-        }, {
-            rootMargin: '200px 0px', // Start loading when image is 200px from viewport
-            threshold: 0.01
-        });
-
-        // Observe all feature image containers in the grid
-        document.querySelectorAll('.feature-image-container').forEach(container => {
-            observer.observe(container);
-        });
-    });
-</script>
