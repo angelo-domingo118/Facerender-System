@@ -1,13 +1,18 @@
-<div class="h-full flex flex-col bg-gray-100 overflow-hidden" id="main-canvas-component" wire:ignore>
+<div class="h-full flex flex-col bg-gray-100 overflow-hidden" id="main-canvas-component">
     <!-- Selection Tools Toolbar -->
     <div class="bg-white border-b border-gray-200 p-2 flex items-center justify-between">
         <div class="flex items-center space-x-3">
-            <button id="move-tool" class="p-1.5 rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors duration-200 {{ $activeTool === 'move' ? 'bg-gray-100' : '' }} flex items-center" x-tooltip="'Move Tool (V)'">
+            <button 
+                wire:click="toggleMoveMode" 
+                id="move-tool" 
+                class="p-1.5 rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors duration-200 flex items-center {{ $moveEnabled ? 'bg-blue-100 text-blue-700 border border-blue-300' : '' }}" 
+                x-tooltip="'{{ $moveEnabled ? 'Disable' : 'Enable' }} Move Mode'"
+            >
                 <!-- Cursor Arrow Icon -->
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122" />
                 </svg>
-                <span class="text-xs">Move</span>
+                <span class="text-xs">{{ $moveEnabled ? 'Move: ON' : 'Move: OFF' }}</span>
             </button>
             <button id="delete-selected" class="p-1.5 rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors duration-200 flex items-center" x-tooltip="'Delete Selected'">
                 <!-- Delete Icon -->
@@ -47,13 +52,16 @@
                 </svg>
                 <span class="text-xs">Zoom Out</span>
             </button>
+            <div class="px-2 py-1 bg-gray-100 rounded-md text-xs text-gray-700">
+                <span id="zoom-level">{{ $zoomLevel }}%</span>
+            </div>
         </div>
     </div>
     
     <!-- Canvas Area -->
-    <div class="flex-1 overflow-auto relative p-6 flex items-center justify-center bg-gray-200">
-        <!-- Canvas container -->
-        <div class="relative bg-white shadow-md" style="width: 600px; height: 600px;">
+    <div class="flex-1 overflow-auto relative p-6 flex items-center justify-center bg-gray-200" id="canvas-viewport">
+        <!-- Canvas container - this will be transformed for zooming -->
+        <div class="relative bg-white shadow-md" style="width: 600px; height: 600px; transform-origin: center center;" data-scale="1" wire:ignore>
             <canvas id="editor-canvas" width="600" height="600"></canvas>
         </div>
     </div>

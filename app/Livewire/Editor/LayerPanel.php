@@ -10,8 +10,8 @@ class LayerPanel extends Component
     public $compositeId;
     public $layers = []; // Stores layer information including visibility, locked state, etc.
     public $selectedLayerId = null; // Currently selected layer ID
-    public $blendMode = 'Normal';
     public $opacity = 100;
+    public $isLayerLocked = false;
     
     // Listen for feature updates from MainCanvas
     protected $listeners = [
@@ -52,8 +52,8 @@ class LayerPanel extends Component
                 'name' => $feature['name'] ?? ('Feature ' . $featureId),
                 'feature_type' => $feature['feature_type'] ?? null,
                 'visible' => $existingLayer ? $existingLayer['visible'] : true,
+                'locked' => $existingLayer ? $existingLayer['locked'] : false,
                 'opacity' => $existingLayer ? $existingLayer['opacity'] : 100,
-                'blend_mode' => $existingLayer ? $existingLayer['blend_mode'] : 'Normal',
                 'position' => $feature['position'] ?? null,
                 'image_path' => $feature['image_path'] ?? null
             ];
@@ -73,7 +73,7 @@ class LayerPanel extends Component
         elseif (empty($this->layers)) {
             $this->selectedLayerId = null;
             $this->opacity = 100;
-            $this->blendMode = 'Normal';
+            $this->isLayerLocked = false;
         }
     }
     
@@ -125,7 +125,7 @@ class LayerPanel extends Component
         $layer = $this->findLayer($layerId);
         if ($layer) {
             $this->opacity = $layer['opacity'];
-            $this->blendMode = $layer['blend_mode'];
+            $this->isLayerLocked = $layer['locked'];
             
             // Dispatch event to select this feature on the canvas
             $this->dispatch('select-feature-on-canvas', [
@@ -163,32 +163,6 @@ class LayerPanel extends Component
     }
     
     /**
-     * Update layer blend mode
-     */
-    public function updatedBlendMode()
-    {
-        if ($this->selectedLayerId) {
-            foreach ($this->layers as $key => $layer) {
-                if ($layer['id'] == $this->selectedLayerId) {
-                    $this->layers[$key]['blend_mode'] = $this->blendMode;
-                    
-                    // Dispatch event to update canvas
-                    $this->dispatch('layer-blend-mode-changed', [
-                        'layerId' => $this->selectedLayerId,
-                        'blendMode' => $this->blendMode
-                    ]);
-                    
-                    Log::info('Layer blend mode updated', [
-                        'layerId' => $this->selectedLayerId, 
-                        'blendMode' => $this->blendMode
-                    ]);
-                    break;
-                }
-            }
-        }
-    }
-    
-    /**
      * Handle a feature being removed
      */
     public function handleFeatureRemoved($featureId)
@@ -205,7 +179,7 @@ class LayerPanel extends Component
             } else {
                 $this->selectedLayerId = null;
                 $this->opacity = 100;
-                $this->blendMode = 'Normal';
+                $this->isLayerLocked = false;
             }
         }
         
@@ -220,7 +194,7 @@ class LayerPanel extends Component
         $this->layers = [];
         $this->selectedLayerId = null;
         $this->opacity = 100;
-        $this->blendMode = 'Normal';
+        $this->isLayerLocked = false;
         
         Log::info('All layers cleared from panel');
     }
@@ -277,6 +251,47 @@ class LayerPanel extends Component
             }
         }
         return -1;
+    }
+    
+    /**
+     * Toggle a layer's lock state
+     */
+    public function toggleLock($layerId)
+    {
+        foreach ($this->layers as $key => $layer) {
+            if ($layer['id'] == $layerId) {
+                $this->layers[$key]['locked'] = !$this->layers[$key]['locked'];
+                $isLocked = $this->layers[$key]['locked'];
+                
+                // If this is the currently selected layer, update the property panel state
+                if ($this->selectedLayerId == $layerId) {
+                    $this->isLayerLocked = $isLocked;
+                }
+                
+                // Dispatch event to update canvas
+                $this->dispatch('layer-lock-changed', [
+                    'layerId' => $layerId,
+                    'locked' => $isLocked
+                ]);
+                
+                Log::info('Layer lock toggled', [
+                    'layerId' => $layerId, 
+                    'locked' => $isLocked
+                ]);
+                break;
+            }
+        }
+    }
+    
+    /**
+     * Request deletion of a layer by dispatching an event to the main canvas.
+     */
+    public function requestDeletion($layerId)
+    {
+        Log::info('Requesting layer deletion', ['layerId' => $layerId]);
+        $this->dispatch('remove-feature-requested', [
+            'featureId' => $layerId
+        ]);
     }
     
     public function render()

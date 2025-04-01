@@ -11,20 +11,36 @@ class MainCanvas extends Component
     public $compositeId;
     public $composite;
     
+    // --- Default Layer Order Configuration ---
+    // IMPORTANT: Replace these placeholder IDs with the actual IDs from your feature_types table
+    private const FEATURE_TYPE_ID_EARS = 9991; // Replace with actual ID for Ears
+    private const FEATURE_TYPE_ID_FACE = 9992; // Replace with actual ID for Face
+    private const FEATURE_TYPE_ID_HAIR = 9993; // Replace with actual ID for Hair
+    
+    private const ORDER_MAP = [
+        self::FEATURE_TYPE_ID_EARS => 10,
+        self::FEATURE_TYPE_ID_FACE => 20,
+        self::FEATURE_TYPE_ID_HAIR => 30,
+        // Add other specific types if needed, e.g., Neck => 5
+    ];
+    private const DEFAULT_ORDER = 100; // Order for all other feature types (eyes, nose, mouth, etc.)
+    // ----------------------------------------
+
     // Properties for canvas state
     public $activeTool = 'move'; // move, scale, rotate
     public $zoomLevel = 100;
     public $selectedFeatures = []; // Array to store selected features
+    public $moveEnabled = true; // Flag to control if objects can be moved on the canvas
     
     protected $listeners = [
         'feature-selected' => 'handleFeatureSelected',
         'direct-update-canvas' => 'handleDirectCanvasUpdate',
         'updateFeaturePosition' => 'updateFeaturePosition',
         'removeFeature' => 'removeFeature',
+        'remove-feature-requested' => 'removeFeature',
         'clearFeatures' => 'clearFeatures',
         'layer-visibility-changed' => 'handleLayerVisibilityChange',
         'layer-opacity-changed' => 'handleLayerOpacityChange',
-        'layer-blend-mode-changed' => 'handleLayerBlendModeChange',
         'select-feature-on-canvas' => 'handleSelectFeatureOnCanvas',
         'layers-reordered' => 'handleLayersReordered'
     ];
@@ -94,10 +110,19 @@ class MainCanvas extends Component
                 'total_features' => count($this->selectedFeatures)
             ]);
             
-            // Dispatch the event to the browser
+            // --- Sort features based on defined order --- 
+            usort($this->selectedFeatures, function($a, $b) {
+                $orderA = $this->getFeatureOrder($a);
+                $orderB = $this->getFeatureOrder($b);
+                return $orderA <=> $orderB; // Use spaceship operator for comparison
+            });
+            Log::info('Features sorted by type order', ['new_order' => array_column($this->selectedFeatures, 'id')]);
+            // ----------------------------------------
+
+            // Dispatch the event to the browser (with sorted features)
             $this->dispatch('update-canvas', ['selectedFeatures' => $this->selectedFeatures]);
             
-            // Also dispatch direct event for JS
+            // Also dispatch direct event for JS (feature data itself is fine)
             $this->dispatch('direct-update-canvas', [
                 'feature' => end($this->selectedFeatures)
             ]);
@@ -108,6 +133,15 @@ class MainCanvas extends Component
         } else {
             Log::error('Feature not found in database', ['featureId' => $featureId]);
         }
+    }
+    
+    /**
+     * Helper function to get the defined sort order for a feature type.
+     */
+    private function getFeatureOrder(array $feature): int
+    {
+        $typeId = $feature['feature_type'] ?? null;
+        return self::ORDER_MAP[$typeId] ?? self::DEFAULT_ORDER;
     }
     
     public function handleDirectCanvasUpdate($data)
@@ -223,19 +257,33 @@ class MainCanvas extends Component
         Log::info('Tool set', ['tool' => $tool]);
     }
     
-    public function zoomIn()
+    public function zoomIn($scale = null)
     {
-        $this->zoomLevel = min($this->zoomLevel + 10, 200);
+        if ($scale !== null) {
+            $this->zoomLevel = round($scale * 100);
+        } else {
+            $this->zoomLevel = min($this->zoomLevel + 10, 300);
+        }
+        Log::info('Canvas zoomed in', ['zoomLevel' => $this->zoomLevel]);
+        $this->dispatch('zoom-level-changed', ['zoomLevel' => $this->zoomLevel]);
     }
     
-    public function zoomOut()
+    public function zoomOut($scale = null)
     {
-        $this->zoomLevel = max($this->zoomLevel - 10, 50);
+        if ($scale !== null) {
+            $this->zoomLevel = round($scale * 100);
+        } else {
+            $this->zoomLevel = max($this->zoomLevel - 10, 50);
+        }
+        Log::info('Canvas zoomed out', ['zoomLevel' => $this->zoomLevel]);
+        $this->dispatch('zoom-level-changed', ['zoomLevel' => $this->zoomLevel]);
     }
     
     public function resetZoom()
     {
         $this->zoomLevel = 100;
+        Log::info('Canvas zoom reset', ['zoomLevel' => $this->zoomLevel]);
+        $this->dispatch('zoom-level-changed', ['zoomLevel' => $this->zoomLevel]);
     }
     
     /**
@@ -276,27 +324,6 @@ class MainCanvas extends Component
                 $this->dispatch('update-feature-opacity', [
                     'featureId' => $data['layerId'],
                     'opacity' => $data['opacity']
-                ]);
-                break;
-            }
-        }
-    }
-    
-    /**
-     * Handle layer blend mode change from LayerPanel
-     */
-    public function handleLayerBlendModeChange($data)
-    {
-        Log::info('Layer blend mode change received', $data);
-        
-        // Update the blend mode in our features array
-        foreach ($this->selectedFeatures as $key => $feature) {
-            if ($feature['id'] == $data['layerId']) {
-                $this->selectedFeatures[$key]['blend_mode'] = $data['blendMode'];
-                
-                // Dispatch event to update canvas
-                $this->dispatch('update-canvas', [
-                    'selectedFeatures' => $this->selectedFeatures
                 ]);
                 break;
             }
@@ -358,6 +385,21 @@ class MainCanvas extends Component
         Log::info('Features reordered', [
             'new_order' => array_column($this->selectedFeatures, 'id')
         ]);
+    }
+    
+    /**
+     * Toggle the move mode on the canvas
+     */
+    public function toggleMoveMode()
+    {
+        $this->moveEnabled = !$this->moveEnabled;
+        Log::info('Move mode toggled', ['moveEnabled' => $this->moveEnabled]);
+        
+        // Notify JavaScript to update canvas objects - send as both array and object format for compatibility
+        $this->dispatch('toggle-move-mode', ['enabled' => $this->moveEnabled]);
+        
+        // Force a re-render of the component to update the move button appearance
+        $this->render();
     }
     
     public function render()

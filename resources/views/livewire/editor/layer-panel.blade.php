@@ -37,6 +37,24 @@
                                     </svg>
                                 @endif
                             </button>
+                            <!-- Lock Button -->
+                            <button 
+                                wire:click.stop="toggleLock({{ $layer['id'] }})"
+                                class="{{ $layer['locked'] ? 'text-red-500' : 'text-gray-400' }} hover:text-red-600 transition-colors duration-150 p-1"
+                                title="{{ $layer['locked'] ? 'Unlock layer' : 'Lock layer' }}"
+                            >
+                                @if($layer['locked'])
+                                    <!-- Locked Icon (Heroicon: lock-closed outline) -->
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-5 w-5">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                                    </svg>
+                                @else
+                                    <!-- Unlocked Icon (Heroicon: lock-open outline) -->
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-5 w-5">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 10.5V6.75a4.5 4.5 0 119 0v3.75M3.75 21.75h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H3.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                                    </svg>
+                                @endif
+                            </button>
                             <span class="{{ $selectedLayerId == $layer['id'] ? 'text-[#2C3E50] font-medium' : 'text-gray-600' }} text-sm truncate">{{ $layer['name'] }}</span>
                         </div>
                         <div class="flex items-center space-x-3">
@@ -59,6 +77,18 @@
                             >
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </button>
+
+                            <!-- Delete Layer Button -->
+                            <button 
+                                wire:click.stop="requestDeletion({{ $layer['id'] }})"
+                                class="text-gray-500 hover:text-red-600 transition-colors duration-150 p-1 bg-gray-100 rounded-md"
+                                title="Delete layer"
+                            >
+                                <!-- Trash Icon (Heroicon: trash outline) -->
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
                                 </svg>
                             </button>
                         </div>
@@ -95,23 +125,7 @@
                 <div class="flex justify-between text-xs text-gray-500 mt-1">
                     <span>0%</span>
                     <span>{{ $opacity }}%</span>
-                    <span>100%</span>
                 </div>
-            </div>
-            
-            <div>
-                <label class="text-xs text-gray-600 mb-1 block">Blend Mode</label>
-                <select 
-                    wire:model.live="blendMode"
-                    class="w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm text-xs"
-                >
-                    <option value="Normal">Normal</option>
-                    <option value="Multiply">Multiply</option>
-                    <option value="Screen">Screen</option>
-                    <option value="Overlay">Overlay</option>
-                    <option value="Darken">Darken</option>
-                    <option value="Lighten">Lighten</option>
-                </select>
             </div>
         </div>
     </div>

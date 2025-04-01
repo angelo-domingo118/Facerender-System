@@ -145,6 +145,17 @@ document.addEventListener('DOMContentLoaded', function() {
         const imagePath = `/storage/${feature.image_path}`;
         console.log('Attempting to load image from:', imagePath);
         
+        // Get the current moveEnabled state from the Livewire component
+        let moveEnabled = true; // Default to true if we can't find the component
+        if (typeof Livewire !== 'undefined') {
+            const component = Livewire.find(
+                document.getElementById('main-canvas-component')?.getAttribute('wire:id')
+            );
+            if (component) {
+                moveEnabled = component.get('moveEnabled');
+            }
+        }
+        
         // Create an image element first to check if it loads
         const imgElement = new Image();
         
@@ -160,15 +171,15 @@ document.addEventListener('DOMContentLoaded', function() {
                     left: feature.position?.x || canvas.width / 2,
                     top: feature.position?.y || canvas.height / 2,
                     angle: feature.position?.rotation || 0,
-                    hasControls: feature.locked ? false : true,
-                    hasBorders: feature.locked ? false : true,
-                    selectable: feature.locked ? false : true,
-                    evented: feature.locked ? false : true,
-                    lockMovementX: feature.locked ? true : false,
-                    lockMovementY: feature.locked ? true : false,
-                    lockRotation: feature.locked ? true : false,
-                    lockScalingX: feature.locked ? true : false,
-                    lockScalingY: feature.locked ? true : false,
+                    hasControls: feature.locked ? false : moveEnabled,
+                    hasBorders: feature.locked ? false : moveEnabled,
+                    selectable: feature.locked ? false : moveEnabled,
+                    evented: feature.locked ? false : moveEnabled,
+                    lockMovementX: feature.locked ? true : !moveEnabled,
+                    lockMovementY: feature.locked ? true : !moveEnabled,
+                    lockRotation: feature.locked ? true : !moveEnabled,
+                    lockScalingX: feature.locked ? true : !moveEnabled,
+                    lockScalingY: feature.locked ? true : !moveEnabled,
                     visible: feature.visible !== undefined ? feature.visible : true,
                     opacity: feature.opacity ? feature.opacity / 100 : 1, // Convert from 0-100 to 0-1
                     cornerColor: '#2C3E50',
@@ -176,22 +187,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     transparentCorners: false,
                     data: {
                         featureId: feature.id,
-                        featureType: feature.feature_type // Store the feature type for future reference
+                        featureType: feature.feature_type, // Store the feature type for future reference
+                        locked: feature.locked || false
                     }
                 });
-                
-                // Apply blend mode if specified
-                if (feature.blend_mode) {
-                    const blendModeMap = {
-                        'Normal': 'source-over',
-                        'Multiply': 'multiply',
-                        'Screen': 'screen',
-                        'Overlay': 'overlay',
-                        'Darken': 'darken',
-                        'Lighten': 'lighten'
-                    };
-                    fabricImage.globalCompositeOperation = blendModeMap[feature.blend_mode] || 'source-over';
-                }
                 
                 // Scale the image to fit within a reasonable size
                 const maxWidth = 200;
@@ -441,6 +440,25 @@ document.addEventListener('DOMContentLoaded', function() {
         
         console.log('Found main-canvas component:', component);
         
+        // Get initial moveEnabled state and apply to any existing canvas objects
+        try {
+            const moveEnabled = component.get('moveEnabled');
+            console.log('Initial moveEnabled state:', moveEnabled);
+            
+            // Apply this state to any objects already on the canvas
+            updateCanvasObjectsMoveState(moveEnabled);
+            
+            // Also initialize zoom level from component
+            const zoomLevel = component.get('zoomLevel');
+            if (zoomLevel) {
+                const scale = zoomLevel / 100; // Convert from percentage to decimal
+                console.log('Initial zoom level:', zoomLevel, '%, scale:', scale);
+                applyCanvasZoom(scale);
+            }
+        } catch (error) {
+            console.error('Error getting initial state:', error);
+        }
+        
         // Listen for feature-selected event from Livewire
         Livewire.on('update-canvas', (data) => {
             console.log('Canvas update received through Livewire.on. Data:', data);
@@ -510,11 +528,174 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
         
-        // Tool handlers
-        document.getElementById('move-tool')?.addEventListener('click', function() {
-            canvas.isDrawingMode = false;
-            component.call('setTool', 'move');
+        // Listener for layer visibility change
+        Livewire.on('layer-visibility-changed', (data) => {
+            console.log('Layer visibility changed event:', data);
+            const layerId = data.layerId || (data[0] ? data[0].layerId : null);
+            const visible = data.visible !== undefined ? data.visible : (data[0] ? data[0].visible : true);
+            
+            if (layerId === null) {
+                console.error('Missing layerId in layer-visibility-changed event');
+                return;
+            }
+            
+            const objects = canvas.getObjects().filter(obj => obj.data && obj.data.featureId === layerId);
+            if (objects.length > 0) {
+                objects[0].set('visible', visible);
+                canvas.renderAll();
+                console.log(`Set visibility for layer ${layerId} to ${visible}`);
+            } else {
+                console.warn(`Layer ${layerId} not found on canvas for visibility change.`);
+            }
         });
+        
+        // Listener for layer opacity change
+        Livewire.on('layer-opacity-changed', (data) => {
+            console.log('Layer opacity changed event:', data);
+            const layerId = data.layerId || (data[0] ? data[0].layerId : null);
+            const opacity = data.opacity !== undefined ? data.opacity : (data[0] ? data[0].opacity : 100);
+            
+            if (layerId === null) {
+                console.error('Missing layerId in layer-opacity-changed event');
+                return;
+            }
+            
+            const objects = canvas.getObjects().filter(obj => obj.data && obj.data.featureId === layerId);
+            if (objects.length > 0) {
+                // Convert opacity from 0-100 to 0-1
+                objects[0].set('opacity', opacity / 100);
+                canvas.renderAll();
+                console.log(`Set opacity for layer ${layerId} to ${opacity / 100}`);
+            } else {
+                console.warn(`Layer ${layerId} not found on canvas for opacity change.`);
+            }
+        });
+        
+        // Listener for layer lock change
+        Livewire.on('layer-lock-changed', (data) => {
+            console.log('Layer lock changed event:', data);
+            const layerId = data.layerId || (data[0] ? data[0].layerId : null);
+            const isLocked = data.locked !== undefined ? data.locked : (data[0] ? data[0].locked : false);
+            
+            if (layerId === null) {
+                console.error('Missing layerId in layer-lock-changed event');
+                return;
+            }
+            
+            const objects = canvas.getObjects().filter(obj => obj.data && obj.data.featureId === layerId);
+            if (objects.length > 0) {
+                const fabricObject = objects[0];
+                fabricObject.set({
+                    hasControls: !isLocked,
+                    hasBorders: !isLocked,
+                    selectable: !isLocked,
+                    evented: !isLocked, // Prevents events like 'selected' when locked
+                    lockMovementX: isLocked,
+                    lockMovementY: isLocked,
+                    lockRotation: isLocked,
+                    lockScalingX: isLocked,
+                    lockScalingY: isLocked,
+                    lockSkewingX: isLocked,
+                    lockSkewingY: isLocked
+                });
+                
+                // If the object is currently selected and gets locked, deselect it
+                if (isLocked && canvas.getActiveObject() === fabricObject) {
+                    canvas.discardActiveObject();
+                }
+                
+                canvas.renderAll();
+                console.log(`Set lock state for layer ${layerId} to ${isLocked}`);
+            } else {
+                console.warn(`Layer ${layerId} not found on canvas for lock change.`);
+            }
+        });
+        
+        // Listener for selecting a feature on the canvas (triggered by LayerPanel click)
+        Livewire.on('select-feature-on-canvas', (data) => {
+            console.log('Select feature on canvas event:', data);
+            const featureId = data.featureId || (data[0] ? data[0].featureId : null);
+            
+            if (!featureId) {
+                console.error('Missing featureId in select-feature-on-canvas event');
+                return;
+            }
+            
+            const objects = canvas.getObjects().filter(obj => obj.data && obj.data.featureId === featureId);
+            if (objects.length > 0) {
+                canvas.setActiveObject(objects[0]);
+                canvas.renderAll();
+                console.log(`Selected feature ${featureId} on canvas.`);
+            } else {
+                console.warn(`Feature ${featureId} not found on canvas for selection.`);
+            }
+        });
+        
+        // Listener for reordering layers
+        Livewire.on('layers-reordered', (data) => {
+            console.log('Layers reordered event:', data);
+            const orderedLayers = data.layers || (data[0] ? data[0].layers : null);
+            
+            if (!orderedLayers) {
+                console.error('Missing layers data in layers-reordered event');
+                return;
+            }
+            
+            console.log('Handling layer reordering...');
+            
+            // Get a map of existing objects on the canvas by feature ID
+            const existingObjectsMap = {};
+            canvas.getObjects().forEach(obj => {
+                if (obj.data && obj.data.featureId) {
+                    existingObjectsMap[obj.data.featureId] = obj;
+                }
+            });
+            
+            // Remove all feature objects from canvas (excluding grid lines)
+            canvas.getObjects().forEach(obj => {
+                if (obj.data && obj.data.featureId) {
+                    canvas.remove(obj);
+                }
+            });
+            
+            // In Fabric.js, objects added last appear on top (highest z-index)
+            // The layers array from the backend LayerPanel is ordered top-to-bottom visually.
+            // So, we need to reverse this array before adding to Fabric.js canvas to match stacking.
+            const reversedLayers = [...orderedLayers].reverse(); // Create a reversed copy
+            
+            console.log('Adding features in correct stacking order (Fabric.js):');
+            console.log('Bottom layers first, top layers last');
+            
+            // Display the layer order we're processing (bottom to top for Fabric)
+            const featureIds = reversedLayers.map(l => l.id);
+            console.log('Layer order (bottom to top):', featureIds);
+            
+            // Process each feature in the reversed order (bottom to top for Fabric)
+            for (let i = 0; i < reversedLayers.length; i++) {
+                const layer = reversedLayers[i];
+                const featureId = layer.id;
+                console.log(`Processing feature at Fabric index ${i}: ${featureId} (${layer.name})`);
+                
+                if (existingObjectsMap[featureId]) {
+                    canvas.add(existingObjectsMap[featureId]);
+                    console.log(`Re-added feature ID ${featureId} to canvas in new order (position ${i})`);
+                }
+                // Note: We assume reordering only happens with existing objects.
+                // If a new object appeared during reorder, it would be missed here.
+                // The `update-canvas` listener should handle adding truly new objects.
+            }
+            
+            // Ensure grid lines are behind everything
+            gridLines.forEach(line => {
+                canvas.sendObjectToBack(line);
+            });
+            
+            canvas.renderAll();
+            console.log('Layer reordering complete.');
+        });
+        
+        // Tool handlers
+        // Note: move-tool is now handled by Livewire wire:click="toggleMoveMode"
         
         document.getElementById('delete-selected')?.addEventListener('click', function() {
             const activeObject = canvas.getActiveObject();
@@ -539,21 +720,60 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Zoom controls
         document.getElementById('zoom-in')?.addEventListener('click', function() {
-            const zoom = canvas.getZoom();
-            canvas.setZoom(zoom * 1.1);
-            component.call('zoomIn');
+            const canvasContainer = document.querySelector('.relative.bg-white.shadow-md');
+            const currentScale = parseFloat(canvasContainer.getAttribute('data-scale') || '1');
+            const newScale = Math.min(currentScale * 1.1, 3); // Limit max zoom to 3x
+            
+            applyCanvasZoom(newScale);
+            component.call('zoomIn', newScale);
         });
         
         document.getElementById('zoom-out')?.addEventListener('click', function() {
-            const zoom = canvas.getZoom();
-            canvas.setZoom(zoom * 0.9);
-            component.call('zoomOut');
+            const canvasContainer = document.querySelector('.relative.bg-white.shadow-md');
+            const currentScale = parseFloat(canvasContainer.getAttribute('data-scale') || '1');
+            const newScale = Math.max(currentScale * 0.9, 0.5); // Limit min zoom to 0.5x
+            
+            applyCanvasZoom(newScale);
+            component.call('zoomOut', newScale);
         });
         
         document.getElementById('reset-zoom')?.addEventListener('click', function() {
-            canvas.setZoom(1);
+            applyCanvasZoom(1);
             component.call('resetZoom');
         });
+        
+        // Function to apply zoom to the canvas container
+        function applyCanvasZoom(scale) {
+            const canvasContainer = document.querySelector('.relative.bg-white.shadow-md');
+            if (!canvasContainer) return;
+            
+            // Store the scale for future reference
+            canvasContainer.setAttribute('data-scale', scale);
+            
+            // Apply the scale transform
+            canvasContainer.style.transform = `scale(${scale})`;
+            
+            // Adjust the container's parent padding to accommodate the scaled size
+            const parentContainer = canvasContainer.parentElement;
+            if (parentContainer) {
+                const originalWidth = 600;
+                const originalHeight = 600;
+                const scaledWidth = originalWidth * scale;
+                const scaledHeight = originalHeight * scale;
+                
+                // Calculate padding to center the scaled canvas
+                const horizPadding = Math.max(0, (scaledWidth - originalWidth) / 2);
+                const vertPadding = Math.max(0, (scaledHeight - originalHeight) / 2);
+                
+                parentContainer.style.padding = `${vertPadding + 24}px ${horizPadding + 24}px`;
+            }
+            
+            // Update zoom indicator if it exists
+            const zoomIndicator = document.getElementById('zoom-level');
+            if (zoomIndicator) {
+                zoomIndicator.textContent = `${Math.round(scale * 100)}%`;
+            }
+        }
         
         // Keyboard shortcuts
         document.addEventListener('keydown', function(e) {
@@ -568,6 +788,94 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 }
             }
+            
+            // Add keyboard shortcuts for zoom
+            if (e.ctrlKey || e.metaKey) {
+                if (e.key === '=' || e.key === '+') {
+                    e.preventDefault();
+                    document.getElementById('zoom-in')?.click();
+                } else if (e.key === '-') {
+                    e.preventDefault();
+                    document.getElementById('zoom-out')?.click();
+                } else if (e.key === '0') {
+                    e.preventDefault();
+                    document.getElementById('reset-zoom')?.click();
+                }
+            }
         });
+        
+        // Listen for zoom level changes from Livewire
+        Livewire.on('zoom-level-changed', function(data) {
+            const zoomLevel = data.zoomLevel || (Array.isArray(data) && data.length > 0 ? data[0].zoomLevel : 100);
+            const scale = zoomLevel / 100;
+            applyCanvasZoom(scale);
+        });
+        
+        // Handle toggle-move-mode event
+        window.addEventListener('toggle-move-mode', function(e) {
+            const enabled = e.detail && typeof e.detail.enabled !== 'undefined' 
+                ? e.detail.enabled 
+                : (e.detail && e.detail[0] && typeof e.detail[0].enabled !== 'undefined' 
+                    ? e.detail[0].enabled 
+                    : null);
+            
+            console.log('Toggle move mode event received:', enabled);
+            
+            // If enabled is null, we couldn't extract the value from the event
+            if (enabled === null) {
+                console.error('Could not determine toggle state from event:', e);
+                return;
+            }
+            
+            updateCanvasObjectsMoveState(enabled);
+        });
+        
+        // Also listen via Livewire event system
+        Livewire.on('toggle-move-mode', function(data) {
+            const enabled = data && typeof data.enabled !== 'undefined' 
+                ? data.enabled 
+                : (Array.isArray(data) && data.length > 0 && typeof data[0].enabled !== 'undefined' 
+                    ? data[0].enabled 
+                    : null);
+            
+            console.log('Livewire toggle-move-mode event received:', enabled);
+            
+            // If enabled is null, we couldn't extract the value from the event
+            if (enabled === null) {
+                console.error('Could not determine toggle state from Livewire event:', data);
+                return;
+            }
+            
+            updateCanvasObjectsMoveState(enabled);
+        });
+        
+        // Function to update canvas objects based on move state
+        function updateCanvasObjectsMoveState(enabled) {
+            // Set all objects to be selectable or not based on the move mode
+            canvas.getObjects().forEach(function(obj) {
+                // Don't change the grid lines
+                if (gridLines.includes(obj)) return;
+                
+                // If the object is locked specifically, don't change its state
+                if (obj.data && obj.data.locked) return;
+                
+                obj.selectable = enabled;
+                obj.evented = enabled;
+                obj.hasControls = enabled;
+                obj.hasBorders = enabled;
+                obj.lockMovementX = !enabled;
+                obj.lockMovementY = !enabled;
+                obj.lockRotation = !enabled;
+                obj.lockScalingX = !enabled;
+                obj.lockScalingY = !enabled;
+            });
+            
+            // If disabling move mode, deselect all objects
+            if (!enabled) {
+                canvas.discardActiveObject();
+            }
+            
+            canvas.renderAll();
+        }
     }
 }); 
