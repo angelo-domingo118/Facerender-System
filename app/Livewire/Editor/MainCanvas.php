@@ -21,7 +21,12 @@ class MainCanvas extends Component
         'direct-update-canvas' => 'handleDirectCanvasUpdate',
         'updateFeaturePosition' => 'updateFeaturePosition',
         'removeFeature' => 'removeFeature',
-        'clearFeatures' => 'clearFeatures'
+        'clearFeatures' => 'clearFeatures',
+        'layer-visibility-changed' => 'handleLayerVisibilityChange',
+        'layer-opacity-changed' => 'handleLayerOpacityChange',
+        'layer-blend-mode-changed' => 'handleLayerBlendModeChange',
+        'select-feature-on-canvas' => 'handleSelectFeatureOnCanvas',
+        'layers-reordered' => 'handleLayersReordered'
     ];
     
     public function mount($compositeId)
@@ -33,6 +38,9 @@ class MainCanvas extends Component
             'compositeId' => $this->compositeId,
             'listeners' => $this->listeners
         ]);
+        
+        // Initially, notify the layer panel of the current features (empty at start)
+        $this->dispatch('layers-updated', $this->selectedFeatures);
     }
     
     public function handleFeatureSelected($featureId)
@@ -44,14 +52,33 @@ class MainCanvas extends Component
             Log::info('Feature selected in MainCanvas', [
                 'featureId' => $featureId,
                 'name' => $feature->name,
-                'image_path' => $feature->image_path
+                'image_path' => $feature->image_path,
+                'feature_type' => $feature->feature_type_id
             ]);
+            
+            // Check if we already have a feature of this type and remove it
+            $featureTypeId = $feature->feature_type_id;
+            
+            // Find and remove features of the same type
+            $this->selectedFeatures = array_values(array_filter($this->selectedFeatures, function($existingFeature) use ($featureTypeId) {
+                $keepFeature = !isset($existingFeature['feature_type']) || $existingFeature['feature_type'] != $featureTypeId;
+                
+                if (!$keepFeature) {
+                    Log::info('Removing existing feature of the same type', [
+                        'removed_feature_id' => $existingFeature['id'],
+                        'feature_type' => $featureTypeId
+                    ]);
+                }
+                
+                return $keepFeature;
+            }));
             
             // Add the feature to the selected features array with default position
             $this->selectedFeatures[] = [
                 'id' => $feature->id,
                 'image_path' => $feature->image_path,
                 'name' => $feature->name,
+                'feature_type' => $feature->feature_type_id,
                 'position' => [
                     'x' => 300, // Center of canvas
                     'y' => 300, // Center of canvas
@@ -63,6 +90,7 @@ class MainCanvas extends Component
             // Debug log
             Log::info('Feature added to canvas', [
                 'feature_id' => $feature->id,
+                'feature_type' => $feature->feature_type_id,
                 'total_features' => count($this->selectedFeatures)
             ]);
             
@@ -73,6 +101,10 @@ class MainCanvas extends Component
             $this->dispatch('direct-update-canvas', [
                 'feature' => end($this->selectedFeatures)
             ]);
+
+            // After updating features, notify layer panel
+            // Send layers in canvas order - last item in array = top most layer visually
+            $this->dispatch('layers-updated', $this->selectedFeatures);
         } else {
             Log::error('Feature not found in database', ['featureId' => $featureId]);
         }
@@ -84,6 +116,30 @@ class MainCanvas extends Component
         
         if (isset($data['feature'])) {
             $feature = $data['feature'];
+            
+            // Check if feature has a type and remove other features of the same type
+            if (isset($feature['feature_type'])) {
+                $featureTypeId = $feature['feature_type'];
+                
+                // Filter out existing features of the same type
+                $this->selectedFeatures = array_values(array_filter($this->selectedFeatures, function($existingFeature) use ($featureTypeId, $feature) {
+                    // Keep this feature if it's a different type OR if it's the same feature ID
+                    $differentType = !isset($existingFeature['feature_type']) || $existingFeature['feature_type'] != $featureTypeId;
+                    $sameFeature = $existingFeature['id'] == $feature['id'];
+                    
+                    $keepFeature = $differentType || $sameFeature;
+                    
+                    if (!$keepFeature) {
+                        Log::info('Removing existing feature of the same type via direct update', [
+                            'removed_feature_id' => $existingFeature['id'],
+                            'feature_type' => $featureTypeId,
+                            'new_feature_id' => $feature['id']
+                        ]);
+                    }
+                    
+                    return $keepFeature;
+                }));
+            }
             
             // Check if this feature is already in our array
             $exists = false;
@@ -103,11 +159,16 @@ class MainCanvas extends Component
             
             Log::info('Feature added/updated via direct update', [
                 'feature_id' => $feature['id'],
+                'feature_type' => $feature['feature_type'] ?? 'not set',
                 'total_features' => count($this->selectedFeatures)
             ]);
             
             // Re-dispatch the event to ensure JS picks it up
             $this->dispatch('update-canvas', ['selectedFeatures' => $this->selectedFeatures]);
+
+            // After updating features, notify layer panel
+            // Send layers in canvas order - last item in array = top most layer visually
+            $this->dispatch('layers-updated', $this->selectedFeatures);
         }
     }
     
@@ -122,6 +183,9 @@ class MainCanvas extends Component
                 break;
             }
         }
+
+        // After updating position, notify layer panel of the change
+        $this->dispatch('layers-updated', $this->selectedFeatures);
     }
     
     public function removeFeature($featureId)
@@ -138,6 +202,9 @@ class MainCanvas extends Component
             'feature_id' => $featureId,
             'remaining_features' => count($this->selectedFeatures)
         ]);
+
+        // Notify layer panel that a feature was removed
+        $this->dispatch('feature-removed', $featureId);
     }
     
     public function clearFeatures()
@@ -145,6 +212,9 @@ class MainCanvas extends Component
         // Clear all features from the canvas
         $this->selectedFeatures = [];
         Log::info('All features cleared from canvas');
+
+        // Notify layer panel that all features were cleared
+        $this->dispatch('features-cleared');
     }
     
     public function setTool($tool)
@@ -166,6 +236,128 @@ class MainCanvas extends Component
     public function resetZoom()
     {
         $this->zoomLevel = 100;
+    }
+    
+    /**
+     * Handle layer visibility change from LayerPanel
+     */
+    public function handleLayerVisibilityChange($data)
+    {
+        Log::info('Layer visibility change received', $data);
+        
+        // Update the visibility in our features array
+        foreach ($this->selectedFeatures as $key => $feature) {
+            if ($feature['id'] == $data['layerId']) {
+                $this->selectedFeatures[$key]['visible'] = $data['visible'];
+                
+                // Dispatch event to update canvas in JS
+                $this->dispatch('update-feature-visibility', [
+                    'featureId' => $data['layerId'],
+                    'visible' => $data['visible']
+                ]);
+                break;
+            }
+        }
+    }
+    
+    /**
+     * Handle layer opacity change from LayerPanel
+     */
+    public function handleLayerOpacityChange($data)
+    {
+        Log::info('Layer opacity change received', $data);
+        
+        // Update the opacity in our features array
+        foreach ($this->selectedFeatures as $key => $feature) {
+            if ($feature['id'] == $data['layerId']) {
+                $this->selectedFeatures[$key]['opacity'] = $data['opacity'];
+                
+                // Dispatch event to update canvas in JS
+                $this->dispatch('update-feature-opacity', [
+                    'featureId' => $data['layerId'],
+                    'opacity' => $data['opacity']
+                ]);
+                break;
+            }
+        }
+    }
+    
+    /**
+     * Handle layer blend mode change from LayerPanel
+     */
+    public function handleLayerBlendModeChange($data)
+    {
+        Log::info('Layer blend mode change received', $data);
+        
+        // Update the blend mode in our features array
+        foreach ($this->selectedFeatures as $key => $feature) {
+            if ($feature['id'] == $data['layerId']) {
+                $this->selectedFeatures[$key]['blend_mode'] = $data['blendMode'];
+                
+                // Dispatch event to update canvas
+                $this->dispatch('update-canvas', [
+                    'selectedFeatures' => $this->selectedFeatures
+                ]);
+                break;
+            }
+        }
+    }
+    
+    /**
+     * Handle selecting a feature on the canvas from the layer panel
+     */
+    public function handleSelectFeatureOnCanvas($data)
+    {
+        Log::info('Select feature on canvas request received', $data);
+        
+        // Dispatch event to select this feature on the canvas in JS
+        $this->dispatch('select-feature', [
+            'featureId' => $data['featureId']
+        ]);
+    }
+    
+    /**
+     * Handle layer reordering from LayerPanel
+     */
+    public function handleLayersReordered($data)
+    {
+        Log::info('Layer reordering received', ['layer_count' => count($data['layers'])]);
+        
+        // Get the new order of feature IDs from the layer panel (top to bottom)
+        $panelLayerIds = array_column($data['layers'], 'id');
+        
+        // We need to reverse this order for the canvas since in Fabric.js:
+        // - First items in array = bottom layers
+        // - Last items in array = top layers
+        $orderedFeaturesIds = array_reverse($panelLayerIds);
+        
+        Log::info('Layer ordering for canvas', [
+            'panel_order' => $panelLayerIds,
+            'canvas_order' => $orderedFeaturesIds
+        ]);
+        
+        // Rebuild the selectedFeatures array in the new order
+        $orderedFeatures = [];
+        foreach ($orderedFeaturesIds as $featureId) {
+            foreach ($this->selectedFeatures as $feature) {
+                if ($feature['id'] == $featureId) {
+                    $orderedFeatures[] = $feature;
+                    break;
+                }
+            }
+        }
+        
+        $this->selectedFeatures = $orderedFeatures;
+        
+        // Dispatch event to update canvas with new order
+        $this->dispatch('update-canvas', [
+            'selectedFeatures' => $this->selectedFeatures
+        ]);
+        
+        // Log the new order for debugging
+        Log::info('Features reordered', [
+            'new_order' => array_column($this->selectedFeatures, 'id')
+        ]);
     }
     
     public function render()

@@ -105,6 +105,32 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
+        // Check for existing features of the same type and remove them
+        if (feature.feature_type) {
+            const objectsOfSameType = canvas.getObjects().filter(obj => 
+                obj.data && 
+                obj.data.featureType === feature.feature_type
+            );
+            
+            if (objectsOfSameType.length > 0) {
+                console.log(`Found ${objectsOfSameType.length} existing feature(s) of type ${feature.feature_type}. Removing them before adding new one.`);
+                objectsOfSameType.forEach(obj => {
+                    canvas.remove(obj);
+                    
+                    // Notify Livewire component about the removal
+                    if (typeof Livewire !== 'undefined') {
+                        const component = Livewire.find(
+                            document.getElementById('main-canvas-component')?.getAttribute('wire:id')
+                        );
+                        
+                        if (component && obj.data && obj.data.featureId) {
+                            component.call('removeFeature', obj.data.featureId);
+                        }
+                    }
+                });
+            }
+        }
+        
         // Check if this feature is currently loading
         if (loadingFeatures.has(feature.id)) {
             console.log('Feature with ID', feature.id, 'is already being loaded. Skipping...');
@@ -134,15 +160,38 @@ document.addEventListener('DOMContentLoaded', function() {
                     left: feature.position?.x || canvas.width / 2,
                     top: feature.position?.y || canvas.height / 2,
                     angle: feature.position?.rotation || 0,
-                    hasControls: true,
-                    hasBorders: true,
+                    hasControls: feature.locked ? false : true,
+                    hasBorders: feature.locked ? false : true,
+                    selectable: feature.locked ? false : true,
+                    evented: feature.locked ? false : true,
+                    lockMovementX: feature.locked ? true : false,
+                    lockMovementY: feature.locked ? true : false,
+                    lockRotation: feature.locked ? true : false,
+                    lockScalingX: feature.locked ? true : false,
+                    lockScalingY: feature.locked ? true : false,
+                    visible: feature.visible !== undefined ? feature.visible : true,
+                    opacity: feature.opacity ? feature.opacity / 100 : 1, // Convert from 0-100 to 0-1
                     cornerColor: '#2C3E50',
                     cornerSize: 10,
                     transparentCorners: false,
                     data: {
-                        featureId: feature.id
+                        featureId: feature.id,
+                        featureType: feature.feature_type // Store the feature type for future reference
                     }
                 });
+                
+                // Apply blend mode if specified
+                if (feature.blend_mode) {
+                    const blendModeMap = {
+                        'Normal': 'source-over',
+                        'Multiply': 'multiply',
+                        'Screen': 'screen',
+                        'Overlay': 'overlay',
+                        'Darken': 'darken',
+                        'Lighten': 'lighten'
+                    };
+                    fabricImage.globalCompositeOperation = blendModeMap[feature.blend_mode] || 'source-over';
+                }
                 
                 // Scale the image to fit within a reasonable size
                 const maxWidth = 200;
@@ -288,6 +337,85 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
+    // Additional event listeners for layer panel interactions
+    document.addEventListener('livewire:update-feature-visibility', (event) => {
+        console.log('Update feature visibility event caught:', event.detail);
+        const featureId = event.detail.featureId;
+        const isVisible = event.detail.visible;
+        
+        // Find the object(s) with this feature ID
+        const objects = canvas.getObjects().filter(obj => 
+            obj.data && obj.data.featureId === featureId
+        );
+        
+        objects.forEach(obj => {
+            obj.visible = isVisible;
+        });
+        
+        canvas.renderAll();
+    });
+    
+    document.addEventListener('livewire:update-feature-opacity', (event) => {
+        console.log('Update feature opacity event caught:', event.detail);
+        const featureId = event.detail.featureId;
+        const opacity = event.detail.opacity / 100; // Convert from 0-100 to 0-1
+        
+        // Find the object(s) with this feature ID
+        const objects = canvas.getObjects().filter(obj => 
+            obj.data && obj.data.featureId === featureId
+        );
+        
+        objects.forEach(obj => {
+            obj.opacity = opacity;
+        });
+        
+        canvas.renderAll();
+    });
+    
+    document.addEventListener('livewire:update-feature-blend-mode', (event) => {
+        console.log('Update feature blend mode event caught:', event.detail);
+        const featureId = event.detail.featureId;
+        const blendMode = event.detail.blendMode;
+        
+        // Map Livewire blend mode names to fabric.js globalCompositeOperation values
+        const blendModeMap = {
+            'Normal': 'source-over',
+            'Multiply': 'multiply',
+            'Screen': 'screen',
+            'Overlay': 'overlay',
+            'Darken': 'darken',
+            'Lighten': 'lighten'
+        };
+        
+        // Find the object(s) with this feature ID
+        const objects = canvas.getObjects().filter(obj => 
+            obj.data && obj.data.featureId === featureId
+        );
+        
+        objects.forEach(obj => {
+            obj.globalCompositeOperation = blendModeMap[blendMode] || 'source-over';
+        });
+        
+        canvas.renderAll();
+    });
+    
+    document.addEventListener('livewire:select-feature', (event) => {
+        console.log('Select feature event caught:', event.detail);
+        const featureId = event.detail.featureId;
+        
+        // Find the object with this feature ID
+        const objects = canvas.getObjects().filter(obj => 
+            obj.data && obj.data.featureId === featureId
+        );
+        
+        if (objects.length > 0) {
+            // Select the first found object
+            canvas.setActiveObject(objects[0]);
+            canvas.renderAll();
+            console.log('Selected feature on canvas:', objects[0]);
+        }
+    });
+    
     // Check if Livewire is initialized already
     if (typeof Livewire !== 'undefined') {
         setupLivewireHandlers();
@@ -324,9 +452,59 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Check if there's a new feature to add
             if (updateData && updateData.selectedFeatures && updateData.selectedFeatures.length > 0) {
-                const latestFeature = updateData.selectedFeatures[updateData.selectedFeatures.length - 1];
-                console.log('Calling addFeatureToCanvas from Livewire.on update-canvas listener.');
-                addFeatureToCanvas(latestFeature);
+                // First check if we have more than one feature - could be a reordering operation
+                if (updateData.selectedFeatures.length > 1) {
+                    // Handle reordering by rebuilding the canvas in the correct order
+                    console.log('Handling potential layer reordering...');
+                    
+                    // Get a map of existing objects on the canvas by feature ID
+                    const existingObjectsMap = {};
+                    canvas.getObjects().forEach(obj => {
+                        if (obj.data && obj.data.featureId) {
+                            existingObjectsMap[obj.data.featureId] = obj;
+                        }
+                    });
+                    
+                    // Remove all feature objects from canvas
+                    canvas.getObjects().forEach(obj => {
+                        if (obj.data && obj.data.featureId) {
+                            canvas.remove(obj);
+                        }
+                    });
+                    
+                    // In Fabric.js, objects added last appear on top (highest z-index)
+                    // The selected features array from the backend is ordered bottom-to-top
+                    // So we add them in the same order to maintain correct visual stacking
+                    console.log('Adding features in correct stacking order:');
+                    console.log('Bottom layers first, top layers last');
+                    
+                    // Display the layer order we're processing
+                    const featureIds = updateData.selectedFeatures.map(f => f.id);
+                    console.log('Layer order (bottom to top):', featureIds);
+                    
+                    // Process each feature in order (bottom to top)
+                    for (let i = 0; i < updateData.selectedFeatures.length; i++) {
+                        const feature = updateData.selectedFeatures[i];
+                        const featureId = feature.id;
+                        console.log(`Processing feature at index ${i}: ${featureId} (${feature.name})`);
+                        
+                        if (existingObjectsMap[featureId]) {
+                            canvas.add(existingObjectsMap[featureId]);
+                            console.log(`Re-added feature ID ${featureId} to canvas in new order (position ${i})`);
+                        } else {
+                            // If object doesn't exist, add it
+                            console.log(`Feature ID ${featureId} not found in existing objects, adding new`);
+                            addFeatureToCanvas(feature);
+                        }
+                    }
+                    
+                    canvas.renderAll();
+                } else {
+                    // Just a single feature, handle as before
+                    const latestFeature = updateData.selectedFeatures[updateData.selectedFeatures.length - 1];
+                    console.log('Calling addFeatureToCanvas from Livewire.on update-canvas listener.');
+                    addFeatureToCanvas(latestFeature);
+                }
             } else {
                 console.warn('Livewire.on update-canvas did not contain expected selectedFeatures data:', updateData);
             }

@@ -55,7 +55,7 @@
                     <!-- Tab Content -->
                     <div class="flex-1 overflow-y-auto">
                         @if($activeRightTab === 'layers')
-                            @livewire('editor.layer-panel')
+                            @livewire('editor.layer-panel', ['compositeId' => $compositeId])
                         @elseif($activeRightTab === 'adjustments')
                             @livewire('editor.feature-adjustment-panel')
                         @elseif($activeRightTab === 'details')

@@ -109,7 +109,8 @@ class FeatureLibrary extends Component
         // Log feature selection for debugging
         \Illuminate\Support\Facades\Log::info("Feature selected: {$featureId}", [
             'name' => $feature->name,
-            'image_path' => $feature->image_path
+            'image_path' => $feature->image_path,
+            'feature_type_id' => $feature->feature_type_id
         ]);
         
         // Dispatch both events to ensure it's caught
@@ -121,6 +122,7 @@ class FeatureLibrary extends Component
                 'id' => $feature->id,
                 'image_path' => $feature->image_path,
                 'name' => $feature->name,
+                'feature_type' => $feature->feature_type_id,
                 'position' => [
                     'x' => 300,
                     'y' => 300,
