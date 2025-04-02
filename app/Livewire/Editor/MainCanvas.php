@@ -402,6 +402,66 @@ class MainCanvas extends Component
         $this->render();
     }
     
+    /**
+     * Handle request for feature data when the feature isn't in the canvas yet
+     */
+    public function requestFeatureData($featureId)
+    {
+        Log::info('Requested feature data for ID', ['featureId' => $featureId]);
+        
+        // Check if we already have this feature
+        foreach ($this->selectedFeatures as $feature) {
+            if ($feature['id'] == $featureId) {
+                Log::info('Feature already in selectedFeatures, dispatching directly', ['featureId' => $featureId]);
+                
+                // Dispatch the feature data directly
+                $this->dispatch('direct-update-canvas', [
+                    'feature' => $feature
+                ]);
+                
+                return;
+            }
+        }
+        
+        // If not in selectedFeatures, fetch it from the database
+        $feature = \App\Models\FacialFeature::find($featureId);
+        
+        if ($feature) {
+            Log::info('Fetched feature from database', [
+                'featureId' => $featureId,
+                'name' => $feature->name,
+                'image_path' => $feature->image_path
+            ]);
+            
+            // Create feature data in the expected format
+            $featureData = [
+                'id' => $feature->id,
+                'image_path' => $feature->image_path,
+                'name' => $feature->name,
+                'feature_type' => $feature->feature_type_id,
+                'position' => [
+                    'x' => 300, // Center of canvas
+                    'y' => 300, // Center of canvas
+                    'scale' => 1,
+                    'rotation' => 0
+                ]
+            ];
+            
+            // Add it to our selectedFeatures array
+            $this->selectedFeatures[] = $featureData;
+            
+            // Dispatch the feature data to the frontend
+            $this->dispatch('direct-update-canvas', [
+                'feature' => $featureData
+            ]);
+            
+            // Also notify layer panel of the update
+            $this->dispatch('layers-updated', $this->selectedFeatures);
+        } else {
+            Log::error('Feature not found in database', ['featureId' => $featureId]);
+        }
+    }
+    
     public function render()
     {
         return view('livewire.editor.main-canvas');

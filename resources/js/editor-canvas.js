@@ -6,6 +6,26 @@ console.log('Editor canvas script loaded');
 document.addEventListener('DOMContentLoaded', function() {
     console.log('DOM content loaded, initializing Fabric.js canvas');
     
+    // Add debug info
+    console.log('Setting up event listeners for Livewire events');
+    
+    // Set up global event debug
+    const eventsToWatch = [
+        'feature-selected',
+        'direct-update-canvas',
+        'update-canvas',
+        'layer-visibility-changed',
+        'layer-opacity-changed',
+        'layer-lock-changed',
+        'toggle-move-mode'
+    ];
+    
+    eventsToWatch.forEach(eventName => {
+        window.addEventListener(eventName, (event) => {
+            console.log(`Caught ${eventName} event on window:`, event.detail);
+        });
+    });
+    
     // Check if the canvas element exists
     const canvasElement = document.getElementById('editor-canvas');
     if (!canvasElement) {
@@ -34,6 +54,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Keep track of features currently being loaded to prevent duplicates
     const loadingFeatures = new Set();
+    
+    // Keep track of features that need to be selected after loading
+    const pendingSelectionRequests = new Set();
     
     function setupGrid() {
         console.log('Setting up grid');
@@ -79,9 +102,14 @@ document.addEventListener('DOMContentLoaded', function() {
     // Set up initial grid
     setupGrid();
     
-    // Make wheel event listeners passive
+    // Fix wheel event listener warning by properly setting passive flag
+    // First remove any existing wheel listeners
+    const oldWheelHandler = function(e) {};
+    canvas.wrapperEl.removeEventListener('wheel', oldWheelHandler);
+    
+    // Add new passive wheel event listener
     canvas.wrapperEl.addEventListener('wheel', function(e) {
-        // Handle zooming if needed
+        // This is a passive event listener that doesn't block scrolling
     }, { passive: true });
     
     // Function to add a feature to the canvas - defined here to have access to canvas
@@ -101,7 +129,9 @@ document.addEventListener('DOMContentLoaded', function() {
         );
         
         if (existingObjects.length > 0) {
-            console.log('Feature with ID', feature.id, 'already exists on canvas. Skipping...');
+            console.log('Feature with ID', feature.id, 'already exists on canvas. Selecting it...');
+            canvas.setActiveObject(existingObjects[0]);
+            canvas.renderAll();
             return;
         }
         
@@ -141,8 +171,16 @@ document.addEventListener('DOMContentLoaded', function() {
         loadingFeatures.add(feature.id);
         console.log('Added feature ID', feature.id, 'to loading set. Current loading:', Array.from(loadingFeatures));
         
-        // Use absolute URL to prevent path issues
-        const imagePath = `/storage/${feature.image_path}`;
+        // Modify the image loading part with better path handling
+        let imagePath = `/storage/${feature.image_path}`;
+        
+        // Check if the path already has /storage at the beginning
+        if (feature.image_path.startsWith('/storage/')) {
+            imagePath = feature.image_path;
+        } else if (feature.image_path.startsWith('storage/')) {
+            imagePath = `/${feature.image_path}`;
+        }
+        
         console.log('Attempting to load image from:', imagePath);
         
         // Get the current moveEnabled state from the Livewire component
@@ -161,6 +199,36 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Important: Set crossOrigin before setting src
         imgElement.crossOrigin = 'Anonymous';
+        
+        // Better error handling and retry logic
+        imgElement.onerror = function(error) {
+            console.error('❌ Error loading image:', error);
+            console.error('Image path that failed:', imagePath);
+            
+            // Try alternate paths in sequence
+            const pathsToTry = [
+                `/storage${feature.image_path}`,
+                feature.image_path,
+                `/storage/${feature.image_path.replace(/^\/+|^storage\/+/g, '')}`,
+                `${imagePath}?t=${new Date().getTime()}`  // Cache busting as last resort
+            ];
+            
+            const nextPath = pathsToTry.shift();
+            if (nextPath && !imgElement.dataset.retriesCount) {
+                // Start retry count
+                imgElement.dataset.retriesCount = '1';
+                console.log(`Retry ${imgElement.dataset.retriesCount} with path:`, nextPath);
+                imgElement.src = nextPath;
+            } else if (nextPath && parseInt(imgElement.dataset.retriesCount) < pathsToTry.length) {
+                // Increment retry count
+                imgElement.dataset.retriesCount = (parseInt(imgElement.dataset.retriesCount) + 1).toString();
+                console.log(`Retry ${imgElement.dataset.retriesCount} with path:`, nextPath);
+                imgElement.src = nextPath;
+            } else {
+                console.error('All image loading attempts failed for feature:', feature);
+                loadingFeatures.delete(feature.id);
+            }
+        };
         
         imgElement.onload = function() {
             console.log('Image loaded successfully:', imgElement.width, 'x', imgElement.height);
@@ -223,6 +291,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 console.log('✅ Feature added and canvas rendered successfully');
                 
+                // Remove this feature from the loading set
+                loadingFeatures.delete(feature.id);
+                
                 // Restore modified event handler
                 if (typeof Livewire !== 'undefined') {
                     const component = Livewire.find(
@@ -247,26 +318,18 @@ document.addEventListener('DOMContentLoaded', function() {
                         });
                     }
                 }
+                
+                // Process any pending selection requests for this feature
+                if (pendingSelectionRequests.has(feature.id)) {
+                    console.log(`Processing pending selection request for feature ${feature.id}`);
+                    canvas.setActiveObject(fabricImage);
+                    canvas.renderAll();
+                    pendingSelectionRequests.delete(feature.id);
+                }
             } catch (error) {
                 console.error('Error creating fabric image:', error);
-            } finally {
-                // Remove this feature from the loading set
                 loadingFeatures.delete(feature.id);
-                console.log('Removed feature ID', feature.id, 'from loading set. Current loading:', Array.from(loadingFeatures));
             }
-        };
-        
-        imgElement.onerror = function(error) {
-            console.error('❌ Error loading image:', error);
-            console.error('Image path that failed:', imagePath);
-            
-            // Try to load the image again with a timestamp to bypass cache
-            console.log('Attempting to load with cache-busting...');
-            imgElement.src = `${imagePath}?t=${new Date().getTime()}`;
-            
-            // Remove this feature from the loading set if it fails
-            loadingFeatures.delete(feature.id);
-            console.log('Removed feature ID', feature.id, 'from loading set due to error. Current loading:', Array.from(loadingFeatures));
         };
         
         // Set src after defining event handlers
@@ -276,61 +339,63 @@ document.addEventListener('DOMContentLoaded', function() {
     // Set up Livewire event handlers
     console.log('Setting up Livewire event listeners');
     
-    // Listen for feature-selected directly as well
-    document.addEventListener('livewire:feature-selected', (event) => {
-        console.log('Direct livewire:feature-selected event caught:', event.detail);
-    });
-    
-    // Listen for direct DOM events
-    document.addEventListener('direct-update-canvas', (event) => {
-        console.log('DOM direct-update-canvas event caught. Detail:', event.detail);
-        let featureData = event.detail;
-        // Check if detail is an array and extract the first element if necessary
-        if (Array.isArray(event.detail) && event.detail.length > 0) {
-            featureData = event.detail[0];
-        }
-        
-        if (featureData && featureData.feature) {
-            console.log('Calling addFeatureToCanvas from DOM direct-update-canvas listener.');
-            addFeatureToCanvas(featureData.feature);
-        } else {
-            console.warn('DOM direct-update-canvas event did not contain expected feature data:', featureData);
-        }
-    });
-    
-    // Also listen for traditional Livewire events
-    document.addEventListener('livewire:direct-update-canvas', (event) => {
-        console.log('Livewire direct-update-canvas event caught. Detail:', event.detail);
-        let featureData = event.detail;
-        // Check if detail is an array and extract the first element if necessary
-        if (Array.isArray(event.detail) && event.detail.length > 0) {
-            featureData = event.detail[0];
-        }
-        
-        if (featureData && featureData.feature) {
-            console.log('Calling addFeatureToCanvas from Livewire direct-update-canvas listener.');
-            addFeatureToCanvas(featureData.feature);
-        } else {
-            console.warn('Livewire direct-update-canvas event did not contain expected feature data:', featureData);
-        }
-    });
-    
     document.addEventListener('livewire:update-canvas', (event) => {
         console.log('Livewire update-canvas event caught. Detail:', event.detail);
         let updateData = event.detail;
-        // Check if detail is an array and extract the first element if necessary
-        if (Array.isArray(event.detail) && event.detail.length > 0) {
-            updateData = event.detail[0];
+        
+        // Ensure we have the actual data, not wrapped in an array sometimes
+        if (Array.isArray(updateData) && updateData.length > 0 && updateData[0]?.selectedFeatures) {
+            updateData = updateData[0];
         }
         
         if (updateData && updateData.selectedFeatures) {
-            const latestFeature = updateData.selectedFeatures[updateData.selectedFeatures.length - 1];
-            if (latestFeature) {
-                console.log('Calling addFeatureToCanvas from Livewire update-canvas listener.');
-                addFeatureToCanvas(latestFeature);
-            } else {
-                 console.warn('Livewire update-canvas event had selectedFeatures, but the last item was empty.');
-            }
+            console.log('Processing update-canvas event with features:', updateData.selectedFeatures);
+            
+            // Process all features sent in the update
+            updateData.selectedFeatures.forEach(feature => {
+                // Check if the feature already exists on the canvas
+                const existingObject = canvas.getObjects().find(obj => 
+                    obj.data && obj.data.featureId === feature.id
+                );
+                
+                if (!existingObject) {
+                    console.log(`Feature ${feature.id} not found on canvas, attempting to add.`);
+                    addFeatureToCanvas(feature);
+                } else {
+                    console.log(`Feature ${feature.id} already exists, ensuring properties are up-to-date.`);
+                    // Optional: Update properties of existing object if needed (e.g., visibility, opacity)
+                    existingObject.set({
+                        visible: feature.visible !== undefined ? feature.visible : true,
+                        opacity: feature.opacity ? feature.opacity / 100 : 1,
+                        // Update other relevant properties if they can change via this event
+                    });
+                }
+            });
+            
+            // After processing adds/updates, handle potential removals
+            const currentFeatureIds = updateData.selectedFeatures.map(f => f.id);
+            canvas.getObjects().forEach(obj => {
+                if (obj.data && obj.data.featureId && !currentFeatureIds.includes(obj.data.featureId)) {
+                    console.log(`Removing feature ${obj.data.featureId} as it's no longer in selectedFeatures.`);
+                    canvas.remove(obj);
+                }
+            });
+            
+            // Ensure correct stacking order after updates
+            // Note: This assumes selectedFeatures is ordered bottom-to-top
+            updateData.selectedFeatures.forEach((feature, index) => {
+                const fabricObject = canvas.getObjects().find(obj => obj.data && obj.data.featureId === feature.id);
+                if (fabricObject) {
+                    canvas.moveTo(fabricObject, index);
+                }
+            });
+
+            // Ensure grid lines are behind everything
+            gridLines.forEach(line => {
+                canvas.sendObjectToBack(line);
+            });
+
+            canvas.renderAll();
         } else {
             console.warn('Livewire update-canvas event did not contain expected selectedFeatures data:', updateData);
         }
@@ -459,75 +524,6 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error('Error getting initial state:', error);
         }
         
-        // Listen for feature-selected event from Livewire
-        Livewire.on('update-canvas', (data) => {
-            console.log('Canvas update received through Livewire.on. Data:', data);
-            let updateData = data;
-            // Check if data is an array and extract the first element if necessary
-            if (Array.isArray(data) && data.length > 0) {
-                 updateData = data[0];
-            }
-            
-            // Check if there's a new feature to add
-            if (updateData && updateData.selectedFeatures && updateData.selectedFeatures.length > 0) {
-                // First check if we have more than one feature - could be a reordering operation
-                if (updateData.selectedFeatures.length > 1) {
-                    // Handle reordering by rebuilding the canvas in the correct order
-                    console.log('Handling potential layer reordering...');
-                    
-                    // Get a map of existing objects on the canvas by feature ID
-                    const existingObjectsMap = {};
-                    canvas.getObjects().forEach(obj => {
-                        if (obj.data && obj.data.featureId) {
-                            existingObjectsMap[obj.data.featureId] = obj;
-                        }
-                    });
-                    
-                    // Remove all feature objects from canvas
-                    canvas.getObjects().forEach(obj => {
-                        if (obj.data && obj.data.featureId) {
-                            canvas.remove(obj);
-                        }
-                    });
-                    
-                    // In Fabric.js, objects added last appear on top (highest z-index)
-                    // The selected features array from the backend is ordered bottom-to-top
-                    // So we add them in the same order to maintain correct visual stacking
-                    console.log('Adding features in correct stacking order:');
-                    console.log('Bottom layers first, top layers last');
-                    
-                    // Display the layer order we're processing
-                    const featureIds = updateData.selectedFeatures.map(f => f.id);
-                    console.log('Layer order (bottom to top):', featureIds);
-                    
-                    // Process each feature in order (bottom to top)
-                    for (let i = 0; i < updateData.selectedFeatures.length; i++) {
-                        const feature = updateData.selectedFeatures[i];
-                        const featureId = feature.id;
-                        console.log(`Processing feature at index ${i}: ${featureId} (${feature.name})`);
-                        
-                        if (existingObjectsMap[featureId]) {
-                            canvas.add(existingObjectsMap[featureId]);
-                            console.log(`Re-added feature ID ${featureId} to canvas in new order (position ${i})`);
-                        } else {
-                            // If object doesn't exist, add it
-                            console.log(`Feature ID ${featureId} not found in existing objects, adding new`);
-                            addFeatureToCanvas(feature);
-                        }
-                    }
-                    
-                    canvas.renderAll();
-                } else {
-                    // Just a single feature, handle as before
-                    const latestFeature = updateData.selectedFeatures[updateData.selectedFeatures.length - 1];
-                    console.log('Calling addFeatureToCanvas from Livewire.on update-canvas listener.');
-                    addFeatureToCanvas(latestFeature);
-                }
-            } else {
-                console.warn('Livewire.on update-canvas did not contain expected selectedFeatures data:', updateData);
-            }
-        });
-        
         // Listener for layer visibility change
         Livewire.on('layer-visibility-changed', (data) => {
             console.log('Layer visibility changed event:', data);
@@ -627,7 +623,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 canvas.renderAll();
                 console.log(`Selected feature ${featureId} on canvas.`);
             } else {
-                console.warn(`Feature ${featureId} not found on canvas for selection.`);
+                console.warn(`Feature ${featureId} not found on canvas for selection. Adding to pending selection requests.`);
+                // Store this as a pending selection request
+                pendingSelectionRequests.add(featureId);
             }
         });
         
@@ -876,6 +874,116 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             canvas.renderAll();
+        }
+    }
+
+    // When a feature is selected, make sure it's added to the canvas first
+    window.addEventListener('feature-selected', (event) => {
+        console.log('Feature selected event caught in main-canvas:', event.detail);
+        console.log('Event type:', event.type);
+        console.log('Event target:', event.target);
+        
+        const featureId = Array.isArray(event.detail) ? event.detail[0] : event.detail;
+        console.log('Extracted feature ID:', featureId);
+        
+        // Try to find it on canvas first
+        const objects = canvas.getObjects().filter(obj => 
+            obj.data && obj.data.featureId === featureId
+        );
+        
+        console.log(`Found ${objects.length} objects with feature ID ${featureId} on canvas`);
+        
+        if (objects.length > 0) {
+            // Feature exists, select it
+            console.log('Selecting existing feature on canvas');
+            canvas.setActiveObject(objects[0]);
+            canvas.renderAll();
+        } else {
+            // Feature doesn't exist yet, add to pending selection
+            pendingSelectionRequests.add(featureId);
+            console.log(`Added feature ${featureId} to pending selection requests. Current pending:`, 
+                Array.from(pendingSelectionRequests));
+            
+            // Request feature to be added
+            if (typeof Livewire !== 'undefined') {
+                const component = Livewire.find(
+                    document.getElementById('main-canvas-component')?.getAttribute('wire:id')
+                );
+                
+                if (component) {
+                    console.log('Dispatching request to get feature data');
+                    component.call('requestFeatureData', featureId);
+                }
+            }
+        }
+    });
+
+    // Make sure we listen for the Livewire version of the event too
+    document.addEventListener('livewire:feature-selected', (event) => {
+        console.log('Livewire feature-selected event caught:', event.detail);
+        const featureId = Array.isArray(event.detail) ? event.detail[0] : event.detail;
+        
+        // Try to find it on canvas first
+        const objects = canvas.getObjects().filter(obj => 
+            obj.data && obj.data.featureId === featureId
+        );
+        
+        if (objects.length > 0) {
+            // Feature exists, select it
+            canvas.setActiveObject(objects[0]);
+            canvas.renderAll();
+        } else {
+            // Feature doesn't exist yet, add to pending selection
+            pendingSelectionRequests.add(featureId);
+            console.log(`Added feature ${featureId} to pending selection requests from Livewire event.`);
+        }
+    });
+
+    // Update to listen for both window and document events for direct-update-canvas
+    window.addEventListener('direct-update-canvas', (event) => {
+        console.log('Window direct-update-canvas event caught:', event.detail);
+        handleDirectUpdateCanvas(event.detail);
+    });
+
+    document.addEventListener('direct-update-canvas', (event) => {
+        console.log('Document direct-update-canvas event caught:', event.detail);
+        handleDirectUpdateCanvas(event.detail);
+    });
+    
+    document.addEventListener('livewire:direct-update-canvas', (event) => {
+        console.log('Livewire direct-update-canvas event caught:', event.detail);
+        handleDirectUpdateCanvas(event.detail);
+    });
+    
+    // Centralized handler for direct-update-canvas events
+    function handleDirectUpdateCanvas(detail) {
+        // Inspect data closely
+        console.log('Processing direct update canvas data:', detail);
+        
+        let featureData = null;
+        
+        // Try different data formats that might be sent
+        if (detail && detail.feature) {
+            console.log('Found feature in direct format:', detail.feature);
+            featureData = detail.feature;
+        } else if (Array.isArray(detail) && detail.length > 0) {
+            if (detail[0].feature) {
+                console.log('Found feature in array[0].feature format:', detail[0].feature);
+                featureData = detail[0].feature;
+            } else if (detail[0].id && detail[0].image_path) {
+                console.log('Found feature directly in array[0]:', detail[0]);
+                featureData = detail[0];
+            }
+        } else if (detail && detail.id && detail.image_path) {
+            console.log('Found feature directly in detail:', detail);
+            featureData = detail;
+        }
+        
+        if (featureData) {
+            console.log('Adding feature to canvas:', featureData);
+            addFeatureToCanvas(featureData);
+        } else {
+            console.error('Could not extract feature data from event:', detail);
         }
     }
 }); 
