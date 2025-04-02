@@ -19,7 +19,7 @@
                 <x-input-error for="current_password" class="mt-1 text-sm" />
             </div>
 
-            <div>
+            <div x-data="passwordStrengthValidator()" x-init="init($wire.get('state.password'), $wire.get('state.password_confirmation'))">
                 <x-label for="password" value="{{ __('New Password') }}" class="text-[#34495E] font-medium" />
                 <div class="relative mt-1 rounded-md shadow-sm">
                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
@@ -31,6 +31,7 @@
                         type="password" 
                         class="pl-10 w-full border border-[#95A5A6] focus:border-[#34495E] focus:ring focus:ring-[#34495E] focus:ring-opacity-20 rounded-md shadow-sm" 
                         wire:model.live="state.password" 
+                        x-model="password"
                         autocomplete="new-password"
                         placeholder="Enter new password" />
                 </div>
@@ -38,27 +39,38 @@
                 <!-- Password Strength Meter -->
                 <div class="mt-2">
                     <div class="bg-gray-200 h-2 rounded-full overflow-hidden">
-                        <div id="password-strength-meter" class="h-2 rounded-full" style="width: 0%; transition: width 0.3s;"></div>
+                        <div id="password-strength-meter" class="h-2 rounded-full" 
+                             :style="`width: ${strengthPercentage}%; transition: width 0.3s;`"
+                             :class="strengthColor"></div>
                     </div>
-                    <p id="password-strength-text" class="text-xs text-gray-500 mt-1">Password strength: Too weak</p>
+                    <p id="password-strength-text" class="text-xs text-gray-500 mt-1" x-text="strengthText"></p>
                 </div>
 
                 <!-- Password Requirements -->
                 <div class="mt-2 text-xs text-gray-500 space-y-1">
                     <p class="font-medium">Password must contain:</p>
                     <ul class="list-disc pl-5 space-y-1">
-                        <li id="req-length" class="text-gray-500">At least 8 characters</li>
-                        <li id="req-uppercase" class="text-gray-500">At least one uppercase letter</li>
-                        <li id="req-lowercase" class="text-gray-500">At least one lowercase letter</li>
-                        <li id="req-number" class="text-gray-500">At least one number</li>
-                        <li id="req-special" class="text-gray-500">At least one special character</li>
+                        <li id="req-length" :class="requirements.length ? 'text-green-500' : 'text-gray-500'">At least 8 characters</li>
+                        <li id="req-uppercase" :class="requirements.uppercase ? 'text-green-500' : 'text-gray-500'">At least one uppercase letter</li>
+                        <li id="req-lowercase" :class="requirements.lowercase ? 'text-green-500' : 'text-gray-500'">At least one lowercase letter</li>
+                        <li id="req-number" :class="requirements.number ? 'text-green-500' : 'text-gray-500'">At least one number</li>
+                        <li id="req-special" :class="requirements.special ? 'text-green-500' : 'text-gray-500'">At least one special character</li>
                     </ul>
                 </div>
 
                 <x-input-error for="password" class="mt-1 text-sm" />
             </div>
 
-            <div>
+            <div x-data="{ confirmPassword: '', password: '', passwordsMatch: false, showMatchText: false }" 
+                 x-init="password = document.getElementById('password').value; 
+                         confirmPassword = $wire.get('state.password_confirmation') || ''; 
+                         $watch('confirmPassword', value => { checkMatch(); }); 
+                         Livewire.hook('message.processed', (message, component) => { password = document.getElementById('password').value; checkMatch(); });
+                         function checkMatch() { 
+                            passwordsMatch = password && confirmPassword && password === confirmPassword;
+                            showMatchText = confirmPassword.length > 0;
+                         }"
+                 class="mt-4">
                 <x-label for="password_confirmation" value="{{ __('Confirm Password') }}" class="text-[#34495E] font-medium" />
                 <div class="relative mt-1 rounded-md shadow-sm">
                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
@@ -70,14 +82,23 @@
                         type="password" 
                         class="pl-10 w-full border border-[#95A5A6] focus:border-[#34495E] focus:ring focus:ring-[#34495E] focus:ring-opacity-20 rounded-md shadow-sm" 
                         wire:model.live="state.password_confirmation" 
+                        x-model="confirmPassword"
                         autocomplete="new-password"
                         placeholder="Confirm your new password" />
                 </div>
-                <p id="password-match-text" class="text-xs mt-1 hidden text-green-500">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                    </svg>
-                    Passwords match
+                <p id="password-match-text" class="text-xs mt-1" 
+                   :class="{ 'hidden': !showMatchText, 'text-green-500': passwordsMatch, 'text-red-500': !passwordsMatch && showMatchText }">
+                    <template x-if="showMatchText">
+                        <span class="inline-flex items-center">
+                            <svg x-show="passwordsMatch" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                            </svg>
+                            <svg x-show="!passwordsMatch" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                            <span x-text="passwordsMatch ? 'Passwords match' : 'Passwords do not match'"></span>
+                        </span>
+                    </template>
                 </p>
                 <x-input-error for="password_confirmation" class="mt-1 text-sm" />
             </div>
@@ -106,123 +127,91 @@
 
     <!-- JavaScript for Password Strength Meter -->
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const passwordInput = document.getElementById('password');
-            const confirmInput = document.getElementById('password_confirmation');
-            const strengthMeter = document.getElementById('password-strength-meter');
-            const strengthText = document.getElementById('password-strength-text');
-            const matchText = document.getElementById('password-match-text');
-            
-            // Requirements elements
-            const reqLength = document.getElementById('req-length');
-            const reqUppercase = document.getElementById('req-uppercase');
-            const reqLowercase = document.getElementById('req-lowercase');
-            const reqNumber = document.getElementById('req-number');
-            const reqSpecial = document.getElementById('req-special');
-            
-            // Check password strength and update requirements
-            passwordInput.addEventListener('input', function() {
-                const password = this.value;
-                let strength = 0;
-                let color = '';
-                let text = '';
-                
-                // Reset requirements
-                reqLength.classList.remove('text-green-500');
-                reqUppercase.classList.remove('text-green-500');
-                reqLowercase.classList.remove('text-green-500');
-                reqNumber.classList.remove('text-green-500');
-                reqSpecial.classList.remove('text-green-500');
-                
-                reqLength.classList.add('text-gray-500');
-                reqUppercase.classList.add('text-gray-500');
-                reqLowercase.classList.add('text-gray-500');
-                reqNumber.classList.add('text-gray-500');
-                reqSpecial.classList.add('text-gray-500');
-                
-                // Check length
-                if (password.length >= 8) {
-                    strength += 20;
-                    reqLength.classList.remove('text-gray-500');
-                    reqLength.classList.add('text-green-500');
-                }
-                
-                // Check uppercase
-                if (/[A-Z]/.test(password)) {
-                    strength += 20;
-                    reqUppercase.classList.remove('text-gray-500');
-                    reqUppercase.classList.add('text-green-500');
-                }
-                
-                // Check lowercase
-                if (/[a-z]/.test(password)) {
-                    strength += 20;
-                    reqLowercase.classList.remove('text-gray-500');
-                    reqLowercase.classList.add('text-green-500');
-                }
-                
-                // Check numbers
-                if (/[0-9]/.test(password)) {
-                    strength += 20;
-                    reqNumber.classList.remove('text-gray-500');
-                    reqNumber.classList.add('text-green-500');
-                }
-                
-                // Check special characters
-                if (/[^A-Za-z0-9]/.test(password)) {
-                    strength += 20;
-                    reqSpecial.classList.remove('text-gray-500');
-                    reqSpecial.classList.add('text-green-500');
-                }
-                
-                // Determine strength text and color
-                if (strength === 0) {
-                    text = 'Too weak';
-                    color = 'bg-gray-300';
-                } else if (strength <= 20) {
-                    text = 'Weak';
-                    color = 'bg-red-500';
-                } else if (strength <= 40) {
-                    text = 'Fair';
-                    color = 'bg-orange-500';
-                } else if (strength <= 60) {
-                    text = 'Good';
-                    color = 'bg-yellow-500';
-                } else if (strength <= 80) {
-                    text = 'Strong';
-                    color = 'bg-green-400';
-                } else {
-                    text = 'Very strong';
-                    color = 'bg-green-600';
-                }
-                
-                // Update the meter
-                strengthMeter.className = 'h-2 rounded-full ' + color;
-                strengthMeter.style.width = strength + '%';
-                strengthText.textContent = 'Password strength: ' + text;
-                
-                // Check if passwords match
-                checkPasswordMatch();
-            });
-            
-            // Check if passwords match
-            confirmInput.addEventListener('input', function() {
-                checkPasswordMatch();
-            });
-            
-            function checkPasswordMatch() {
-                if (confirmInput.value && passwordInput.value === confirmInput.value) {
-                    matchText.classList.remove('hidden', 'text-red-500');
-                    matchText.classList.add('text-green-500');
-                    matchText.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg> Passwords match';
-                } else if (confirmInput.value) {
-                    matchText.classList.remove('hidden', 'text-green-500');
-                    matchText.classList.add('text-red-500');
-                    matchText.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg> Passwords do not match';
-                } else {
-                    matchText.classList.add('hidden');
+        function passwordStrengthValidator() {
+            return {
+                password: '',
+                strengthPercentage: 0,
+                strengthColor: 'bg-gray-300',
+                strengthText: 'Password strength: Too weak',
+                requirements: {
+                    length: false,
+                    uppercase: false,
+                    lowercase: false,
+                    number: false,
+                    special: false
+                },
+                init(initialPassword, initialConfirmPassword) {
+                    this.password = initialPassword || '';
+                    // We need a slight delay to ensure wire:model hydrates initial value if present
+                    this.$nextTick(() => {
+                         this.password = document.getElementById('password').value || initialPassword || '';
+                         this.checkStrength();
+
+                         // Initialize confirmation check (handled by a separate x-data for simplicity now)
+                         // This could be combined, but separating concerns might be easier to manage
+                    });
+
+                    this.$watch('password', value => {
+                        this.checkStrength();
+                        // Dispatch event for confirmation watcher
+                        this.$dispatch('password-updated', { password: this.password });
+                    });
+                },
+                checkStrength() {
+                    const pass = this.password;
+                    let strength = 0;
+                    let text = '';
+                    let color = 'bg-gray-300'; // Default
+
+                    // Reset requirements
+                    this.requirements.length = false;
+                    this.requirements.uppercase = false;
+                    this.requirements.lowercase = false;
+                    this.requirements.number = false;
+                    this.requirements.special = false;
+
+                    if (!pass) {
+                        strength = 0;
+                        text = 'Too weak';
+                    } else {
+                        // Check length
+                        if (pass.length >= 8) { strength += 20; this.requirements.length = true; }
+                        // Check uppercase
+                        if (/[A-Z]/.test(pass)) { strength += 20; this.requirements.uppercase = true; }
+                        // Check lowercase
+                        if (/[a-z]/.test(pass)) { strength += 20; this.requirements.lowercase = true; }
+                        // Check numbers
+                        if (/[0-9]/.test(pass)) { strength += 20; this.requirements.number = true; }
+                        // Check special characters
+                        if (/[^A-Za-z0-9]/.test(pass)) { strength += 20; this.requirements.special = true; }
+
+                        // Determine strength text and color
+                        if (strength === 0) { // Should only happen if length < 8 and nothing else matches
+                            text = 'Too weak';
+                            color = 'bg-red-500'; // Make 'too weak' red if some input exists
+                        } else if (strength <= 20) { // Likely only length or one other category
+                             text = 'Weak';
+                             color = 'bg-red-500';
+                         } else if (strength <= 40) {
+                            text = 'Fair';
+                            color = 'bg-orange-500';
+                        } else if (strength <= 60) {
+                            text = 'Good';
+                            color = 'bg-yellow-500';
+                        } else if (strength <= 80) {
+                            text = 'Strong';
+                            color = 'bg-green-400';
+                        } else { // strength = 100
+                            text = 'Very strong';
+                            color = 'bg-green-600';
+                        }
+                    }
+
+                    this.strengthPercentage = strength;
+                    this.strengthColor = color;
+                    this.strengthText = 'Password strength: ' + text;
                 }
             }
-        });
+        }
     </script>
 </div>

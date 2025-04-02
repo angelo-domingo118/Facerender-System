@@ -3,7 +3,7 @@
     <div class="container mx-auto px-4 flex justify-between items-center">
         <div class="flex items-center">
             <!-- Logo -->
-            <a href="/" class="text-2xl font-bold text-white flex items-center mr-8">
+            <a href="{{ auth()->check() ? route('dashboard') : '/' }}" class="text-2xl font-bold text-white flex items-center mr-8">
                 <span class="text-[#E74C3C]">FACE</span>RENDER
             </a>
 
