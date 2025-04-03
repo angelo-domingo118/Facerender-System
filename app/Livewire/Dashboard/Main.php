@@ -148,56 +148,56 @@ class Main extends Component
         // Filter cases by the currently authenticated user
         $query->where('user_id', Auth::id());
             
-        // Add eager loading based on content type
+        // Prepare relationship loading with potential filtering
+        $searchTerm = $this->search;
+        $loadWitnesses = function ($q) use ($searchTerm) {
+            if ($searchTerm) {
+                $q->where('name', 'like', '%' . $searchTerm . '%')
+                  ->orWhere('relationship_to_case', 'like', '%' . $searchTerm . '%');
+            }
+        };
+        $loadComposites = function ($q) use ($searchTerm) {
+            if ($searchTerm) {
+                $q->where('title', 'like', '%' . $searchTerm . '%')
+                  ->orWhere('description', 'like', '%' . $searchTerm . '%');
+            }
+        };
+
+        // Handle content type filtering and eager loading
         if ($this->contentTypeFilter === 'witnesses') {
-            $query->with(['witnesses']);
+            // Only get cases that HAVE matching witnesses
+            $query->whereHas('witnesses', $loadWitnesses);
+            // Eager load ONLY the matching witnesses
+            $query->with(['witnesses' => $loadWitnesses]);
         } elseif ($this->contentTypeFilter === 'composites') {
-            $query->with(['composites']);
+            // Only get cases that HAVE matching composites
+            $query->whereHas('composites', $loadComposites);
+            // Eager load ONLY the matching composites
+            $query->with(['composites' => $loadComposites]);
         } else {
+            // Default view: Load both, unfiltered, for general search
             $query->with(['composites', 'witnesses']);
-        }
             
-        // Handle content type filtering
-        if ($this->contentTypeFilter === 'witnesses') {
-            $query->whereHas('witnesses', function ($q) {
-                if ($this->search) {
-                    $q->where('name', 'like', '%' . $this->search . '%')
-                      ->orWhere('relationship_to_case', 'like', '%' . $this->search . '%');
-                }
-            });
-        } elseif ($this->contentTypeFilter === 'composites') {
-            $query->whereHas('composites', function ($q) {
-                if ($this->search) {
-                    $q->where('title', 'like', '%' . $this->search . '%')
-                      ->orWhere('description', 'like', '%' . $this->search . '%');
-                }
-            });
-        } else {
-            // Default search behavior for all content types
-            if ($this->search) {
-                $query->where(function ($q) {
-                    // Search in cases
-                    $q->where('title', 'like', '%' . $this->search . '%')
-                      ->orWhere('reference_number', 'like', '%' . $this->search . '%')
-                      ->orWhere('description', 'like', '%' . $this->search . '%')
-                      ->orWhere('location', 'like', '%' . $this->search . '%');
-                      
-                    // Search in witnesses
-                    $q->orWhereHas('witnesses', function ($wq) {
-                        $wq->where('name', 'like', '%' . $this->search . '%')
-                          ->orWhere('relationship_to_case', 'like', '%' . $this->search . '%');
-                    });
-                    
-                    // Search in composites
-                    $q->orWhereHas('composites', function ($cq) {
-                        $cq->where('title', 'like', '%' . $this->search . '%')
-                          ->orWhere('description', 'like', '%' . $this->search . '%');
-                    });
+            // Default search behavior (search across cases, witnesses, composites)
+            if ($searchTerm) {
+                $query->where(function ($q) use ($searchTerm) {
+                    $q->where('title', 'like', '%' . $searchTerm . '%')
+                      ->orWhere('reference_number', 'like', '%' . $searchTerm . '%')
+                      ->orWhere('description', 'like', '%' . $searchTerm . '%')
+                      ->orWhere('location', 'like', '%' . $searchTerm . '%')
+                      ->orWhereHas('witnesses', function ($wq) use ($searchTerm) {
+                          $wq->where('name', 'like', '%' . $searchTerm . '%')
+                             ->orWhere('relationship_to_case', 'like', '%' . $searchTerm . '%');
+                      })
+                      ->orWhereHas('composites', function ($cq) use ($searchTerm) {
+                          $cq->where('title', 'like', '%' . $searchTerm . '%')
+                             ->orWhere('description', 'like', '%' . $searchTerm . '%');
+                      });
                 });
             }
         }
         
-        // Apply status filter
+        // Apply status filter (applies to cases regardless of view mode)
         if ($this->statusFilter != 'all') {
             $query->where('status', $this->statusFilter);
         }
@@ -212,7 +212,6 @@ class Main extends Component
                 break;
             case 'recent':
             default:
-                // For recent sorting
                 $query->latest('updated_at');
                 break;
         }

@@ -66,7 +66,34 @@
             </div>
         </div>
         
-        @if($cases->isEmpty())
+        @if($cases->isEmpty() && ($contentTypeFilter === 'witnesses' || $contentTypeFilter === 'composites') && $search)
+            <div class="flex flex-col items-center justify-center py-12 bg-white rounded-lg shadow-md border border-gray-200">
+                <div class="bg-gray-50 rounded-full p-4 mb-4">
+                    <x-icon name="funnel" class="w-12 h-12 text-gray-400"/>
+                </div>
+                <h3 class="text-lg font-medium text-[#2C3E50]">
+                    @if($contentTypeFilter === 'witnesses')
+                        No matching witnesses found
+                    @else
+                        No matching composites found
+                    @endif
+                </h3>
+                <p class="text-gray-500 mt-2 text-center max-w-md">
+                    No {{ $contentTypeFilter === 'witnesses' ? 'witnesses' : 'composites' }} match your current search criteria.
+                    Try adjusting your search or 
+                    <button wire:click="$dispatch('quick-filter', { type: 'reset' })" class="text-[#3498DB] hover:underline">
+                        resetting the filters
+                    </button>.
+                </p>
+                <x-button 
+                    secondary
+                    label="Reset Filters"
+                    icon="arrow-path"
+                    class="mt-6"
+                    wire:click="$dispatch('quick-filter', { type: 'reset' })"
+                />
+            </div>
+        @elseif($cases->isEmpty())
             <div class="flex flex-col items-center justify-center py-12 bg-white rounded-lg shadow-md border border-gray-200">
                 <div class="bg-gray-50 rounded-full p-4 mb-4">
                     <x-icon name="{{ $this->totalCasesCount > 0 ? 'funnel' : 'document-magnifying-glass' }}" class="w-12 h-12 text-gray-400"/>
@@ -84,18 +111,28 @@
                         You haven't created any cases yet. Click the "New Case" button to get started.
                     @endif
                 </p>
-                <x-button 
-                    primary 
-                    label="Create New Case" 
-                    icon="plus" 
-                    class="mt-6 bg-[#2C3E50] hover:bg-[#34495E] transition-colors text-white transform hover:scale-105" 
-                    wire:click="createNewCase"
-                />
+                @if($this->totalCasesCount > 0)
+                    <x-button 
+                        secondary
+                        label="Reset Filters"
+                        icon="arrow-path"
+                        class="mt-6"
+                        wire:click="$dispatch('quick-filter', { type: 'reset' })"
+                    />
+                @else
+                     <x-button 
+                        primary 
+                        label="Create New Case" 
+                        icon="plus" 
+                        class="mt-6 bg-[#2C3E50] hover:bg-[#34495E] transition-colors text-white transform hover:scale-105" 
+                        wire:click="createNewCase"
+                    />
+                @endif
             </div>
         @else
             <!-- Witness View -->
             @if($contentTypeFilter === 'witnesses')
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 w-full">
+                <div class="grid grid-cols-1 gap-5 w-full">
                     @foreach($cases as $case)
                         @foreach($case->witnesses as $witness)
                             <div class="bg-white p-3 rounded-lg border border-gray-200 hover:border-[#2C3E50]/50 transition-all duration-200 shadow-sm">
@@ -107,6 +144,7 @@
                                         :label="$case->title" 
                                         class="text-xs"
                                         rounded="full"
+                                        color="slate"
                                     />
                                 </div>
                                 <div class="mt-2">
@@ -118,7 +156,7 @@
                 </div>
             <!-- Composite View -->
             @elseif($contentTypeFilter === 'composites')
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 w-full">
+                <div class="grid grid-cols-1 gap-5 w-full">
                     @foreach($cases as $case)
                         @foreach($case->composites as $composite)
                             <div class="bg-white p-3 rounded-lg border border-gray-200 hover:border-[#2C3E50]/50 transition-all duration-200 shadow-sm">
@@ -158,7 +196,4 @@
     
     <!-- Create Case Form -->
     @livewire('forms.create-case-form')
-    
-    <!-- Edit Case Form -->
-    @livewire('forms.edit-case-form')
 </div>

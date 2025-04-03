@@ -6,12 +6,23 @@
             <div class="flex flex-col space-y-3">
                 <div class="flex items-center justify-between">
                     <div class="flex items-center space-x-3">
-                        <!-- Title and Reference Number -->
+                        <!-- Title, Status Badge, and Reference Number -->
                         <div>
-                            <div class="flex items-center">
+                            <div class="flex items-center space-x-2">
                                 <h3 class="text-lg font-semibold text-[#2C3E50] group-hover:text-[#2C3E50]">{{ $case->title }}</h3>
+                                <x-badge 
+                                    :label="ucfirst($case->status)" 
+                                    :color="
+                                        $case->status === 'open' ? 'positive' : 
+                                        ($case->status === 'pending' ? 'warning' : 
+                                        ($case->status === 'closed' ? 'negative' : 
+                                        ($case->status === 'archived' ? 'slate' : 'neutral')))
+                                    "
+                                    class="font-medium"
+                                    rounded="full"
+                                />
                             </div>
-                            <p class="text-sm text-gray-600 flex items-center">
+                            <p class="text-sm text-gray-600 flex items-center mt-1">
                                 <x-icon name="hashtag" class="h-3 w-3 mr-1 text-[#2C3E50]" />
                                 {{ $case->reference_number }}
                             </p>
@@ -19,43 +30,38 @@
                     </div>
                     
                     <div class="flex items-center space-x-2">
-                        <!-- Status Badge -->
-                        <x-badge 
-                            :label="ucfirst($case->status)" 
-                            :color="
-                                $case->status === 'open' ? 'positive' : 
-                                ($case->status === 'pending' ? 'warning' : 
-                                ($case->status === 'closed' ? 'negative' : 
-                                ($case->status === 'archived' ? 'slate' : 'neutral')))
-                            "
-                            class="font-medium"
-                            rounded="full"
-                        />
+                        <!-- Improved action buttons with labels -->
+                        <div class="flex items-center space-x-2">
+                            <x-button 
+                                wire:click="editCase" 
+                                icon="pencil" 
+                                label="Edit Case"
+                                xs
+                                class="bg-blue-50 hover:bg-blue-100 text-blue-700"
+                                rounded
+                            />
+                            <x-button 
+                                wire:click="deleteCase" 
+                                icon="trash" 
+                                label="Delete Case"
+                                xs
+                                class="bg-red-50 hover:bg-red-100 text-red-700"
+                                rounded
+                            />
+                        </div>
                         
-                        <!-- Expand/Collapse Button -->
+                        <!-- Expand/Collapse Button with text -->
                         <button 
                             wire:click="toggleExpand" 
-                            class="text-gray-500 hover:text-[#2C3E50] focus:outline-none transition-colors duration-200 p-1.5 rounded-full hover:bg-gray-100"
-                            x-tooltip="isExpanded ? 'Collapse Details' : 'Expand Details'"
+                            class="flex items-center space-x-1 text-sm text-gray-500 hover:text-[#2C3E50] focus:outline-none transition-colors duration-200 px-2 py-1 rounded-md hover:bg-gray-200 focus:bg-gray-200"
                         >
                             <x-icon 
                                 name="chevron-down" 
-                                class="h-5 w-5 transform transition-transform duration-300"
+                                class="h-4 w-4 transform transition-transform duration-300"
                                 x-bind:class="isExpanded ? 'rotate-180' : ''" 
                             />
+                            <span x-text="isExpanded ? 'Collapse' : 'Expand'"></span>
                         </button>
-                        
-                        <!-- Actions Dropdown -->
-                        <x-dropdown>
-                            <x-slot name="trigger">
-                                <button class="p-1.5 rounded-full hover:bg-gray-100 focus:outline-none">
-                                    <x-icon name="ellipsis-vertical" class="h-5 w-5 text-gray-500 cursor-pointer hover:text-[#2C3E50]" />
-                                </button>
-                            </x-slot>
-                            
-                            <x-dropdown.item icon="pencil" label="Edit Case" wire:click="editCase" />
-                            <x-dropdown.item icon="trash" label="Delete Case" wire:click="deleteCase" class="text-gray-700" />
-                        </x-dropdown>
                     </div>
                 </div>
 

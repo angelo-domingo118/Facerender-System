@@ -1,12 +1,27 @@
 <div class="bg-white p-6 h-full">
-    <!-- Search Bar -->
+    <!-- Search Bar with Clear Button -->
     <div class="mb-6">
         <x-input 
             placeholder="{{ $contentTypeFilter === 'witnesses' ? 'Search witnesses...' : ($contentTypeFilter === 'composites' ? 'Search composites...' : 'Search cases...') }}" 
-            wire:model.live="search"
+            wire:model.live.debounce.300ms="search"
             icon="magnifying-glass"
             class="w-full bg-gray-50 border-gray-200 focus:border-indigo-500 focus:ring-indigo-500"
-        />
+        >
+            <x-slot name="append">
+                <div class="absolute inset-y-0 right-0 flex items-center p-0.5">
+                    <button 
+                        x-data="{ search: @entangle('search') }" 
+                        x-show="search.length > 0" 
+                        @click="$wire.set('search', '')" 
+                        type="button"
+                        class="flex items-center justify-center h-full w-8 text-gray-400 hover:text-gray-600 focus:outline-none rounded-full hover:bg-gray-100"
+                        aria-label="Clear search"
+                    >
+                        <x-icon name="x-mark" class="w-4 h-4" />
+                    </button>
+                </div>
+            </x-slot>
+        </x-input>
     </div>
     
     <!-- Divider with label -->
@@ -28,6 +43,7 @@
                 placeholder="Select view mode"
                 wire:model.live="contentTypeFilter"
                 class="w-full bg-gray-50 border-gray-200"
+                :clearable="false"
             >
                 <x-select.option value="all" label="Cases (Default)" />
                 <x-select.option value="witnesses">
@@ -55,6 +71,7 @@
                 placeholder="Filter by status"
                 wire:model.live="statusFilter"
                 class="w-full bg-gray-50 border-gray-200"
+                :clearable="false"
             >
                 <x-select.option value="all" label="All Statuses" />
                 <x-select.option value="open">
@@ -90,6 +107,7 @@
             <x-select
                 wire:model.live="sortBy"
                 class="w-full bg-gray-50 border-gray-200"
+                :clearable="false"
             >
                 <x-select.option value="recent">
                     <div class="flex items-center">

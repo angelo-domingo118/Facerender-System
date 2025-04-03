@@ -9,7 +9,7 @@ use Livewire\Attributes\On;
 class WitnessCard extends Component
 {
     public Witness $witness;
-    public $showDetails = false;
+    public $isExpanded = false;
 
     public function mount(Witness $witness)
     {
@@ -21,9 +21,9 @@ class WitnessCard extends Component
         return 'witness-' . $this->witness->id;
     }
 
-    public function toggleDetails()
+    public function toggleExpand()
     {
-        $this->showDetails = !$this->showDetails;
+        $this->isExpanded = !$this->isExpanded;
     }
 
     public function editWitness()
