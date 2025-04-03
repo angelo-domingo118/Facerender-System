@@ -161,10 +161,4 @@
     
     <!-- Edit Case Form -->
     @livewire('forms.edit-case-form')
-    
-    <!-- Create Composite Form -->
-    @livewire('forms.create-composite-form')
-    
-    <!-- Add Witness Form -->
-    @livewire('forms.add-witness-form')
 </div>

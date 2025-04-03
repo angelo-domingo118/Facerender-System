@@ -3,6 +3,7 @@
 namespace App\Livewire\Dashboard;
 
 use App\Models\CaseRecord;
+use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Livewire\Attributes\On;
@@ -143,6 +144,9 @@ class Main extends Component
     {
         // Start with base query
         $query = CaseRecord::query();
+            
+        // Filter cases by the currently authenticated user
+        $query->where('user_id', Auth::id());
             
         // Add eager loading based on content type
         if ($this->contentTypeFilter === 'witnesses') {

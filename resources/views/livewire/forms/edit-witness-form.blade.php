@@ -43,13 +43,6 @@
                     label="Contact Number"
                     placeholder="Enter contact number"
                 />
-                
-                <x-input
-                    wire:model="email"
-                    label="Email"
-                    placeholder="Enter email address"
-                    type="email"
-                />
             </div>
             
             <x-input
@@ -63,6 +56,24 @@
                 label="Relationship to Case"
                 placeholder="E.g., Victim, Bystander, Reporting Officer"
             />
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <x-input
+                    wire:model="reliability_rating"
+                    label="Reliability Rating (1-10)"
+                    placeholder="Enter rating from 1-10"
+                    min="1"
+                    max="10"
+                    type="number"
+                />
+                
+                <x-datetime-picker
+                    wire:model="interview_date"
+                    label="Interview Date"
+                    placeholder="Select interview date"
+                    without-time
+                />
+            </div>
             
             <x-textarea
                 wire:model="notes"

@@ -65,7 +65,7 @@
                                         size="sm"
                                         class="bg-[#6366F1] hover:bg-[#4F46E5] text-white transition-colors rounded-md"
                                     >
-                                        Composite Editor
+                                        Edit Composite
                                     </x-button>
                                 </div>
                                 

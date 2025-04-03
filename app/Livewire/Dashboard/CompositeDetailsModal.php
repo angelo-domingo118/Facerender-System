@@ -129,7 +129,17 @@ class CompositeDetailsModal extends Component
     public function close()
     {
         $this->show = false;
-        $this->resetFormData();
+        // Defer the resetFormData to avoid showing "Composite not found" message
+        // during the closing animation
+    }
+    
+    #[On('hidden')]
+    public function onModalHidden()
+    {
+        // Only reset form data after the modal is completely hidden
+        if (!$this->show) {
+            $this->resetFormData();
+        }
     }
     
     public function resetFormData()

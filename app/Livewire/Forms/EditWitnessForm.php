@@ -17,9 +17,10 @@ class EditWitnessForm extends Component
     public $gender = '';
     public $contact_number = '';
     public $address = '';
-    public $email = '';
     public $relationship_to_case = '';
     public $notes = '';
+    public $reliability_rating = null;
+    public $interview_date = null;
     
     protected $rules = [
         'name' => 'required|min:3|max:255',
@@ -27,9 +28,10 @@ class EditWitnessForm extends Component
         'gender' => 'required|in:Male,Female,Other',
         'contact_number' => 'nullable|max:20',
         'address' => 'nullable|max:255',
-        'email' => 'nullable|email|max:255',
         'relationship_to_case' => 'nullable|max:100',
         'notes' => 'nullable|max:1000',
+        'reliability_rating' => 'nullable|numeric|min:1|max:10',
+        'interview_date' => 'nullable|date',
     ];
     
     #[On('edit-witness')]
@@ -50,16 +52,18 @@ class EditWitnessForm extends Component
         $this->gender = $this->witness->gender;
         $this->contact_number = $this->witness->contact_number;
         $this->address = $this->witness->address;
-        $this->email = $this->witness->email;
         $this->relationship_to_case = $this->witness->relationship_to_case;
         $this->notes = $this->witness->interview_notes;
+        $this->reliability_rating = $this->witness->reliability_rating;
+        $this->interview_date = $this->witness->interview_date;
     }
     
     public function resetForm()
     {
         $this->reset([
             'name', 'age', 'gender', 'contact_number',
-            'address', 'email', 'relationship_to_case', 'notes'
+            'address', 'relationship_to_case', 'notes',
+            'reliability_rating', 'interview_date'
         ]);
         $this->resetValidation();
     }
@@ -74,9 +78,10 @@ class EditWitnessForm extends Component
             'gender' => $this->gender,
             'contact_number' => $this->contact_number,
             'address' => $this->address,
-            'email' => $this->email,
             'relationship_to_case' => $this->relationship_to_case,
             'interview_notes' => $this->notes,
+            'reliability_rating' => $this->reliability_rating,
+            'interview_date' => $this->interview_date,
         ]);
         
         $this->dispatch('witness-updated', caseId: $this->witness->case_id);

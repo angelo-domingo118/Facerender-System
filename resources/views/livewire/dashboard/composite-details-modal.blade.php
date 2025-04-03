@@ -1,7 +1,7 @@
 <div>
     <x-modal 
         wire:model.live="show" 
-        max-width="6xl" 
+        max-width="16xl" 
         blur="md"
         align="center"
         x-transition:enter="ease-out duration-300"
@@ -10,6 +10,7 @@
         x-transition:leave="ease-in duration-200"
         x-transition:leave-start="opacity-100 scale-100"
         x-transition:leave-end="opacity-0 scale-90"
+        x-on:hidden="$dispatch('hidden')"
     >
         <x-card :title="$isEditing ? 'Edit Composite' : 'Composite Details'" class="overflow-hidden">
             @if($composite)
