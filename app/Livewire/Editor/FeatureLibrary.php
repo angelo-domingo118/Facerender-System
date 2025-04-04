@@ -8,6 +8,7 @@ use App\Models\FeatureCategory;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Cache;
 
 class FeatureLibrary extends Component
 {
@@ -17,13 +18,20 @@ class FeatureLibrary extends Component
     public $selectedSubcategory = null;
     public $search = '';
     public $viewedCategories = [];
+    protected $cachedFeatures = [];
+    
+    protected $listeners = [
+        'refresh-feature-library' => '$refresh',
+    ];
     
     /**
      * Get the feature types for the dropdown.
      */
     public function getFeatureTypesProperty()
     {
-        return FeatureType::all();
+        return Cache::remember('feature-types', 3600, function() {
+            return FeatureType::all();
+        });
     }
     
     /**
@@ -35,13 +43,17 @@ class FeatureLibrary extends Component
             return collect();
         }
         
-        $featureType = FeatureType::where('name', $this->selectedCategory)->first();
+        $cacheKey = 'subcategories-' . $this->selectedCategory;
         
-        if (!$featureType) {
-            return collect();
-        }
-        
-        return FeatureCategory::where('feature_type_id', $featureType->id)->get();
+        return Cache::remember($cacheKey, 1800, function() {
+            $featureType = FeatureType::where('name', $this->selectedCategory)->first();
+            
+            if (!$featureType) {
+                return collect();
+            }
+            
+            return FeatureCategory::where('feature_type_id', $featureType->id)->get();
+        });
     }
     
     /**
@@ -53,6 +65,33 @@ class FeatureLibrary extends Component
             return collect();
         }
         
+        // If search is active, don't use cache
+        if ($this->search) {
+            return $this->fetchFeaturesFromDatabase();
+        }
+        
+        $cacheKey = "features-{$this->selectedCategory}-{$this->selectedSubcategory}";
+        
+        if (isset($this->cachedFeatures[$cacheKey])) {
+            return $this->cachedFeatures[$cacheKey];
+        }
+        
+        // Short-lived cache to improve performance during user session
+        $features = Cache::remember($cacheKey, 300, function() {
+            return $this->fetchFeaturesFromDatabase();
+        });
+        
+        // Store in memory for this component instance
+        $this->cachedFeatures[$cacheKey] = $features;
+        
+        return $features;
+    }
+    
+    /**
+     * Fetch features from database with current filters
+     */
+    protected function fetchFeaturesFromDatabase()
+    {
         $query = FacialFeature::query();
         
         // Log for debugging
@@ -79,6 +118,7 @@ class FeatureLibrary extends Component
             });
         }
         
+        // Eager load relationships to avoid N+1 issues
         $features = $query->with(['featureType', 'category'])->get();
         Log::info("Found {$features->count()} features");
         
@@ -99,15 +139,15 @@ class FeatureLibrary extends Component
     public function selectFeature($featureId)
     {
         // Get the feature details
-        $feature = \App\Models\FacialFeature::find($featureId);
+        $feature = FacialFeature::find($featureId);
         
         if (!$feature) {
-            \Illuminate\Support\Facades\Log::error("Feature not found: {$featureId}");
+            Log::error("Feature not found: {$featureId}");
             return;
         }
         
         // Log feature selection for debugging
-        \Illuminate\Support\Facades\Log::info("Feature selected: {$featureId}", [
+        Log::info("Feature selected: {$featureId}", [
             'name' => $feature->name,
             'image_path' => $feature->image_path,
             'feature_type_id' => $feature->feature_type_id
@@ -145,48 +185,46 @@ class FeatureLibrary extends Component
         // Always scroll to top when changing categories
         if ($value) {
             $this->dispatch('scrollToTop');
+            
+            // Prefetch features for the selected category
+            $this->prefetchFeaturesForCategory($value);
         }
         
         Log::info("Category changed to: {$value}, scrolling to top");
     }
     
-    public function render()
+    /**
+     * Prefetch features for a category to improve performance
+     */
+    protected function prefetchFeaturesForCategory($category)
     {
-        $query = FacialFeature::query();
+        // Create a background job to warmup the cache
+        $cacheKey = "features-{$category}-null";
         
-        // Filter by search term if provided
-        if ($this->search) {
-            $query->where('name', 'like', '%' . $this->search . '%');
-        }
-        
-        // Filter by main category if selected
-        if ($this->selectedCategory) {
-            $featureType = FeatureType::where('name', $this->selectedCategory)->first();
+        if (!isset($this->cachedFeatures[$cacheKey])) {
+            $featureType = FeatureType::where('name', $category)->first();
             
             if ($featureType) {
-                $query->where('feature_type_id', $featureType->id);
+                $query = FacialFeature::query()
+                    ->where('feature_type_id', $featureType->id)
+                    ->with(['featureType', 'category']);
                 
-                // Filter by subcategory if selected
-                if ($this->selectedSubcategory) {
-                    $query->where('feature_category_id', $this->selectedSubcategory);
-                }
+                $features = $query->get();
+                
+                // Store in memory
+                $this->cachedFeatures[$cacheKey] = $features;
+                
+                // Also store in cache
+                Cache::put($cacheKey, $features, 300);
             }
         }
-        
-        $features = $query->get();
-        
-        // Get subcategories for the selected main category
-        $subcategories = [];
-        if ($this->selectedCategory) {
-            $featureType = FeatureType::where('name', $this->selectedCategory)->first();
-            if ($featureType) {
-                $subcategories = FeatureCategory::where('feature_type_id', $featureType->id)->get();
-            }
-        }
-        
+    }
+    
+    public function render()
+    {
         return view('livewire.editor.feature-library', [
-            'features' => $features,
-            'subcategories' => $subcategories
+            'features' => $this->features,
+            'subcategories' => $this->subcategories
         ]);
     }
 }

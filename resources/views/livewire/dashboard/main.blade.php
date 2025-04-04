@@ -60,7 +60,7 @@
                     primary 
                     label="New Case" 
                     icon="plus" 
-                    class="bg-[#2C3E50] hover:bg-[#34495E] transition-colors text-white" 
+                    class="bg-[#10B981] hover:bg-[#059669] transition-colors text-white shadow-sm rounded-md" 
                     wire:click="createNewCase"
                 />
             </div>
@@ -124,7 +124,7 @@
                         primary 
                         label="Create New Case" 
                         icon="plus" 
-                        class="mt-6 bg-[#2C3E50] hover:bg-[#34495E] transition-colors text-white transform hover:scale-105" 
+                        class="mt-6 bg-[#10B981] hover:bg-[#059669] transition-colors text-white shadow-sm rounded-md transform hover:scale-105" 
                         wire:click="createNewCase"
                     />
                 @endif
@@ -168,6 +168,7 @@
                                         :label="$case->title" 
                                         class="text-xs"
                                         rounded="full"
+                                        color="slate"
                                     />
                                 </div>
                                 <div class="mt-2">

@@ -45,7 +45,12 @@
                 class="w-full bg-gray-50 border-gray-200"
                 :clearable="false"
             >
-                <x-select.option value="all" label="Cases (Default)" />
+                <x-select.option value="all">
+                    <div class="flex items-center">
+                        <x-icon name="document-text" class="w-4 h-4 mr-2 text-gray-500" />
+                        Cases (Default)
+                    </div>
+                </x-select.option>
                 <x-select.option value="witnesses">
                     <div class="flex items-center">
                         <x-icon name="users" class="w-4 h-4 mr-2 text-gray-500" />

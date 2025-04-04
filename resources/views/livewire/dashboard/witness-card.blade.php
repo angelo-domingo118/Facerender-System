@@ -23,20 +23,21 @@
             <!-- Action Buttons -->
             <x-button 
                 wire:click="editWitness" 
-                icon="pencil" 
-                label="Edit Witness"
-                xs
-                class="bg-blue-50 hover:bg-blue-100 text-blue-700"
-                rounded
-            />
+                icon="pencil-square" 
+                size="sm"
+                class="bg-[#6366F1] hover:bg-[#4F46E5] text-white transition-colors rounded-md"
+            >
+                Edit Witness
+            </x-button>
             <x-button 
                 wire:click="deleteWitness" 
                 icon="trash" 
-                label="Delete Witness"
-                xs
-                class="bg-red-50 hover:bg-red-100 text-red-700"
-                rounded
-            />
+                size="sm"
+                outline
+                class="text-red-600 border-red-300 hover:bg-red-50 transition-colors rounded-md"
+            >
+                Delete Witness
+            </x-button>
             
             <!-- Details Toggle Button -->
             <button 

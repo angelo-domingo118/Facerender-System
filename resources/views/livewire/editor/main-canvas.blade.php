@@ -69,17 +69,10 @@
     @vite(['resources/js/editor-canvas.js'])
 
     <script>
-        // Debug event communication
-        document.addEventListener('DOMContentLoaded', function() {
-            // Listen for feature-selected event and log it
-            window.addEventListener('feature-selected', (event) => {
-                console.log('Feature selected event caught in main-canvas:', event.detail);
-            });
-            
-            // Listen for direct update-canvas event
-            window.addEventListener('direct-update-canvas', (event) => {
-                console.log('Direct update-canvas event caught in main-canvas:', event.detail);
-            });
+        // Use window.onload instead of DOMContentLoaded to ensure consistent initialization
+        window.addEventListener('load', function() {
+            // No need for additional event listeners here since they're handled in editor-canvas.js
+            // and were causing duplicate processing
         });
     </script>
 </div>

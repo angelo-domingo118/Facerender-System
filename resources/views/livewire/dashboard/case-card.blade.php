@@ -10,17 +10,6 @@
                         <div>
                             <div class="flex items-center space-x-2">
                                 <h3 class="text-lg font-semibold text-[#2C3E50] group-hover:text-[#2C3E50]">{{ $case->title }}</h3>
-                                <x-badge 
-                                    :label="ucfirst($case->status)" 
-                                    :color="
-                                        $case->status === 'open' ? 'positive' : 
-                                        ($case->status === 'pending' ? 'warning' : 
-                                        ($case->status === 'closed' ? 'negative' : 
-                                        ($case->status === 'archived' ? 'slate' : 'neutral')))
-                                    "
-                                    class="font-medium"
-                                    rounded="full"
-                                />
                             </div>
                             <p class="text-sm text-gray-600 flex items-center mt-1">
                                 <x-icon name="hashtag" class="h-3 w-3 mr-1 text-[#2C3E50]" />
@@ -30,24 +19,38 @@
                     </div>
                     
                     <div class="flex items-center space-x-2">
+                        <!-- Status Badge - Moved here for better visibility -->
+                        <x-badge 
+                            :label="ucfirst($case->status)" 
+                            :color="
+                                $case->status === 'open' ? 'positive' : 
+                                ($case->status === 'pending' ? 'warning' : 
+                                ($case->status === 'closed' ? 'negative' : 
+                                ($case->status === 'archived' ? 'slate' : 'neutral')))
+                            "
+                            class="font-medium"
+                            rounded="full"
+                        />
+                        
                         <!-- Improved action buttons with labels -->
                         <div class="flex items-center space-x-2">
                             <x-button 
                                 wire:click="editCase" 
-                                icon="pencil" 
-                                label="Edit Case"
-                                xs
-                                class="bg-blue-50 hover:bg-blue-100 text-blue-700"
-                                rounded
-                            />
+                                icon="pencil-square" 
+                                size="sm"
+                                class="bg-[#6366F1] hover:bg-[#4F46E5] text-white transition-colors rounded-md"
+                            >
+                                Edit Case
+                            </x-button>
                             <x-button 
                                 wire:click="deleteCase" 
                                 icon="trash" 
-                                label="Delete Case"
-                                xs
-                                class="bg-red-50 hover:bg-red-100 text-red-700"
-                                rounded
-                            />
+                                size="sm"
+                                outline
+                                class="text-red-600 border-red-300 hover:bg-red-50 transition-colors rounded-md"
+                            >
+                                Delete Case
+                            </x-button>
                         </div>
                         
                         <!-- Expand/Collapse Button with text -->
@@ -152,12 +155,12 @@
                             </h4>
                             <x-button 
                                 wire:click="createComposite" 
-                                xs
+                                size="sm"
                                 icon="plus" 
-                                label="Add Composite" 
-                                class="bg-[#2C3E50] hover:bg-[#34495E] text-white shadow-sm"
-                                rounded
-                            />
+                                class="bg-[#10B981] hover:bg-[#059669] text-white shadow-sm transition-colors rounded-md"
+                            >
+                                Add Composite
+                            </x-button>
                         </div>
                         
                         @if($case->composites->isEmpty())
@@ -169,12 +172,12 @@
                                 <x-button 
                                     wire:click="createComposite" 
                                     flat 
-                                    xs
+                                    size="sm"
                                     icon="plus" 
-                                    label="Create First Composite" 
-                                    class="mt-2 text-[#2C3E50] hover:bg-[#2C3E50]/20" 
-                                    rounded
-                                />
+                                    class="mt-2 text-[#10B981] hover:bg-[#10B981]/10 transition-colors rounded-md" 
+                                >
+                                    Create First Composite
+                                </x-button>
                             </div>
                         @else
                             <div class="space-y-3" wire:key="composites-{{ $case->updated_at->timestamp }}">
@@ -196,12 +199,12 @@
                             </h4>
                             <x-button 
                                 wire:click="addWitness" 
-                                xs
+                                size="sm"
                                 icon="plus" 
-                                label="Add Witness" 
-                                class="bg-[#2C3E50] hover:bg-[#34495E] text-white shadow-sm"
-                                rounded
-                            />
+                                class="bg-[#10B981] hover:bg-[#059669] text-white shadow-sm transition-colors rounded-md"
+                            >
+                                Add Witness
+                            </x-button>
                         </div>
                         
                         @if($case->witnesses->isEmpty())
@@ -213,12 +216,12 @@
                                 <x-button 
                                     wire:click="addWitness" 
                                     flat 
-                                    xs
+                                    size="sm"
                                     icon="plus" 
-                                    label="Add First Witness" 
-                                    class="mt-2 text-[#2C3E50] hover:bg-[#2C3E50]/20" 
-                                    rounded
-                                />
+                                    class="mt-2 text-[#10B981] hover:bg-[#10B981]/10 transition-colors rounded-md" 
+                                >
+                                    Add First Witness
+                                </x-button>
                             </div>
                         @else
                             <div class="space-y-3" wire:key="witnesses-{{ $case->updated_at->timestamp }}">

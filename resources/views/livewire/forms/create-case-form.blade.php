@@ -73,7 +73,7 @@
                     label="Create Case"
                     wire:click="save"
                     spinner="save"
-                    class="bg-[#2C3E50] hover:bg-[#34495E]"
+                    class="bg-[#10B981] hover:bg-[#059669] text-white shadow-sm transition-colors rounded-md"
                 />
             </div>
         </x-slot>

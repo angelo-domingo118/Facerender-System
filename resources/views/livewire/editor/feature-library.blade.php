@@ -1,5 +1,6 @@
-<div class="h-full flex flex-col bg-gray-50" 
+<div class="h-full flex flex-col bg-gray-50 relative" 
     x-data="{ 
+        loading: false,
         init() {
             Livewire.on('scrollToTop', () => {
                 const featureGrid = document.querySelector('.feature-grid-container');
@@ -10,11 +11,9 @@
         }
     }"
 >
-    <!-- Removed the redundant "Feature Library" heading -->
-    
     <!-- Feature Category Selection -->
     <div class="p-3 border-b border-gray-200 bg-white">
-        <div x-data="{ open: false, selected: @entangle('selectedCategory') }" class="relative">
+        <div x-data="{ open: false, selected: @entangle('selectedCategory').live }" class="relative">
             <label class="text-sm font-medium text-gray-700 mb-1 block">Feature Category</label>
             
             <!-- Custom Dropdown Trigger -->
@@ -102,7 +101,7 @@
             >
                 <!-- Category Options -->
                 <button 
-                    @click="selected = 'eyes'; open = false" 
+                    @click="selected = 'eyes'; open = false;" 
                     class="w-full px-3 py-2 text-sm flex items-center hover:bg-indigo-50"
                     :class="{ 'bg-indigo-50 text-indigo-700': selected === 'eyes' }"
                     wire:click="$set('selectedCategory', 'eyes')"
@@ -115,7 +114,7 @@
                     </span> Eyes
                 </button>
                 <button 
-                    @click="selected = 'eyebrows'; open = false" 
+                    @click="selected = 'eyebrows'; open = false;" 
                     class="w-full px-3 py-2 text-sm flex items-center hover:bg-indigo-50"
                     :class="{ 'bg-indigo-50 text-indigo-700': selected === 'eyebrows' }"
                     wire:click="$set('selectedCategory', 'eyebrows')"
@@ -127,7 +126,7 @@
                     </span> Eyebrows
                 </button>
                 <button 
-                    @click="selected = 'nose'; open = false" 
+                    @click="selected = 'nose'; open = false;" 
                     class="w-full px-3 py-2 text-sm flex items-center hover:bg-indigo-50"
                     :class="{ 'bg-indigo-50 text-indigo-700': selected === 'nose' }"
                     wire:click="$set('selectedCategory', 'nose')"
@@ -139,7 +138,7 @@
                     </span> Nose
                 </button>
                 <button 
-                    @click="selected = 'mouth'; open = false" 
+                    @click="selected = 'mouth'; open = false;" 
                     class="w-full px-3 py-2 text-sm flex items-center hover:bg-indigo-50"
                     :class="{ 'bg-indigo-50 text-indigo-700': selected === 'mouth' }"
                     wire:click="$set('selectedCategory', 'mouth')"
@@ -151,7 +150,7 @@
                     </span> Mouth
                 </button>
                 <button 
-                    @click="selected = 'ears'; open = false" 
+                    @click="selected = 'ears'; open = false;" 
                     class="w-full px-3 py-2 text-sm flex items-center hover:bg-indigo-50"
                     :class="{ 'bg-indigo-50 text-indigo-700': selected === 'ears' }"
                     wire:click="$set('selectedCategory', 'ears')"
@@ -163,7 +162,7 @@
                     </span> Ears
                 </button>
                 <button 
-                    @click="selected = 'hair'; open = false" 
+                    @click="selected = 'hair'; open = false;" 
                     class="w-full px-3 py-2 text-sm flex items-center hover:bg-indigo-50"
                     :class="{ 'bg-indigo-50 text-indigo-700': selected === 'hair' }"
                     wire:click="$set('selectedCategory', 'hair')"
@@ -175,7 +174,7 @@
                     </span> Hair
                 </button>
                 <button 
-                    @click="selected = 'face'; open = false" 
+                    @click="selected = 'face'; open = false;" 
                     class="w-full px-3 py-2 text-sm flex items-center hover:bg-indigo-50"
                     :class="{ 'bg-indigo-50 text-indigo-700': selected === 'face' }"
                     wire:click="$set('selectedCategory', 'face')"
@@ -187,7 +186,7 @@
                     </span> Face Shape
                 </button>
                 <button 
-                    @click="selected = 'accessories'; open = false" 
+                    @click="selected = 'accessories'; open = false;" 
                     class="w-full px-3 py-2 text-sm flex items-center hover:bg-indigo-50"
                     :class="{ 'bg-indigo-50 text-indigo-700': selected === 'accessories' }"
                     wire:click="$set('selectedCategory', 'accessories')"
@@ -213,15 +212,27 @@
                 <input 
                     type="text" 
                     placeholder="Search features..." 
-                    wire:model.live="search"
+                    wire:model.debounce.300ms="search"
                     class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg w-full text-sm focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-150"
                 />
             </div>
         </div>
     </div>
     
-    <!-- Feature Grid -->
-    <div class="flex-1 overflow-y-auto p-3 feature-grid-container">
+    <!-- Feature Grid with Livewire loading state -->
+    <div class="flex-1 overflow-y-auto p-3 feature-grid-container relative">
+        <!-- Pure Livewire Loading Indicator -->
+        <div wire:loading wire:target="selectedCategory, search" class="absolute inset-0 bg-white/80 z-50 flex items-center justify-center">
+            <div class="bg-white p-4 rounded-lg shadow-lg flex flex-col items-center">
+                <div class="flex items-center justify-center space-x-2 animate-pulse">
+                    <div class="w-3 h-3 bg-indigo-500 rounded-full"></div>
+                    <div class="w-3 h-3 bg-indigo-500 rounded-full"></div>
+                    <div class="w-3 h-3 bg-indigo-500 rounded-full"></div>
+                </div>
+                <span class="mt-2 text-sm text-gray-700 font-medium">Loading features...</span>
+            </div>
+        </div>
+
         @if(!$selectedCategory)
             <div class="flex flex-col items-center justify-center h-full text-center">
                 <div class="bg-white p-8 rounded-lg border border-gray-200 shadow-sm max-w-sm">
@@ -269,16 +280,13 @@
                         class="bg-white border border-gray-200 rounded-md overflow-hidden hover:border-[#2C3E50] transition-colors duration-200 cursor-pointer group"
                     >
                         <div class="aspect-square bg-gray-100 relative overflow-hidden">
-                            <!-- Debug info to verify image path -->
-                            <div class="hidden">Path: {{ $feature->image_path }}</div>
-                            
                             <!-- Feature image with lazy loading and fade-in effect -->
                             <div class="absolute inset-0 w-full h-full bg-gray-200 feature-image-container">
                                 <img 
                                     src="{{ asset('storage/' . $feature->image_path) }}" 
                                     alt="{{ $feature->name }}" 
-                                    class="absolute inset-0 w-full h-full object-contain p-2 feature-image"
-                                    loading="eager"
+                                    class="absolute inset-0 w-full h-full object-contain p-2 feature-library-image"
+                                    loading="lazy"
                                     onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjIwMCIgaGVpZ2h0PSIyMDAiIGZpbGw9IiNmMWYxZjEiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjI4IiBmaWxsPSIjYWFhYWFhIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5JbWFnZTwvdGV4dD48L3N2Zz4='; this.onerror=null;"
                                 >
                             </div>
@@ -416,8 +424,40 @@
         </div>
     </div>
 
-    <!-- Add Alpine.js directive for hiding elements -->
+    <!-- Style adjustments -->
     <style>
         [x-cloak] { display: none !important; }
+        
+        /* Add smooth transitions for feature items to improve perceived performance */
+        .feature-library-image {
+            transition: opacity 0.2s ease-in-out;
+        }
+        
+        /* Animated loading dots */
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+        
+        .animate-pulse {
+            animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        
+        /* Staggered animation for the loading dots */
+        .animate-pulse div:nth-child(1) {
+            animation-delay: 0s;
+        }
+        
+        .animate-pulse div:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        
+        .animate-pulse div:nth-child(3) {
+            animation-delay: 0.4s;
+        }
     </style>
 </div>
