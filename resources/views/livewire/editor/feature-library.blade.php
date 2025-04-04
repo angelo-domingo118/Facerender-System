@@ -202,7 +202,7 @@
         </div>
         
         <!-- Search input -->
-        <div class="mt-3">
+        <div class="mt-3 relative">
             <div class="relative">
                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
@@ -211,18 +211,62 @@
                 </div>
                 <input 
                     type="text" 
-                    placeholder="Search features..." 
-                    wire:model.debounce.300ms="search"
-                    class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg w-full text-sm focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-150"
+                    placeholder="{{ !$selectedCategory ? 'Select category first' : 'Search features...' }}" 
+                    wire:model.live="search"
+                    class="pl-10 pr-10 py-2 border border-gray-300 rounded-lg w-full text-sm focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-150 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                    @disabled(!$selectedCategory)
                 />
+                
+                <!-- Clear search button - only show when there's search text and input is enabled -->
+                @if($search && $selectedCategory)
+                    <button 
+                        wire:click="clearSearch" 
+                        type="button"
+                        class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                @endif
             </div>
+            
+            <!-- Show active filters -->
+            @if($search || $selectedSubcategory)
+                <div class="mt-2 flex items-center text-xs text-gray-600 space-x-2">
+                    <span class="font-medium">Active filters:</span>
+                    @if($search)
+                        <span class="bg-indigo-100 text-indigo-800 px-2 py-1 rounded-full flex items-center">
+                            "{{ $search }}"
+                            <button wire:click="clearSearch" class="ml-1 text-indigo-500 hover:text-indigo-700">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </span>
+                    @endif
+                    @if($selectedSubcategory)
+                        @php
+                            $subCategoryName = $subcategories->firstWhere('id', $selectedSubcategory)?->name ?? 'Unknown';
+                        @endphp
+                        <span class="bg-gray-100 text-gray-800 px-2 py-1 rounded-full flex items-center">
+                            {{ $subCategoryName }}
+                            <button wire:click="clearSubcategory" class="ml-1 text-gray-500 hover:text-gray-700">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </span>
+                    @endif
+                </div>
+            @endif
         </div>
     </div>
     
     <!-- Feature Grid with Livewire loading state -->
     <div class="flex-1 overflow-y-auto p-3 feature-grid-container relative">
         <!-- Pure Livewire Loading Indicator -->
-        <div wire:loading wire:target="selectedCategory, search" class="absolute inset-0 bg-white/80 z-50 flex items-center justify-center">
+        <div wire:loading wire:target="selectedCategory" class="absolute inset-0 bg-white/80 z-50 flex items-center justify-center">
             <div class="bg-white p-4 rounded-lg shadow-lg flex flex-col items-center">
                 <div class="flex items-center justify-center space-x-2 animate-pulse">
                     <div class="w-3 h-3 bg-indigo-500 rounded-full"></div>
@@ -230,6 +274,20 @@
                     <div class="w-3 h-3 bg-indigo-500 rounded-full"></div>
                 </div>
                 <span class="mt-2 text-sm text-gray-700 font-medium">Loading features...</span>
+            </div>
+        </div>
+        
+        <!-- Search Loading Indicator -->
+        <div wire:loading wire:target="search" class="absolute inset-0 bg-white/80 z-50 flex items-center justify-center">
+            <div class="bg-white p-4 rounded-lg shadow-lg flex flex-col items-center">
+                <div class="flex items-center justify-center space-x-2 animate-pulse">
+                    <div class="w-3 h-3 bg-indigo-500 rounded-full"></div>
+                    <div class="w-3 h-3 bg-indigo-500 rounded-full"></div>
+                    <div class="w-3 h-3 bg-indigo-500 rounded-full"></div>
+                </div>
+                <span class="mt-2 text-sm text-gray-700 font-medium">
+                    Searching for "{{ $search }}"...
+                </span>
             </div>
         </div>
 
@@ -330,8 +388,29 @@
                         </div>
                     </div>
                 @empty
-                    <div class="col-span-2 p-4 text-center text-gray-500">
-                        <p>No features found. Try adjusting your search or category.</p>
+                    <div class="col-span-2 p-8 text-center">
+                        @if($search)
+                            <div class="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+                                <div class="text-gray-400 mb-3">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                    </svg>
+                                </div>
+                                <h3 class="text-base font-medium text-gray-700 mb-1">No features found</h3>
+                                <p class="text-sm text-gray-500 mb-4">No results found for "<span class="font-medium">{{ $search }}</span>"</p>
+                                <button 
+                                    wire:click="clearSearch"
+                                    class="inline-flex items-center justify-center px-3 py-1.5 border border-transparent rounded-md shadow-sm text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    Clear search
+                                </button>
+                            </div>
+                        @else
+                            <p class="text-gray-500">No features found. Try adjusting your search or category.</p>
+                        @endif
                     </div>
                 @endforelse
             </div>

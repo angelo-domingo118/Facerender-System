@@ -7,6 +7,7 @@ use App\Models\FeatureType;
 use App\Models\FeatureCategory;
 use Livewire\Component;
 use Livewire\WithPagination;
+use Livewire\Attributes\Reactive;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
 
@@ -23,6 +24,26 @@ class FeatureLibrary extends Component
     protected $listeners = [
         'refresh-feature-library' => '$refresh',
     ];
+
+    // Make search reactive
+    protected $queryString = ['search'];
+    
+    // Update on every keystroke for search
+    protected function getListeners()
+    {
+        return array_merge($this->listeners, [
+            'search-updated' => 'updatedSearch'
+        ]);
+    }
+
+    /**
+     * Hook for when search is updated
+     */
+    public function updatedSearch()
+    {
+        Log::info("Search updated: {$this->search}");
+        $this->resetPage();
+    }
     
     /**
      * Get the feature types for the dropdown.
@@ -66,7 +87,8 @@ class FeatureLibrary extends Component
         }
         
         // If search is active, don't use cache
-        if ($this->search) {
+        if (!empty($this->search)) {
+            Log::info("Using search: '{$this->search}' in category {$this->selectedCategory}");
             return $this->fetchFeaturesFromDatabase();
         }
         
@@ -111,11 +133,14 @@ class FeatureLibrary extends Component
             Log::info("Filter by subcategory ID: {$this->selectedSubcategory}");
         }
         
-        if ($this->search) {
-            $query->where(function ($subquery) {
-                $subquery->where('name', 'like', '%' . $this->search . '%')
-                    ->orWhere('feature_code', 'like', '%' . $this->search . '%');
+        if (!empty($this->search)) {
+            $searchTerm = '%' . trim($this->search) . '%';
+            $query->where(function ($subquery) use ($searchTerm) {
+                $subquery->where('name', 'like', $searchTerm)
+                    ->orWhere('feature_code', 'like', $searchTerm);
             });
+            
+            Log::info("Applied search filter: {$this->search}");
         }
         
         // Eager load relationships to avoid N+1 issues
@@ -131,6 +156,25 @@ class FeatureLibrary extends Component
     public function selectSubcategory($categoryId)
     {
         $this->selectedSubcategory = $categoryId;
+        $this->resetPage();
+    }
+    
+    /**
+     * Clear search
+     */
+    public function clearSearch()
+    {
+        $this->search = '';
+        $this->resetPage();
+    }
+
+    /**
+     * Clear selected subcategory
+     */
+    public function clearSubcategory()
+    {
+        $this->selectedSubcategory = null;
+        $this->resetPage();
     }
     
     /**
@@ -181,6 +225,8 @@ class FeatureLibrary extends Component
     {
         // Reset subcategory whenever category changes
         $this->selectedSubcategory = null;
+        $this->search = ''; // Clear search when changing categories
+        $this->resetPage();
         
         // Always scroll to top when changing categories
         if ($value) {
