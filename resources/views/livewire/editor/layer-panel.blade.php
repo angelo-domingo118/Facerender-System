@@ -8,8 +8,8 @@
         </div>
     </div>
     
-    <!-- Layer List -->
-    <div class="flex-1 overflow-y-auto">
+    <!-- Layer List - Adding flex-1 and min-height to ensure it takes available space -->
+    <div class="flex-1 overflow-y-auto min-h-0">
         <div class="p-2">
             @forelse($layers as $layer)
                 <div 
@@ -107,8 +107,8 @@
         </div>
     </div>
     
-    <!-- Layer Properties -->
-    <div class="p-3 border-t border-gray-200 {{ empty($layers) ? 'opacity-50 pointer-events-none' : '' }}">
+    <!-- Layer Properties - Explicitly set as a fixed height section with flex-shrink-0 -->
+    <div class="flex-shrink-0 p-3 border-t border-gray-200 bg-white {{ empty($layers) ? 'opacity-50 pointer-events-none' : '' }}">
         <div class="space-y-3">
             <h4 class="text-xs font-medium text-gray-500 uppercase">Layer Properties</h4>
             

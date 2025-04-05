@@ -59,16 +59,19 @@
                     </div>
                     
                     <!-- Tab Content -->
-                    <div class="flex-1 overflow-y-auto">
-                        @if($activeRightTab === 'layers')
-                            @livewire('editor.layer-panel', ['compositeId' => $compositeId])
-                        @elseif($activeRightTab === 'transforms')
-                            @livewire('editor.feature-transform-panel')
-                        @elseif($activeRightTab === 'adjustments')
-                            @livewire('editor.feature-adjustment-panel')
-                        @elseif($activeRightTab === 'details')
-                            @livewire('editor.composite-details-panel', ['compositeId' => $compositeId])
-                        @endif
+                    <div class="flex-1 overflow-hidden flex flex-col">
+                        <div style="{{ $activeRightTab === 'layers' ? '' : 'display: none;' }}" class="h-full flex flex-col">
+                            @livewire('editor.layer-panel', ['compositeId' => $compositeId], key('layer-panel-' . $compositeId))
+                        </div>
+                        <div style="{{ $activeRightTab === 'transforms' ? '' : 'display: none;' }}" class="h-full">
+                            @livewire('editor.feature-transform-panel', key('transform-panel-' . $compositeId))
+                        </div>
+                        <div style="{{ $activeRightTab === 'adjustments' ? '' : 'display: none;' }}" class="h-full">
+                            @livewire('editor.feature-adjustment-panel', key('adjustment-panel-' . $compositeId))
+                        </div>
+                        <div style="{{ $activeRightTab === 'details' ? '' : 'display: none;' }}" class="h-full">
+                            @livewire('editor.composite-details-panel', ['compositeId' => $compositeId], key('details-panel-' . $compositeId))
+                        </div>
                     </div>
                 </div>
             @endif

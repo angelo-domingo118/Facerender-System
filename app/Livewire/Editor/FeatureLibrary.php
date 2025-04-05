@@ -19,10 +19,12 @@ class FeatureLibrary extends Component
     public $selectedSubcategory = null;
     public $search = '';
     public $viewedCategories = [];
+    public $activeFeatureIds = [];
     protected $cachedFeatures = [];
     
     protected $listeners = [
         'refresh-feature-library' => '$refresh',
+        'active-features-updated' => 'handleActiveFeaturesUpdate'
     ];
 
     // Make search reactive
@@ -190,6 +192,25 @@ class FeatureLibrary extends Component
             return;
         }
         
+        // --- Optimistic Update --- 
+        // Immediately update the checkmark locally for instant UI feedback
+        $featureTypeId = $feature->feature_type_id;
+        
+        // Find and remove any existing active ID of the same feature type
+        $this->activeFeatureIds = collect($this->activeFeatureIds)->filter(function ($activeId) use ($featureTypeId, $featureId) {
+            // Find the feature associated with the active ID (check current rendered features)
+            $activeFeature = $this->features->firstWhere('id', $activeId);
+            
+            // Keep if feature not found, or if it's a different type, or if it's the same feature being clicked again
+            return !$activeFeature || $activeFeature->feature_type_id != $featureTypeId || $activeId == $featureId;
+        })->all();
+
+        // Add the newly selected feature ID
+        if (!in_array($featureId, $this->activeFeatureIds)) {
+            $this->activeFeatureIds[] = $featureId;
+        }
+        // --------------------------
+
         // Log feature selection for debugging
         Log::info("Feature selected: {$featureId}", [
             'name' => $feature->name,
@@ -264,6 +285,15 @@ class FeatureLibrary extends Component
                 Cache::put($cacheKey, $features, 300);
             }
         }
+    }
+    
+    /**
+     * Update the list of active feature IDs.
+     */
+    public function handleActiveFeaturesUpdate($activeIds)
+    {
+        $this->activeFeatureIds = $activeIds;
+        Log::info('Received active-features-updated', ['active_ids' => $this->activeFeatureIds]);
     }
     
     public function render()

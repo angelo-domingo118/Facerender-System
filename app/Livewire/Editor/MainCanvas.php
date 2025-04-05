@@ -11,21 +11,6 @@ class MainCanvas extends Component
     public $compositeId;
     public $composite;
     
-    // --- Default Layer Order Configuration ---
-    // IMPORTANT: Replace these placeholder IDs with the actual IDs from your feature_types table
-    private const FEATURE_TYPE_ID_EARS = 9991; // Replace with actual ID for Ears
-    private const FEATURE_TYPE_ID_FACE = 9992; // Replace with actual ID for Face
-    private const FEATURE_TYPE_ID_HAIR = 9993; // Replace with actual ID for Hair
-    
-    private const ORDER_MAP = [
-        self::FEATURE_TYPE_ID_EARS => 10,
-        self::FEATURE_TYPE_ID_FACE => 20,
-        self::FEATURE_TYPE_ID_HAIR => 30,
-        // Add other specific types if needed, e.g., Neck => 5
-    ];
-    private const DEFAULT_ORDER = 100; // Order for all other feature types (eyes, nose, mouth, etc.)
-    // ----------------------------------------
-
     // Properties for canvas state
     public $activeTool = 'move'; // move, scale, rotate
     public $zoomLevel = 100;
@@ -110,26 +95,16 @@ class MainCanvas extends Component
                 'total_features' => count($this->selectedFeatures)
             ]);
             
-            // --- Sort features based on defined order --- 
-            usort($this->selectedFeatures, function($a, $b) {
-                $orderA = $this->getFeatureOrder($a);
-                $orderB = $this->getFeatureOrder($b);
-                return $orderA <=> $orderB; // Use spaceship operator for comparison
-            });
-            Log::info('Features sorted by type order', ['new_order' => array_column($this->selectedFeatures, 'id')]);
-            // ----------------------------------------
-
-            // Dispatch the event to the browser (with sorted features)
+            // Dispatch the event to the browser (with features array)
             $this->dispatch('update-canvas', ['selectedFeatures' => $this->selectedFeatures]);
             
-            // Also dispatch direct event for JS (feature data itself is fine)
-            $this->dispatch('direct-update-canvas', [
-                'feature' => end($this->selectedFeatures)
-            ]);
-
             // After updating features, notify layer panel
             // Send layers in canvas order - last item in array = top most layer visually
             $this->dispatch('layers-updated', $this->selectedFeatures);
+
+            // Dispatch active feature IDs to the feature library
+            $this->dispatchActiveFeatureIds();
+
         } else {
             Log::error('Feature not found in database', ['featureId' => $featureId]);
         }
@@ -140,8 +115,8 @@ class MainCanvas extends Component
      */
     private function getFeatureOrder(array $feature): int
     {
-        $typeId = $feature['feature_type'] ?? null;
-        return self::ORDER_MAP[$typeId] ?? self::DEFAULT_ORDER;
+        // REMOVED: Layer ordering logic
+        return 100; // Return a constant value since sorting is no longer used
     }
     
     public function handleDirectCanvasUpdate($data)
@@ -203,6 +178,9 @@ class MainCanvas extends Component
             // After updating features, notify layer panel
             // Send layers in canvas order - last item in array = top most layer visually
             $this->dispatch('layers-updated', $this->selectedFeatures);
+
+            // Dispatch active feature IDs to the feature library
+            $this->dispatchActiveFeatureIds();
         }
     }
     
@@ -239,6 +217,9 @@ class MainCanvas extends Component
 
         // Notify layer panel that a feature was removed
         $this->dispatch('feature-removed', $featureId);
+
+        // Dispatch updated active feature IDs
+        $this->dispatchActiveFeatureIds();
     }
     
     public function clearFeatures()
@@ -248,7 +229,20 @@ class MainCanvas extends Component
         Log::info('All features cleared from canvas');
 
         // Notify layer panel that all features were cleared
-        $this->dispatch('features-cleared');
+        $this->dispatch('clear-layers');
+
+        // Dispatch updated active feature IDs (which will be empty)
+        $this->dispatchActiveFeatureIds();
+    }
+    
+    /**
+     * Helper method to dispatch the list of active feature IDs.
+     */
+    protected function dispatchActiveFeatureIds()
+    {
+        $activeIds = array_column($this->selectedFeatures, 'id');
+        $this->dispatch('active-features-updated', $activeIds);
+        Log::info('Dispatched active-features-updated', ['active_ids' => $activeIds]);
     }
     
     public function setTool($tool)
@@ -350,22 +344,16 @@ class MainCanvas extends Component
     {
         Log::info('Layer reordering received', ['layer_count' => count($data['layers'])]);
         
-        // Get the new order of feature IDs from the layer panel (top to bottom)
-        $panelLayerIds = array_column($data['layers'], 'id');
+        // Get the layer order as presented in the layer panel
+        $orderedLayerIds = array_column($data['layers'], 'id');
         
-        // We need to reverse this order for the canvas since in Fabric.js:
-        // - First items in array = bottom layers
-        // - Last items in array = top layers
-        $orderedFeaturesIds = array_reverse($panelLayerIds);
-        
-        Log::info('Layer ordering for canvas', [
-            'panel_order' => $panelLayerIds,
-            'canvas_order' => $orderedFeaturesIds
+        Log::info('New layer ordering from panel', [
+            'layer_order' => $orderedLayerIds
         ]);
         
         // Rebuild the selectedFeatures array in the new order
         $orderedFeatures = [];
-        foreach ($orderedFeaturesIds as $featureId) {
+        foreach ($orderedLayerIds as $featureId) {
             foreach ($this->selectedFeatures as $feature) {
                 if ($feature['id'] == $featureId) {
                     $orderedFeatures[] = $feature;
@@ -464,6 +452,10 @@ class MainCanvas extends Component
     
     public function render()
     {
+        // Re-enable dispatch in render to ensure panels update if their state is stale
+        // when they become visible again.
+        $this->dispatch('layers-updated', $this->selectedFeatures);
+        
         return view('livewire.editor.main-canvas');
     }
 }

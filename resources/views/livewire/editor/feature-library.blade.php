@@ -335,8 +335,17 @@
                     <div 
                         wire:key="feature-{{ $feature->id }}"
                         wire:click="selectFeature({{ $feature->id }})" 
-                        class="bg-white border border-gray-200 rounded-md overflow-hidden hover:border-[#2C3E50] transition-colors duration-200 cursor-pointer group"
+                        class="relative bg-white border border-gray-200 rounded-md overflow-hidden hover:border-[#2C3E50] transition-colors duration-200 cursor-pointer group"
                     >
+                        <!-- Checkmark overlay for active features -->
+                        @if(in_array($feature->id, $activeFeatureIds))
+                            <div class="absolute top-1 right-1 z-10 bg-green-500 text-white rounded-full p-0.5 shadow">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+                                </svg>
+                            </div>
+                        @endif
+
                         <div class="aspect-square bg-gray-100 relative overflow-hidden">
                             <!-- Feature image with lazy loading and fade-in effect -->
                             <div class="absolute inset-0 w-full h-full bg-gray-200 feature-image-container">
