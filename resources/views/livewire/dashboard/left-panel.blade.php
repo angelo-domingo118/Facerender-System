@@ -75,9 +75,6 @@
                     </div>
                 </x-select.option>
             </x-select>
-            <p class="text-xs text-gray-400 italic">
-                Choose "Witnesses Only" or "Composites Only" to view specific items across all cases.
-            </p>
         </div>
         
         <!-- Status Filter -->
