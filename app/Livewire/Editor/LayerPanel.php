@@ -132,6 +132,9 @@ class LayerPanel extends Component
                 'featureId' => $layerId
             ]);
             
+            // Dispatch event for the transform panel
+            $this->dispatch('layer-selected', $layer);
+            
             Log::info('Layer selected', ['layerId' => $layerId]);
         }
     }

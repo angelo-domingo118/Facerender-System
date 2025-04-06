@@ -20,6 +20,10 @@
         
         <!-- Styles -->
         @livewireStyles
+        
+        <!-- Favicon -->
+        <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
+        <link rel="alternate icon" href="{{ asset('favicon.ico') }}" type="image/x-icon">
     </head>
     <body class="font-roboto bg-[#F5F7FA] text-[#34495E] overflow-hidden">
         <div class="h-screen flex flex-col">

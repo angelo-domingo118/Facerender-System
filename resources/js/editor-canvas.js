@@ -631,6 +631,79 @@ function setupLivewireHandlers() {
         }
     });
     
+    // Listener for layer transform update
+    Livewire.on('layer-transform-updated', (data) => {
+        log('Layer transform updated event:', data);
+        const layerId = data.layerId || (data[0] ? data[0].layerId : null);
+        const transform = data.transform || (data[0] ? data[0].transform : null);
+        
+        if (!layerId || !transform) {
+            console.error('Missing layerId or transform data in layer-transform-updated event', data);
+            return;
+        }
+        
+        const objects = canvas.getObjects().filter(obj => obj.data && obj.data.featureId === layerId);
+        if (objects.length > 0) {
+            const fabricObject = objects[0];
+            
+            // Keep track of current state before applying changes
+            const currentScaleX = fabricObject.scaleX;
+            const currentScaleY = fabricObject.scaleY;
+            
+            // Determine if this is just a position/rotation update or if it includes size changes
+            const isPositionOnlyUpdate = transform.x !== undefined && 
+                transform.y !== undefined && 
+                (transform.width === undefined || transform.height === undefined);
+            
+            // Update position
+            if (transform.x !== undefined && transform.y !== undefined) {
+                fabricObject.set({
+                    left: transform.x,
+                    top: transform.y
+                });
+            }
+            
+            // Update rotation
+            if (transform.rotation !== undefined) {
+                fabricObject.set('angle', transform.rotation);
+            }
+            
+            // Only update scale if width/height values were explicitly provided
+            // Otherwise, preserve the current scale during position-only movements
+            if (!isPositionOnlyUpdate && transform.width !== undefined && transform.height !== undefined) {
+                // Get the original width/height (without scaling)
+                const originalWidth = fabricObject.width;
+                const originalHeight = fabricObject.height;
+                
+                if (originalWidth && originalHeight) {
+                    // Calculate new scale factors
+                    const scaleX = transform.width / originalWidth;
+                    const scaleY = transform.height / originalHeight;
+                    
+                    // Use the same scale value for both dimensions to preserve aspect ratio
+                    const scale = Math.min(scaleX, scaleY);
+                    
+                    fabricObject.set({
+                        scaleX: scale,
+                        scaleY: scale
+                    });
+                    
+                    log(`Updated scale for layer ${layerId} to ${scale} (preserved aspect ratio)`);
+                }
+            } else {
+                // For position-only updates, maintain the current scale
+                log(`Position-only update, preserving current scale (${currentScaleX})`);
+            }
+            
+            fabricObject.setCoords();
+            canvas.renderAll();
+            
+            log(`Updated transform for layer ${layerId}:`, transform);
+        } else {
+            log(`Layer ${layerId} not found on canvas for transform update.`);
+        }
+    });
+    
     // Listener for selecting a feature on the canvas (triggered by LayerPanel click)
     Livewire.on('select-feature-on-canvas', (data) => {
         log('Select feature on canvas event:', data);

@@ -104,11 +104,6 @@ class Main extends Component
         $this->resetPage();
     }
     
-    public function createNewCase()
-    {
-        $this->dispatch('create-new-case');
-    }
-    
     public function updatedSearch()
     {
         $this->resetPage();

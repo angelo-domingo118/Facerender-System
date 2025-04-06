@@ -20,8 +20,12 @@
         
         <!-- Styles -->
         @livewireStyles
+
+        <!-- Favicon -->
+        <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
+        <link rel="alternate icon" href="{{ asset('favicon.ico') }}" type="image/x-icon">
     </head>
-    <body class="font-roboto bg-[#F5F7FA] text-[#34495E]">
+    <body class="font-roboto bg-[#2C3E50] text-gray-300">
         <x-banner />
 
         <div class="min-h-screen">
@@ -29,7 +33,7 @@
 
             <!-- Page Heading -->
             @if (isset($header))
-                <header class="bg-white shadow">
+                <header class="bg-[#243342] border-b border-[#3498DB]/20">
                     <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
                         {{ $header }}
                     </div>

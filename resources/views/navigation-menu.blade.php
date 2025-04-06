@@ -1,4 +1,4 @@
-<nav x-data="{ open: false }" class="bg-[#2C3E50] py-4 shadow-md">
+<nav x-data="{ open: false }" class="bg-[#2C3E50] py-4">
     <!-- Primary Navigation Menu -->
     <div class="container mx-auto px-4 flex justify-between items-center">
         <div class="flex items-center">
@@ -107,57 +107,33 @@
                         x-transition:leave="transition ease-in duration-75"
                         x-transition:leave-start="transform opacity-100 scale-100"
                         x-transition:leave-end="transform opacity-0 scale-95"
-                        class="absolute z-50 mt-2 w-56 rounded-lg shadow-xl origin-top-right right-0 bg-white overflow-hidden"
+                        class="absolute z-50 mt-2 w-56 rounded-md shadow-xl origin-top-right right-0 bg-[#2C3E50] overflow-hidden border border-[#3498DB]/20"
                         style="display: none;">
                         <!-- User Info -->
-                        <div class="px-4 py-3 border-b border-gray-100 bg-gradient-to-r from-[#3498DB] to-[#2980B9] relative overflow-hidden">
-                            <div class="absolute inset-0 bg-opacity-10 bg-white">
-                                <div class="absolute inset-0 opacity-10" style="background-image: url('data:image/svg+xml,%3Csvg width=\'30\' height=\'30\' viewBox=\'0 0 30 30\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cpath d=\'M15 0C6.716 0 0 6.716 0 15c0 8.284 6.716 15 15 15 8.284 0 15-6.716 15-15 0-8.284-6.716-15-15-15zm0 6c4.986 0 9 4.014 9 9s-4.014 9-9 9-9-4.014-9-9 4.014-9 9-9z\' fill=\'%23FFF\' fill-opacity=\'.2\' fill-rule=\'evenodd\'/%3E%3C/svg%3E');background-size: 60px 60px;"></div>
-                            </div>
-                            <div class="flex items-center relative z-10">
-                                @if (Laravel\Jetstream\Jetstream::managesProfilePhotos())
-                                    <img class="h-10 w-10 rounded-full border-2 border-white shadow-md" src="{{ Auth::user()->profile_photo_url }}" alt="{{ Auth::user()->name }}">
-                                @endif
-                                <div class="ml-3">
-                                    <p class="text-sm font-medium text-white">{{ Auth::user()->name }}</p>
-                                    <p class="text-xs text-white text-opacity-80 truncate">{{ Auth::user()->email }}</p>
-                                </div>
-                            </div>
+                        <div class="px-4 py-3 border-b border-[#3498DB]/20">
+                            <p class="text-sm font-medium text-white truncate">{{ Auth::user()->email }}</p>
                         </div>
 
-                        <!-- Account Management -->
-                        <div class="block px-4 py-2 text-xs font-medium text-gray-500 bg-gray-50">
-                            {{ __('Manage Account') }}
-                        </div>
-
-                        <a href="{{ route('profile.show') }}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                            </svg>
+                        <a href="{{ route('profile.show') }}" class="flex items-center px-4 py-2 text-sm text-white hover:bg-[#34495E] transition">
                             {{ __('Profile') }}
                         </a>
 
                         @if (Laravel\Jetstream\Jetstream::hasApiFeatures())
-                            <a href="{{ route('api-tokens.index') }}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
-                                </svg>
+                            <a href="{{ route('api-tokens.index') }}" class="flex items-center px-4 py-2 text-sm text-white hover:bg-[#34495E] transition">
                                 {{ __('API Tokens') }}
                             </a>
                         @endif
-
-                        <div class="border-t border-gray-100"></div>
 
                         <!-- Authentication -->
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf
                             <a href="{{ route('logout') }}" 
-                               class="flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition"
+                               class="flex items-center justify-between px-4 py-2 text-sm text-white hover:bg-[#34495E] transition"
                                onclick="event.preventDefault(); this.closest('form').submit();">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                                {{ __('LOG OUT') }}
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                                 </svg>
-                                {{ __('Log Out') }}
                             </a>
                         </form>
                     </div>
@@ -182,7 +158,7 @@
     </div>
 
     <!-- Responsive Navigation Menu -->
-    <div :class="{'block': open, 'hidden': !open}" class="hidden md:hidden bg-[#34495E] mt-2 rounded-b-lg shadow-lg">
+    <div :class="{'block': open, 'hidden': !open}" class="hidden md:hidden bg-[#34495E] mt-2 rounded-b-lg">
         <!-- Responsive Settings Options -->
         <div class="pt-4 pb-1 border-t border-gray-600">
             <div class="flex items-center px-4">

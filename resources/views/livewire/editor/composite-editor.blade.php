@@ -64,7 +64,7 @@
                             @livewire('editor.layer-panel', ['compositeId' => $compositeId], key('layer-panel-' . $compositeId))
                         </div>
                         <div style="{{ $activeRightTab === 'transforms' ? '' : 'display: none;' }}" class="h-full">
-                            @livewire('editor.feature-transform-panel', key('transform-panel-' . $compositeId))
+                            @livewire('editor.transform-panel', key('transform-panel-' . $compositeId))
                         </div>
                         <div style="{{ $activeRightTab === 'adjustments' ? '' : 'display: none;' }}" class="h-full">
                             @livewire('editor.feature-adjustment-panel', key('adjustment-panel-' . $compositeId))

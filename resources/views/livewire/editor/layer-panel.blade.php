@@ -1,13 +1,4 @@
 <div class="h-full flex flex-col bg-gray-50">
-    <div class="p-3 border-b border-gray-200 bg-white">
-        <div class="flex justify-between items-center">
-            <h3 class="font-medium text-[#2C3E50]">Layers</h3>
-            <div class="flex space-x-1">
-                <!-- Actions removed as they'll be handled by the feature library -->
-            </div>
-        </div>
-    </div>
-    
     <!-- Layer List - Adding flex-1 and min-height to ensure it takes available space -->
     <div class="flex-1 overflow-y-auto min-h-0">
         <div class="p-2">

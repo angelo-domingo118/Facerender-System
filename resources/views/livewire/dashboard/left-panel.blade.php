@@ -1,11 +1,11 @@
-<div class="bg-white p-6 h-full">
+<div class="bg-[#2C3E50] p-6 h-full text-gray-200 flex flex-col">
     <!-- Search Bar with Clear Button -->
     <div class="mb-6">
         <x-input 
             placeholder="{{ $contentTypeFilter === 'witnesses' ? 'Search witnesses...' : ($contentTypeFilter === 'composites' ? 'Search composites...' : 'Search cases...') }}" 
             wire:model.live.debounce.300ms="search"
             icon="magnifying-glass"
-            class="w-full bg-gray-50 border-gray-200 focus:border-indigo-500 focus:ring-indigo-500"
+            class="w-full bg-[#2C3E50] text-gray-200 border-[#3498DB]/20 focus:border-[#3498DB] focus:ring-[#3498DB]/50 placeholder-gray-400"
         >
             <x-slot name="append">
                 <div class="absolute inset-y-0 right-0 flex items-center p-0.5">
@@ -14,7 +14,7 @@
                         x-show="search.length > 0" 
                         @click="$wire.set('search', '')" 
                         type="button"
-                        class="flex items-center justify-center h-full w-8 text-gray-400 hover:text-gray-600 focus:outline-none rounded-full hover:bg-gray-100"
+                        class="flex items-center justify-center h-full w-8 text-gray-400 hover:text-white focus:outline-none rounded-full hover:bg-[#34495E]"
                         aria-label="Clear search"
                     >
                         <x-icon name="x-mark" class="w-4 h-4" />
@@ -24,13 +24,24 @@
         </x-input>
     </div>
     
+    <!-- New Case Button -->
+    <div class="mb-6">
+        <x-button 
+            primary 
+            label="New Case" 
+            icon="plus" 
+            class="w-full justify-center bg-[#10B981] hover:bg-[#059669] transition-colors text-white shadow-sm rounded-md" 
+            wire:click="$dispatch('create-new-case')"
+        />
+    </div>
+    
     <!-- Divider with label -->
     <div class="relative my-8">
         <div class="absolute inset-0 flex items-center">
-            <div class="w-full border-t border-gray-200"></div>
+            <div class="w-full border-t border-[#3498DB]/20"></div>
         </div>
         <div class="relative flex justify-center text-sm">
-            <span class="px-2 bg-white text-gray-500 uppercase tracking-wider font-medium">Filters</span>
+            <span class="px-2 bg-[#2C3E50] text-[#3498DB] uppercase tracking-wider font-medium">Filters</span>
         </div>
     </div>
     
@@ -38,44 +49,44 @@
     <div class="space-y-6">
         <!-- Content Type Filter -->
         <div class="space-y-2">
-            <label class="text-sm font-medium text-gray-700">View Mode</label>
+            <label class="text-sm font-medium text-gray-300">View Mode</label>
             <x-select
                 placeholder="Select view mode"
                 wire:model.live="contentTypeFilter"
-                class="w-full bg-gray-50 border-gray-200"
+                class="w-full bg-[#2C3E50] text-gray-200 border-[#3498DB]/20"
                 :clearable="false"
             >
                 <x-select.option value="all">
                     <div class="flex items-center">
-                        <x-icon name="document-text" class="w-4 h-4 mr-2 text-gray-500" />
+                        <x-icon name="document-text" class="w-4 h-4 mr-2 text-[#3498DB]" />
                         Cases (Default)
                     </div>
                 </x-select.option>
                 <x-select.option value="witnesses">
                     <div class="flex items-center">
-                        <x-icon name="users" class="w-4 h-4 mr-2 text-gray-500" />
+                        <x-icon name="users" class="w-4 h-4 mr-2 text-[#3498DB]" />
                         Witnesses Only
                     </div>
                 </x-select.option>
                 <x-select.option value="composites">
                     <div class="flex items-center">
-                        <x-icon name="photo" class="w-4 h-4 mr-2 text-gray-500" />
+                        <x-icon name="photo" class="w-4 h-4 mr-2 text-[#3498DB]" />
                         Composites Only
                     </div>
                 </x-select.option>
             </x-select>
-            <p class="text-xs text-gray-500 italic">
+            <p class="text-xs text-gray-400 italic">
                 Choose "Witnesses Only" or "Composites Only" to view specific items across all cases.
             </p>
         </div>
         
         <!-- Status Filter -->
         <div class="space-y-2">
-            <label class="text-sm font-medium text-gray-700">Status</label>
+            <label class="text-sm font-medium text-gray-300">Status</label>
             <x-select
                 placeholder="Filter by status"
                 wire:model.live="statusFilter"
-                class="w-full bg-gray-50 border-gray-200"
+                class="w-full bg-[#2C3E50] text-gray-200 border-[#3498DB]/20"
                 :clearable="false"
             >
                 <x-select.option value="all" label="All Statuses" />
@@ -108,27 +119,27 @@
         
         <!-- Sort Options -->
         <div class="space-y-2">
-            <label class="text-sm font-medium text-gray-700">Sort By</label>
+            <label class="text-sm font-medium text-gray-300">Sort By</label>
             <x-select
                 wire:model.live="sortBy"
-                class="w-full bg-gray-50 border-gray-200"
+                class="w-full bg-[#2C3E50] text-gray-200 border-[#3498DB]/20"
                 :clearable="false"
             >
                 <x-select.option value="recent">
                     <div class="flex items-center">
-                        <x-icon name="clock" class="w-4 h-4 mr-2 text-gray-500" />
+                        <x-icon name="clock" class="w-4 h-4 mr-2 text-[#3498DB]" />
                         Most Recent
                     </div>
                 </x-select.option>
                 <x-select.option value="alphabetical">
                     <div class="flex items-center">
-                        <x-icon name="arrows-up-down" class="w-4 h-4 mr-2 text-gray-500" />
+                        <x-icon name="arrows-up-down" class="w-4 h-4 mr-2 text-[#3498DB]" />
                         Alphabetical
                     </div>
                 </x-select.option>
                 <x-select.option value="status">
                     <div class="flex items-center">
-                        <x-icon name="adjustments-horizontal" class="w-4 h-4 mr-2 text-gray-500" />
+                        <x-icon name="adjustments-horizontal" class="w-4 h-4 mr-2 text-[#3498DB]" />
                         Status
                     </div>
                 </x-select.option>
@@ -141,9 +152,22 @@
                 wire:click="$dispatch('quick-filter', { type: 'reset' })"
                 label="Reset Filters"
                 icon="x-mark"
-                negative
-                class="w-full justify-center"
+                class="w-full justify-center bg-[#E74C3C] hover:bg-[#C0392B] text-white border-0"
             />
         </div>
+    </div>
+    
+    <!-- Collapse Panel Button -->
+    <div class="mt-auto pt-8">
+        <button 
+            x-data
+            @click="$dispatch('toggle-sidebar')" 
+            class="w-full flex items-center justify-center space-x-2 text-sm py-2 rounded bg-[#34495E] hover:bg-[#3498DB] transition-colors duration-200 text-white"
+        >
+            <span>Collapse Panel</span>
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+            </svg>
+        </button>
     </div>
 </div>

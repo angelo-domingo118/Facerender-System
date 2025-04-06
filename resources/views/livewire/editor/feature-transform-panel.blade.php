@@ -49,16 +49,7 @@
                 </div>
                 
                 <!-- Position Indicators -->
-                <div class="grid grid-cols-2 gap-3 mb-4">
-                    <div class="bg-gray-50 p-2 rounded-md text-center border border-gray-200">
-                        <label class="block text-xs text-gray-500 mb-1">X Position</label>
-                        <span class="font-medium text-sm">{{ $positionX }} px</span>
-                    </div>
-                    <div class="bg-gray-50 p-2 rounded-md text-center border border-gray-200">
-                        <label class="block text-xs text-gray-500 mb-1">Y Position</label>
-                        <span class="font-medium text-sm">{{ $positionY }} px</span>
-                    </div>
-                </div>
+                <!-- Removing position indicators as requested -->
                 
                 <!-- Direction Controls - 8 directions -->
                 <div class="grid grid-cols-3 gap-2 mb-2 relative">

@@ -27,7 +27,9 @@ class MainCanvas extends Component
         'layer-visibility-changed' => 'handleLayerVisibilityChange',
         'layer-opacity-changed' => 'handleLayerOpacityChange',
         'select-feature-on-canvas' => 'handleSelectFeatureOnCanvas',
-        'layers-reordered' => 'handleLayersReordered'
+        'layers-reordered' => 'handleLayersReordered',
+        'layer-transform-updated' => 'handleLayerTransformUpdated',
+        'layer-adjustments-updated' => 'handleLayerAdjustmentsUpdated'
     ];
     
     public function mount($compositeId)
@@ -447,6 +449,77 @@ class MainCanvas extends Component
             $this->dispatch('layers-updated', $this->selectedFeatures);
         } else {
             Log::error('Feature not found in database', ['featureId' => $featureId]);
+        }
+    }
+    
+    /**
+     * Handle layer transform updates from the TransformPanel
+     */
+    public function handleLayerTransformUpdated($data)
+    {
+        Log::info('Handling layer transform update', [
+            'layerId' => $data['layerId'],
+            'transform' => $data['transform']
+        ]);
+        
+        // Find the feature with the specified layer ID
+        foreach ($this->selectedFeatures as $key => $feature) {
+            if ($feature['id'] == $data['layerId']) {
+                // Update the feature's position/transform properties
+                $this->selectedFeatures[$key]['position'] = [
+                    'x' => $data['transform']['x'],
+                    'y' => $data['transform']['y'],
+                    'scale' => 1, // Maintain default scale for now
+                    'rotation' => $data['transform']['rotation']
+                ];
+                
+                // Add width and height if they're provided
+                if (isset($data['transform']['width'])) {
+                    $this->selectedFeatures[$key]['width'] = $data['transform']['width'];
+                }
+                
+                if (isset($data['transform']['height'])) {
+                    $this->selectedFeatures[$key]['height'] = $data['transform']['height'];
+                }
+                
+                // Dispatch canvas update
+                $this->dispatch('update-canvas', ['selectedFeatures' => $this->selectedFeatures]);
+                
+                // Notify layer panel of the change
+                $this->dispatch('layers-updated', $this->selectedFeatures);
+                
+                break;
+            }
+        }
+    }
+    
+    /**
+     * Handle layer adjustments updates from the FeatureAdjustmentPanel
+     */
+    public function handleLayerAdjustmentsUpdated($data)
+    {
+        Log::info('Handling layer adjustments update', [
+            'layerId' => $data['layerId'],
+            'adjustments' => $data['adjustments']
+        ]);
+        
+        // Find the feature with the specified layer ID
+        foreach ($this->selectedFeatures as $key => $feature) {
+            if ($feature['id'] == $data['layerId']) {
+                // Store the adjustments in the feature data
+                $this->selectedFeatures[$key]['adjustments'] = $data['adjustments'];
+                
+                // Dispatch canvas update with adjustment information
+                $this->dispatch('update-feature-adjustments', [
+                    'featureId' => $data['layerId'],
+                    'adjustments' => $data['adjustments']
+                ]);
+                
+                // Also update the main canvas to reflect adjustments
+                $this->dispatch('update-canvas', ['selectedFeatures' => $this->selectedFeatures]);
+                
+                break;
+            }
         }
     }
     
