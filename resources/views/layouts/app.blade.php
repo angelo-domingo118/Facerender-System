@@ -5,7 +5,14 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
-        <title>{{ config('app.name', 'FACERENDER') }}</title>
+        <title>
+            {{ config('app.name', 'FACERENDER') }}
+            @if(request()->routeIs('dashboard'))
+                | Dashboard
+            @elseif(request()->routeIs('profile.show'))
+                | Profile
+            @endif
+        </title>
 
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">
@@ -25,10 +32,10 @@
         <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
         <link rel="alternate icon" href="{{ asset('favicon.ico') }}" type="image/x-icon">
     </head>
-    <body class="font-roboto bg-[#2C3E50] text-gray-300">
+    <body class="font-roboto bg-[#2C3E50] text-gray-300 overflow-auto">
         <x-banner />
 
-        <div class="min-h-screen">
+        <div class="h-full">
             @livewire('navigation-menu')
 
             <!-- Page Heading -->

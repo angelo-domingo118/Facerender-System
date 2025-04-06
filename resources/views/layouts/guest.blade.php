@@ -6,7 +6,16 @@
         <meta name="csrf-token" content="{{ csrf_token() }}">
         <meta name="description" content="FACERENDER - Professional Facial Composite System for forensic use">
 
-        <title>{{ config('app.name', 'FACERENDER') }}</title>
+        <title>
+            {{ config('app.name', 'FACERENDER') }}
+            @if(request()->routeIs('login'))
+                | Login
+            @elseif(request()->routeIs('register'))
+                | Register
+            @elseif(request()->routeIs('password.request') || request()->routeIs('password.reset'))
+                | Reset Password
+            @endif
+        </title>
 
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">

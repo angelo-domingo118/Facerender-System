@@ -1,6 +1,6 @@
 <div x-data="{ isCollapsed: false }" 
     @toggle-sidebar.window="isCollapsed = !isCollapsed" 
-    class="flex flex-col md:flex-row min-h-screen w-full">
+    class="flex flex-col md:flex-row h-auto w-full">
     <!-- Left Panel with collapse button -->
     <div class="relative md:w-auto">
         <!-- Left Panel Container with sticky wrapper -->

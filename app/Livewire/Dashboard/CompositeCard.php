@@ -4,6 +4,7 @@ namespace App\Livewire\Dashboard;
 
 use Livewire\Component;
 use Livewire\Attributes\On;
+use App\Models\Composite;
 
 class CompositeCard extends Component
 {
@@ -18,6 +19,19 @@ class CompositeCard extends Component
     private function getComponentId()
     {
         return 'composite-' . $this->composite->id;
+    }
+    
+    #[On('composite-updated')]
+    public function refreshComposite($data)
+    {
+        // Only refresh if this composite is directly updated or via case update
+        if (
+            (isset($data['compositeId']) && $data['compositeId'] == $this->composite->id) ||
+            (isset($data['caseId']) && $data['caseId'] == $this->composite->case_id)
+        ) {
+            // Refresh the composite data from the database
+            $this->composite = Composite::with(['witness', 'caseRecord'])->find($this->composite->id);
+        }
     }
     
     public function viewComposite()

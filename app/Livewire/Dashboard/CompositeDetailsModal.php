@@ -121,7 +121,16 @@ class CompositeDetailsModal extends Component
             'suspect_additional_notes' => $this->suspect_additional_notes,
         ]);
         
-        $this->dispatch('composite-updated', ['caseId' => $composite->case_id]);
+        $this->dispatch('composite-updated', [
+            'compositeId' => $composite->id,
+            'caseId' => $composite->case_id
+        ]);
+        
+        $this->dispatch('notify', [
+            'message' => 'Composite details updated successfully!',
+            'type' => 'success'
+        ]);
+        
         $this->isEditing = false;
         $this->show = false;
     }
@@ -156,6 +165,15 @@ class CompositeDetailsModal extends Component
         $this->suspect_body_build = null;
         $this->suspect_additional_notes = null;
         $this->available_witnesses = [];
+    }
+    
+    public function resetForm()
+    {
+        $this->loadCompositeData();
+        $this->dispatch('notify', [
+            'message' => 'Form has been reset',
+            'type' => 'info'
+        ]);
     }
     
     public function render()

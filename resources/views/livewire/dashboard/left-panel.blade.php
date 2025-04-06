@@ -1,6 +1,6 @@
-<div class="bg-[#2C3E50] p-6 h-full text-gray-200 flex flex-col">
+<div class="bg-[#2C3E50] p-4 h-full text-gray-200 flex flex-col">
     <!-- Search Bar with Clear Button -->
-    <div class="mb-6">
+    <div class="mb-3">
         <x-input 
             placeholder="{{ $contentTypeFilter === 'witnesses' ? 'Search witnesses...' : ($contentTypeFilter === 'composites' ? 'Search composites...' : 'Search cases...') }}" 
             wire:model.live.debounce.300ms="search"
@@ -25,7 +25,7 @@
     </div>
     
     <!-- New Case Button -->
-    <div class="mb-6">
+    <div class="mb-3">
         <x-button 
             primary 
             label="New Case" 
@@ -36,7 +36,7 @@
     </div>
     
     <!-- Divider with label -->
-    <div class="relative my-8">
+    <div class="relative my-4">
         <div class="absolute inset-0 flex items-center">
             <div class="w-full border-t border-[#3498DB]/20"></div>
         </div>
@@ -46,9 +46,9 @@
     </div>
     
     <!-- Filters Section -->
-    <div class="space-y-6">
+    <div class="space-y-3">
         <!-- Content Type Filter -->
-        <div class="space-y-2">
+        <div class="space-y-1">
             <label class="text-sm font-medium text-gray-300">View Mode</label>
             <x-select
                 placeholder="Select view mode"
@@ -81,7 +81,7 @@
         </div>
         
         <!-- Status Filter -->
-        <div class="space-y-2">
+        <div class="space-y-1">
             <label class="text-sm font-medium text-gray-300">Status</label>
             <x-select
                 placeholder="Filter by status"
@@ -118,7 +118,7 @@
         </div>
         
         <!-- Sort Options -->
-        <div class="space-y-2">
+        <div class="space-y-1">
             <label class="text-sm font-medium text-gray-300">Sort By</label>
             <x-select
                 wire:model.live="sortBy"
@@ -147,7 +147,7 @@
         </div>
         
         <!-- Reset Filters Button -->
-        <div class="pt-4">
+        <div class="pt-2">
             <x-button 
                 wire:click="$dispatch('quick-filter', { type: 'reset' })"
                 label="Reset Filters"
@@ -158,7 +158,7 @@
     </div>
     
     <!-- Collapse Panel Button -->
-    <div class="mt-auto pt-8">
+    <div class="mt-auto pt-4">
         <button 
             x-data
             @click="$dispatch('toggle-sidebar')" 

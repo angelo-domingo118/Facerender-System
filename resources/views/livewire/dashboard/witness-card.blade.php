@@ -6,13 +6,13 @@
             </div>
             <div>
                 <h5 class="font-medium text-[#2C3E50]">{{ $witness->name }}</h5>
-                <div class="text-xs text-gray-500 flex items-center mt-1">
+                <div class="text-xs text-gray-700 flex items-center mt-1">
                     <span class="inline-flex items-center mr-2">
-                        <x-icon name="identification" class="h-3 w-3 mr-1 text-gray-500" />
+                        <x-icon name="identification" class="h-3 w-3 mr-1 text-gray-700" />
                         {{ $witness->age ?? 'N/A' }} yrs
                     </span>
                     <span class="inline-flex items-center">
-                        <x-icon name="user-circle" class="h-3 w-3 mr-1 text-gray-500" />
+                        <x-icon name="user-circle" class="h-3 w-3 mr-1 text-gray-700" />
                         {{ $witness->gender ?? 'N/A' }}
                     </span>
                 </div>
@@ -42,7 +42,7 @@
             <!-- Details Toggle Button -->
             <button 
                 wire:click="toggleExpand" 
-                class="flex items-center space-x-1 text-sm text-gray-500 hover:text-[#2C3E50] focus:outline-none transition-colors duration-200 px-2 py-1 rounded-md hover:bg-gray-200 focus:bg-gray-200"
+                class="flex items-center space-x-1 text-sm text-gray-600 hover:text-[#2C3E50] focus:outline-none transition-colors duration-200 px-2 py-1 rounded-md hover:bg-gray-200 focus:bg-gray-200"
             >
                 <x-icon 
                     name="chevron-down" 
@@ -66,37 +66,37 @@
         class="mt-3 pt-3 border-t border-gray-200 space-y-3"
     >
         @if($witness->contact_number)
-            <div class="flex items-center text-sm">
-                <x-icon name="phone" class="h-4 w-4 mr-2 text-gray-500" />
-                <span>{{ $witness->contact_number }}</span>
+            <div class="flex items-center text-sm bg-gray-50 p-2 rounded-md">
+                <x-icon name="phone" class="h-4 w-4 mr-2 text-[#2C3E50]" />
+                <span class="text-gray-800">{{ $witness->contact_number }}</span>
             </div>
         @endif
         
         @if($witness->address)
-            <div class="flex items-start text-sm">
-                <x-icon name="map-pin" class="h-4 w-4 mr-2 text-gray-500 mt-0.5" />
-                <span>{{ $witness->address }}</span>
+            <div class="flex items-start text-sm bg-gray-50 p-2 rounded-md">
+                <x-icon name="map-pin" class="h-4 w-4 mr-2 text-[#2C3E50] mt-0.5" />
+                <span class="text-gray-800">{{ $witness->address }}</span>
             </div>
         @endif
         
         @if($witness->relationship_to_case)
-            <div class="flex items-center text-sm">
-                <x-icon name="link" class="h-4 w-4 mr-2 text-gray-500" />
-                <span>Relation: {{ $witness->relationship_to_case }}</span>
+            <div class="flex items-center text-sm bg-gray-50 p-2 rounded-md">
+                <x-icon name="link" class="h-4 w-4 mr-2 text-[#2C3E50]" />
+                <span class="text-gray-800">Relation: {{ $witness->relationship_to_case }}</span>
             </div>
         @endif
         
         @if($witness->interview_date)
-            <div class="flex items-center text-sm">
-                <x-icon name="calendar" class="h-4 w-4 mr-2 text-gray-500" />
-                <span>Interviewed: {{ $witness->interview_date->format('M d, Y') }}</span>
+            <div class="flex items-center text-sm bg-gray-50 p-2 rounded-md">
+                <x-icon name="calendar" class="h-4 w-4 mr-2 text-[#2C3E50]" />
+                <span class="text-gray-800">Interviewed: {{ $witness->interview_date->format('M d, Y') }}</span>
             </div>
         @endif
         
         @if($witness->interview_notes)
             <div class="mt-2">
-                <p class="text-xs font-medium text-gray-500 mb-1">Interview Notes:</p>
-                <p class="text-sm text-gray-700 bg-gray-50 p-2 rounded-md">{{ $witness->interview_notes }}</p>
+                <p class="text-xs font-medium text-gray-700 mb-1">Interview Notes:</p>
+                <p class="text-sm text-gray-800 bg-gray-50 p-2 rounded-md">{{ $witness->interview_notes }}</p>
             </div>
         @endif
     </div>
