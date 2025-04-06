@@ -1,5 +1,5 @@
 <x-app-layout>
-    <div class="py-8 bg-[#F5F7FA]">
+    <div class="py-8 bg-[#2C3E50]">
         <div class="max-w-7xl mx-auto sm:px-4 lg:px-6">
             <div class="grid md:grid-cols-4 gap-6">
                 <!-- Sidebar - made narrower -->

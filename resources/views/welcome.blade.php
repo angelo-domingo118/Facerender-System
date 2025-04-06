@@ -83,7 +83,7 @@
             <div class="container mx-auto px-4">
                 <div class="text-center mb-16">
                     <h2 class="text-3xl md:text-4xl font-bold mb-4 font-lato text-white">Key Features</h2>
-                    <div class="w-20 h-1 bg-[#3498DB] mx-auto mb-6"></div>
+                    <div class="w-20 h-1 bg-[#E74C3C] mx-auto mb-6"></div>
                     <p class="text-gray-300 max-w-2xl mx-auto text-lg">Our comprehensive set of features helps you create accurate and realistic facial composites quickly and efficiently.</p>
                 </div>
                 
@@ -181,7 +181,7 @@
             <div class="container mx-auto px-4">
                 <div class="text-center mb-16">
                     <h2 class="text-3xl md:text-4xl font-bold mb-4 font-lato text-white">About FACERENDER</h2>
-                    <div class="w-20 h-1 bg-[#3498DB] mx-auto mb-6"></div>
+                    <div class="w-20 h-1 bg-[#E74C3C] mx-auto mb-6"></div>
                     <p class="text-gray-300 max-w-2xl mx-auto text-lg">Our powerful web-based facial composite system is designed specifically for forensic professionals.</p>
                 </div>
                 
