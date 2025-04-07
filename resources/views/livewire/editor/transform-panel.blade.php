@@ -355,51 +355,66 @@
     document.addEventListener('DOMContentLoaded', function() {
         console.log('TRANSFORM PANEL: Script loaded');
         
-        // Function to sync a slider's visual position with its Livewire property
-        function syncSliderVisual(sliderElement, livewireValue) {
-            if (!sliderElement) return;
-            const numericValue = parseFloat(livewireValue);
-            if (!isNaN(numericValue) && parseFloat(sliderElement.value) !== numericValue) {
-                sliderElement.value = numericValue;
-                // console.log(`TRANSFORM PANEL: Synced slider [${sliderElement.id || 'no-id'}] to:`, numericValue);
-            }
-        }
-
-        const rotationSlider = document.getElementById('rotationSlider');
-        const rotationIncrementSlider = document.getElementById('rotationIncrementSlider');
-
-        // Initial sync for both sliders
-        syncSliderVisual(rotationSlider, @this.rotation);
-        syncSliderVisual(rotationIncrementSlider, @this.rotationIncrement);
-
-        // Listen for object selection/modification events from Fabric.js
-        function handleFabricEvent(event) {
+        // Simple direct approach - copy exactly what works in layer-panel.blade.php
+        window.addEventListener('fabricjs:object-selected', function(event) {
             const obj = event.detail;
-            const eventType = event.type;
-            // console.log(`TRANSFORM PANEL: ${eventType} event received`, event.detail);
+            console.log('TRANSFORM PANEL: fabricjs:object-selected event received', event);
             
-            if (obj && @this.selectedLayerId == obj.id) {
-                @this.set('positionX', Math.round(obj.left), true); // Defer network request
-                @this.set('positionY', Math.round(obj.top), true);  // Defer network request
-                const newRotation = parseFloat(obj.angle.toFixed(1));
-                @this.set('rotation', newRotation); 
-                // console.log('TRANSFORM PANEL: Updated positionX/Y/Rotation from Fabric event');
-                // Explicitly sync sliders after direct @this.set from Fabric event
-                syncSliderVisual(rotationSlider, newRotation);
-                syncSliderVisual(rotationIncrementSlider, @this.rotationIncrement);
+            if (obj) {
+                // Direct update using the same approach as layer-panel
+                @this.set('positionX', Math.round(obj.left));
+                @this.set('positionY', Math.round(obj.top));
+                
+                // Also handle rotation if available
+                if (obj.angle !== undefined) {
+                    @this.set('rotation', parseFloat(obj.angle.toFixed(1)));
+                }
+                
+                // Log position for debugging
+                console.log('TRANSFORM PANEL: Selected object position:', { x: obj.left, y: obj.top });
             }
-        }
-
-        window.addEventListener('fabricjs:object-selected', handleFabricEvent);
-        window.addEventListener('fabricjs:object-modified', handleFabricEvent);
+        });
         
-        // Sync sliders whenever Livewire finishes updating this component
-        Livewire.hook('morph.updated', ({ el, component }) => {
-             if (component.id === @this.__instance.id) { 
-                // console.log('TRANSFORM PANEL: Livewire component updated, syncing sliders.');
-                syncSliderVisual(rotationSlider, @this.rotation);
-                syncSliderVisual(rotationIncrementSlider, @this.rotationIncrement);
-             }
+        window.addEventListener('fabricjs:object-modified', function(event) {
+            const obj = event.detail;
+            console.log('TRANSFORM PANEL: fabricjs:object-modified event received', event);
+            
+            if (obj) {
+                // Direct update using the same approach as layer-panel
+                @this.set('positionX', Math.round(obj.left));
+                @this.set('positionY', Math.round(obj.top));
+                
+                // Also handle rotation if available
+                if (obj.angle !== undefined) {
+                    @this.set('rotation', parseFloat(obj.angle.toFixed(1)));
+                }
+                
+                // Log position for debugging
+                console.log('TRANSFORM PANEL: Object position updated:', { x: obj.left, y: obj.top });
+            }
+        });
+        
+        // Also listen for moving events to update during dragging
+        window.addEventListener('fabricjs:object-moving', function(event) {
+            const obj = event.detail;
+            
+            if (obj) {
+                // Direct update of position during dragging
+                @this.set('positionX', Math.round(obj.left));
+                @this.set('positionY', Math.round(obj.top));
+                
+                console.log('TRANSFORM PANEL: Object position during move:', { x: obj.left, y: obj.top });
+            }
+        });
+        
+        // Listen for rotation events
+        window.addEventListener('fabricjs:object-rotating', function(event) {
+            const obj = event.detail;
+            
+            if (obj && obj.angle !== undefined) {
+                @this.set('rotation', parseFloat(obj.angle.toFixed(1)));
+                console.log('TRANSFORM PANEL: Object rotation during rotate:', { angle: obj.angle });
+            }
         });
     });
 </script>
