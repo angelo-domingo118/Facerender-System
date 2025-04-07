@@ -560,6 +560,19 @@ function setupLivewireHandlers() {
                 angle: obj.angle
             });
             
+            // Calculate width and height with scaling
+            const width = obj.width * obj.scaleX;
+            const height = obj.height * obj.scaleY;
+            
+            console.log('DIMENSION DEBUG: Object dimensions:', {
+                originalWidth: obj.width,
+                originalHeight: obj.height,
+                scaleX: obj.scaleX,
+                scaleY: obj.scaleY,
+                calculatedWidth: width,
+                calculatedHeight: height
+            });
+            
             // Dispatch event to update the layer panel
             document.dispatchEvent(new CustomEvent('fabricjs:object-selected', {
                 detail: {
@@ -568,10 +581,12 @@ function setupLivewireHandlers() {
                     top: obj.top,
                     angle: obj.angle,
                     scaleX: obj.scaleX,
-                    scaleY: obj.scaleY
+                    scaleY: obj.scaleY,
+                    width: obj.width,
+                    height: obj.height
                 }
             }));
-            console.log('FABRIC POSITION: Dispatched fabricjs:object-selected event');
+            console.log('FABRIC POSITION: Dispatched fabricjs:object-selected event with width/height');
             
             // Also notify Livewire components
             if (typeof Livewire !== 'undefined') {
@@ -581,9 +596,11 @@ function setupLivewireHandlers() {
                     top: obj.top,
                     angle: obj.angle,
                     scaleX: obj.scaleX,
-                    scaleY: obj.scaleY
+                    scaleY: obj.scaleY,
+                    width: obj.width,
+                    height: obj.height
                 });
-                console.log('FABRIC POSITION: Dispatched Livewire fabricjs:object-selected event');
+                console.log('FABRIC POSITION: Dispatched Livewire fabricjs:object-selected event with width/height');
             }
         }
     });
@@ -600,6 +617,19 @@ function setupLivewireHandlers() {
                 angle: obj.angle
             });
             
+            // Calculate width and height with scaling
+            const width = obj.width * obj.scaleX;
+            const height = obj.height * obj.scaleY;
+            
+            console.log('DIMENSION DEBUG: Modified object dimensions:', {
+                originalWidth: obj.width,
+                originalHeight: obj.height,
+                scaleX: obj.scaleX,
+                scaleY: obj.scaleY,
+                calculatedWidth: width,
+                calculatedHeight: height
+            });
+            
             // Dispatch event with position data
             document.dispatchEvent(new CustomEvent('fabricjs:object-modified', {
                 detail: {
@@ -608,10 +638,12 @@ function setupLivewireHandlers() {
                     top: obj.top,
                     angle: obj.angle,
                     scaleX: obj.scaleX,
-                    scaleY: obj.scaleY
+                    scaleY: obj.scaleY,
+                    width: obj.width,
+                    height: obj.height
                 }
             }));
-            console.log('FABRIC POSITION: Dispatched fabricjs:object-modified event');
+            console.log('FABRIC POSITION: Dispatched fabricjs:object-modified event with width/height');
             
             // Also notify Livewire components
             if (typeof Livewire !== 'undefined') {
@@ -621,10 +653,48 @@ function setupLivewireHandlers() {
                     top: obj.top, 
                     angle: obj.angle,
                     scaleX: obj.scaleX,
-                    scaleY: obj.scaleY
+                    scaleY: obj.scaleY,
+                    width: obj.width,
+                    height: obj.height
                 });
-                console.log('FABRIC POSITION: Dispatched Livewire fabricjs:object-modified event');
+                console.log('FABRIC POSITION: Dispatched Livewire fabricjs:object-modified event with width/height');
             }
+        }
+    });
+    
+    // Add a scaling event listener to capture dimensions during scaling
+    canvas.on('object:scaling', function(e) {
+        const obj = e.target;
+        if (obj && obj.data?.featureId) {
+            log(`Object scaling on canvas: ${obj.data.featureId}`);
+            
+            // Calculate width and height with scaling
+            const width = obj.width * obj.scaleX;
+            const height = obj.height * obj.scaleY;
+            
+            console.log('DIMENSION DEBUG: Scaling object dimensions:', {
+                originalWidth: obj.width,
+                originalHeight: obj.height,
+                scaleX: obj.scaleX,
+                scaleY: obj.scaleY,
+                calculatedWidth: width,
+                calculatedHeight: height
+            });
+            
+            // Dispatch event with position and dimension data
+            document.dispatchEvent(new CustomEvent('fabricjs:object-scaling', {
+                detail: {
+                    id: obj.data.featureId,
+                    left: obj.left,
+                    top: obj.top,
+                    angle: obj.angle,
+                    scaleX: obj.scaleX,
+                    scaleY: obj.scaleY,
+                    width: obj.width,
+                    height: obj.height
+                }
+            }));
+            console.log('FABRIC POSITION: Dispatched fabricjs:object-scaling event with width/height');
         }
     });
     
@@ -748,35 +818,55 @@ function setupLivewireHandlers() {
                 fabricObject.set('angle', transform.rotation);
             }
             
-            // Only update scale if width/height values were explicitly provided
-            // Otherwise, preserve the current scale during position-only movements
+            // Handle size updates when width/height are provided
             if (!isPositionOnlyUpdate && transform.width !== undefined && transform.height !== undefined) {
                 // Get the original width/height (without scaling)
                 const originalWidth = fabricObject.width;
                 const originalHeight = fabricObject.height;
                 
                 if (originalWidth && originalHeight) {
-                    // Calculate new scale factors
-                    const scaleX = transform.width / originalWidth;
-                    const scaleY = transform.height / originalHeight;
+                    // Check if we should scale independently (non-proportional)
+                    const scaleIndependently = transform.scaleToWidth === false;
                     
-                    // Use the same scale value for both dimensions to preserve aspect ratio
-                    const scale = Math.min(scaleX, scaleY);
-                    
-                    fabricObject.set({
-                        scaleX: scale,
-                        scaleY: scale
-                    });
-                    
-                    log(`Updated scale for layer ${layerId} to ${scale} (preserved aspect ratio)`);
+                    if (scaleIndependently) {
+                        // Calculate new scale factors independently
+                        const scaleX = transform.width / originalWidth;
+                        const scaleY = transform.height / originalHeight;
+                        
+                        // Apply different scale values for each dimension
+                        fabricObject.set({
+                            scaleX: scaleX,
+                            scaleY: scaleY
+                        });
+                        
+                        log(`Updated scale independently for layer ${layerId}: scaleX=${scaleX}, scaleY=${scaleY}`);
+                    } else {
+                        // Calculate new scale factors
+                        const scaleX = transform.width / originalWidth;
+                        const scaleY = transform.height / originalHeight;
+                        
+                        // Use the same scale value for both dimensions to preserve aspect ratio
+                        const scale = Math.min(scaleX, scaleY);
+                        
+                        fabricObject.set({
+                            scaleX: scale,
+                            scaleY: scale
+                        });
+                        
+                        log(`Updated scale for layer ${layerId} to ${scale} (preserved aspect ratio)`);
+                    }
                 }
             } else {
                 // For position-only updates, maintain the current scale
                 log(`Position-only update, preserving current scale (${currentScaleX})`);
             }
             
+            // Update the coordinates to ensure the object is correctly positioned and selectable
             fabricObject.setCoords();
             canvas.renderAll();
+            
+            // Dispatch an object modified event to update any UI that's monitoring this object
+            canvas.fire('object:modified', { target: fabricObject });
             
             log(`Updated transform for layer ${layerId}:`, transform);
         } else {
@@ -797,6 +887,10 @@ function setupLivewireHandlers() {
         const objects = canvas.getObjects().filter(obj => obj.data && obj.data.featureId === featureId);
         if (objects.length > 0) {
             canvas.setActiveObject(objects[0]);
+            
+            // Manually dispatch dimension info when selecting from layer panel
+            dispatchDimensionInfo(objects[0]);
+            
             canvas.renderAll();
             log(`Selected feature ${featureId} on canvas.`);
         } else {
@@ -1281,6 +1375,53 @@ function addFeatureToCanvas(feature) {
     loadImageAndSetupFabricImage(feature, moveEnabled, imagePath, operationId);
 }
 
+// Add this as a helper function to dispatch dimension info for newly added objects
+function dispatchDimensionInfo(fabricObject) {
+    if (fabricObject && fabricObject.data?.featureId) {
+        // Calculate width and height with scaling
+        const width = fabricObject.width * fabricObject.scaleX;
+        const height = fabricObject.height * fabricObject.scaleY;
+        
+        console.log('DIMENSION DEBUG: Initial object dimensions for new feature:', {
+            featureId: fabricObject.data.featureId,
+            originalWidth: fabricObject.width,
+            originalHeight: fabricObject.height,
+            scaleX: fabricObject.scaleX,
+            scaleY: fabricObject.scaleY,
+            calculatedWidth: width,
+            calculatedHeight: height
+        });
+        
+        // Create event detail object with all necessary properties
+        const eventDetail = {
+            id: fabricObject.data.featureId,
+            left: fabricObject.left,
+            top: fabricObject.top,
+            angle: fabricObject.angle,
+            scaleX: fabricObject.scaleX,
+            scaleY: fabricObject.scaleY,
+            width: fabricObject.width,
+            height: fabricObject.height
+        };
+        
+        // Dispatch DOM event to update the layer panel
+        document.dispatchEvent(new CustomEvent('fabricjs:object-selected', {
+            detail: eventDetail
+        }));
+        
+        // Also notify Livewire components - but just dispatch the event
+        // Don't try to call any specific methods on the component
+        if (typeof Livewire !== 'undefined') {
+            try {
+                Livewire.dispatch('fabricjs:object-selected', eventDetail);
+                console.log('FABRIC POSITION: Dispatched initial dimensions for new feature');
+            } catch (error) {
+                console.error('Error dispatching dimensions to Livewire:', error);
+            }
+        }
+    }
+}
+
 /**
  * Sets up a Fabric.js image object using a provided HTMLImageElement.
  * This is the core logic shared by both pre-loaded and async paths.
@@ -1402,6 +1543,10 @@ function setupFabricImageFromElement(imgElement, feature, moveEnabled) {
 
         // Select the newly added feature
         canvas.setActiveObject(fabricImage);
+        
+        // Manually dispatch dimension info to update the panel immediately
+        dispatchDimensionInfo(fabricImage);
+        
         canvas.renderAll();
 
         log(`✅ Feature ${feature.id} added and canvas rendered successfully.`);

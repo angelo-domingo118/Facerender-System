@@ -177,11 +177,12 @@ class TransformPanel extends Component
             ]
         ];
         
-        // Only include width and height if explicitly set via size controls
-        // This tells the frontend that this is a size update, not just position
+        // Always include width and height when size_control_used is true
+        // This tells Fabric.js to update dimensions without scaling proportionally
         if ($this->size_control_used) {
             $transformData['transform']['width'] = $this->width;
             $transformData['transform']['height'] = $this->height;
+            $transformData['transform']['scaleToWidth'] = false; // Tell Fabric not to use scaleX/Y
             
             // Reset the flag after use
             $this->size_control_used = false;
@@ -265,6 +266,28 @@ class TransformPanel extends Component
     }
     
     /**
+     * Update when preserveAspectRatio is toggled
+     */
+    public function updatedPreserveAspectRatio($value)
+    {
+        Log::info('Preserve aspect ratio updated', ['value' => $value]);
+        
+        // Dispatch an event to notify the frontend about the aspect ratio change
+        $this->dispatch('preserveAspectRatioChanged', $value);
+    }
+
+    /**
+     * Saves the original dimensions before any adjustments
+     * This is called from JavaScript when selecting an object
+     */
+    public function saveOriginalDimensions($width, $height)
+    {
+        $this->originalWidth = $width;
+        $this->originalHeight = $height;
+        Log::info('Saved original dimensions', ['width' => $width, 'height' => $height]);
+    }
+    
+    /**
      * Adjust size in different ways (increase/decrease width/height)
      */
     public function adjustSize($action)
@@ -276,9 +299,15 @@ class TransformPanel extends Component
         // Mark that size is being updated
         $this->size_control_used = true;
         
+        // Store current dimensions before adjustment if original dimensions aren't set
+        if ($this->originalWidth == 0 || $this->originalHeight == 0) {
+            $this->originalWidth = $this->width;
+            $this->originalHeight = $this->height;
+        }
+        
         // Amount to adjust based on resize step setting
         $amount = $this->resizeStep;
-        $aspectRatio = $this->height / $this->width;
+        $aspectRatio = $this->originalHeight / $this->originalWidth;
         
         switch ($action) {
             case 'increase-width':

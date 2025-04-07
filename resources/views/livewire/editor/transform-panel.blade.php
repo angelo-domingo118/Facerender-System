@@ -135,103 +135,117 @@
                 
                 <!-- Size Controls -->
                 <div class="mb-5 bg-white p-3 rounded-md shadow-sm border border-gray-100">
-                    <h4 class="text-sm font-medium text-gray-700 mb-3 flex items-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1 text-[#2C3E50]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5" />
-                        </svg>
-                        Size
+                    <h4 class="text-sm font-medium text-gray-700 mb-3 flex items-center justify-between">
+                        <div class="flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1 text-[#2C3E50]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5" />
+                            </svg>
+                            Size
+                        </div>
+                        <div class="text-xs text-gray-500 font-normal">
+                            {{ $width }} × {{ $height }} px
+                        </div>
                     </h4>
                     
-                    <!-- Size Adjustment Step -->
-                    <div class="mb-3">
-                        <label class="block text-xs text-gray-500 mb-1">Size Adjustment Step:</label>
-                        <div class="flex space-x-2">
-                            <button 
-                                wire:click="setResizeStep(1)" 
-                                class="flex-1 text-xs text-center font-medium text-gray-500 bg-gray-100 hover:bg-gray-200 active:bg-gray-300 rounded-md py-1 transition-colors {{ $resizeStep === 1 ? 'bg-[#2C3E50] text-white' : '' }}"
-                            >
-                                1px
-                            </button>
-                            <button 
-                                wire:click="setResizeStep(5)" 
-                                class="flex-1 text-xs text-center font-medium text-gray-500 bg-gray-100 hover:bg-gray-200 active:bg-gray-300 rounded-md py-1 transition-colors {{ $resizeStep === 5 ? 'bg-[#2C3E50] text-white' : '' }}"
-                            >
-                                5px
-                            </button>
-                            <button 
-                                wire:click="setResizeStep(10)" 
-                                class="flex-1 text-xs text-center font-medium text-gray-500 bg-gray-100 hover:bg-gray-200 active:bg-gray-300 rounded-md py-1 transition-colors {{ $resizeStep === 10 ? 'bg-[#2C3E50] text-white' : '' }}"
-                            >
-                                10px
-                            </button>
-                            <button 
-                                wire:click="setResizeStep(25)" 
-                                class="flex-1 text-xs text-center font-medium text-gray-500 bg-gray-100 hover:bg-gray-200 active:bg-gray-300 rounded-md py-1 transition-colors {{ $resizeStep === 25 ? 'bg-[#2C3E50] text-white' : '' }}"
-                            >
-                                25px
-                            </button>
+                    <!-- Size Adjustment Step - Changed to Slider -->
+                    <div class="mb-4 pt-3 border-t border-gray-100">
+                        <div class="flex justify-between items-center mb-1">
+                            <label for="resizeStepSlider" class="text-xs text-gray-500">Size Increment:</label>
+                            <span class="text-xs font-medium">{{ $resizeStep }}px</span>
+                        </div>
+                        <input 
+                            id="resizeStepSlider" 
+                            type="range" 
+                            wire:model.live="resizeStep" 
+                            min="1" max="50" step="1" 
+                            class="w-full h-1.5 bg-gray-200 rounded-full appearance-none cursor-pointer accent-[#2C3E50]/50 {{ $selectedLayer ? '' : 'opacity-50 cursor-not-allowed' }}"
+                            {{ $selectedLayer ? '' : 'disabled' }}
+                        >
+                        <div class="flex justify-between text-xs text-gray-400 mt-1">
+                            <span>1px</span>
+                            <span>25px</span>
+                            <span>50px</span>
                         </div>
                     </div>
                     
-                    <!-- Size Adjustment Buttons -->
-                    <div class="grid grid-cols-4 gap-2 mb-4">
-                        <button wire:click="adjustSize('decrease-width')" class="bg-gray-100 hover:bg-gray-200 active:bg-gray-300 rounded-md p-2 flex items-center justify-center transition-colors">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" />
-                            </svg>
-                        </button>
-                        <button wire:click="adjustSize('increase-width')" class="bg-gray-100 hover:bg-gray-200 active:bg-gray-300 rounded-md p-2 flex items-center justify-center transition-colors">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                            </svg>
-                        </button>
-                        <button wire:click="adjustSize('decrease-height')" class="bg-gray-100 hover:bg-gray-200 active:bg-gray-300 rounded-md p-2 flex items-center justify-center transition-colors">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-500 rotate-90" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" />
-                            </svg>
-                        </button>
-                        <button wire:click="adjustSize('increase-height')" class="bg-gray-100 hover:bg-gray-200 active:bg-gray-300 rounded-md p-2 flex items-center justify-center transition-colors">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-500 rotate-90" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                            </svg>
-                        </button>
-                    </div>
-                    
-                    <!-- Direct Size Inputs -->
-                    <div class="grid grid-cols-2 gap-3 mb-4">
-                        <div class="bg-gray-50 p-2 rounded-md text-center border border-gray-200">
-                            <label class="block text-xs text-gray-500 mb-1">Width</label>
-                            <input
-                                type="number"
-                                wire:model.lazy="width"
-                                wire:change="$set('size_control_used', true); updateTransform()"
-                                class="w-full bg-white border border-gray-300 text-sm px-2 py-1 text-center rounded-md"
-                                min="10"
-                            />
-                        </div>
-                        <div class="bg-gray-50 p-2 rounded-md text-center border border-gray-200">
-                            <label class="block text-xs text-gray-500 mb-1">Height</label>
-                            <input
-                                type="number"
-                                wire:model.lazy="height"
-                                wire:change="$set('size_control_used', true); updateTransform()"
-                                class="w-full bg-white border border-gray-300 text-sm px-2 py-1 text-center rounded-md"
-                                min="10"
-                            />
-                        </div>
-                    </div>
-                    
-                    <!-- Aspect Ratio Toggle -->
-                    <div class="flex items-center mb-4">
+                    <!-- Aspect Ratio Toggle - Moved to top for better visibility -->
+                    <div class="flex items-center mb-4 p-2 rounded-md bg-gray-50 border border-gray-200">
                         <input 
                             id="preserve-aspect-ratio" 
                             type="checkbox" 
                             wire:model.live="preserveAspectRatio"
                             class="w-4 h-4 text-[#2C3E50] border-gray-300 rounded focus:ring focus:ring-[#2C3E50]/20"
                         >
-                        <label for="preserve-aspect-ratio" class="ml-2 text-xs text-gray-700">
-                            Preserve aspect ratio ({{ $preserveAspectRatio ? 'On' : 'Off' }})
+                        <label for="preserve-aspect-ratio" class="ml-2 text-xs font-medium {{ $preserveAspectRatio ? 'text-[#2C3E50]' : 'text-gray-700' }}">
+                            Preserve aspect ratio 
+                            <span class="inline-block ml-1 px-1.5 py-0.5 text-xs font-medium rounded-full {{ $preserveAspectRatio ? 'bg-[#2C3E50]/10 text-[#2C3E50]' : 'bg-gray-200 text-gray-700' }}">
+                                {{ $preserveAspectRatio ? 'ON' : 'OFF' }}
+                            </span>
                         </label>
+                    </div>
+                    
+                    <!-- Size Adjustment Buttons - Updated with labels and better visuals -->
+                    <div class="grid grid-cols-2 gap-3 mb-4">
+                        <div class="space-y-2">
+                            <label class="block text-xs font-medium text-gray-600 text-center">Width</label>
+                            <div class="flex items-center space-x-2">
+                                <button wire:click="adjustSize('decrease-width')" class="bg-gray-100 hover:bg-gray-200 active:bg-gray-300 rounded-md p-2 flex-1 flex items-center justify-center transition-colors">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" />
+                                    </svg>
+                                </button>
+                                <button wire:click="adjustSize('increase-width')" class="bg-gray-100 hover:bg-gray-200 active:bg-gray-300 rounded-md p-2 flex-1 flex items-center justify-center transition-colors">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="block text-xs font-medium text-gray-600 text-center">Height</label>
+                            <div class="flex items-center space-x-2">
+                                <button wire:click="adjustSize('decrease-height')" class="bg-gray-100 hover:bg-gray-200 active:bg-gray-300 rounded-md p-2 flex-1 flex items-center justify-center transition-colors">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-500 rotate-90" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" />
+                                    </svg>
+                                </button>
+                                <button wire:click="adjustSize('increase-height')" class="bg-gray-100 hover:bg-gray-200 active:bg-gray-300 rounded-md p-2 flex-1 flex items-center justify-center transition-colors">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-500 rotate-90" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Direct Size Inputs - Enhanced with visual cues -->
+                    <div class="grid grid-cols-2 gap-3 mb-4">
+                        <div class="bg-gray-50 p-2 rounded-md text-center border border-gray-200 {{ !$preserveAspectRatio ? 'ring-2 ring-[#2C3E50]/10' : '' }}">
+                            <label class="block text-xs text-gray-500 mb-1">Width</label>
+                            <div class="relative">
+                                <input
+                                    type="number"
+                                    wire:model.lazy="width"
+                                    wire:change="$set('size_control_used', true); updateTransform()"
+                                    class="w-full bg-white border border-gray-300 text-sm px-2 py-1 text-center rounded-md"
+                                    min="10"
+                                />
+                                <span class="absolute right-2 top-1/2 transform -translate-y-1/2 text-xs text-gray-400">px</span>
+                            </div>
+                        </div>
+                        <div class="bg-gray-50 p-2 rounded-md text-center border border-gray-200 {{ !$preserveAspectRatio ? 'ring-2 ring-[#2C3E50]/10' : '' }}">
+                            <label class="block text-xs text-gray-500 mb-1">Height</label>
+                            <div class="relative">
+                                <input
+                                    type="number"
+                                    wire:model.lazy="height"
+                                    wire:change="$set('size_control_used', true); updateTransform()"
+                                    class="w-full bg-white border border-gray-300 text-sm px-2 py-1 text-center rounded-md"
+                                    min="10"
+                                />
+                                <span class="absolute right-2 top-1/2 transform -translate-y-1/2 text-xs text-gray-400">px</span>
+                            </div>
+                        </div>
                     </div>
                     
                     <button 
@@ -355,65 +369,131 @@
     document.addEventListener('DOMContentLoaded', function() {
         console.log('TRANSFORM PANEL: Script loaded');
         
-        // Simple direct approach - copy exactly what works in layer-panel.blade.php
+        function updateDimensionsAndPosition(component, obj) {
+            if (!obj) return;
+
+            console.log('TRANSFORM PANEL: Updating state for object:', obj.id || 'unknown');
+
+            // Update Position
+            const newPosX = Math.round(obj.left || 0);
+            const newPosY = Math.round(obj.top || 0);
+            component.set('positionX', newPosX);
+            component.set('positionY', newPosY);
+            console.log(`TRANSFORM PANEL: Set position to X: ${newPosX}, Y: ${newPosY}`);
+
+            // Update Rotation
+            if (obj.angle !== undefined) {
+                 const newRotation = parseFloat(obj.angle.toFixed(1));
+                 component.set('rotation', newRotation);
+                 console.log(`TRANSFORM PANEL: Set rotation to: ${newRotation}°`);
+            }
+
+            // Update Dimensions (Using Scaled Values)
+            let newWidth = component.get('width'); // Default to current value
+            let newHeight = component.get('height'); // Default to current value
+
+            if (obj.width !== undefined && obj.scaleX !== undefined) {
+                newWidth = Math.round(obj.width * obj.scaleX);
+                component.set('width', newWidth);
+                 console.log(`TRANSFORM PANEL: Set width to: ${newWidth} (Original: ${obj.width}, ScaleX: ${obj.scaleX})`);
+            } else {
+                 console.warn('TRANSFORM PANEL: Width properties missing', {width: obj.width, scaleX: obj.scaleX});
+            }
+
+            if (obj.height !== undefined && obj.scaleY !== undefined) {
+                newHeight = Math.round(obj.height * obj.scaleY);
+                component.set('height', newHeight);
+                 console.log(`TRANSFORM PANEL: Set height to: ${newHeight} (Original: ${obj.height}, ScaleY: ${obj.scaleY})`);
+            } else {
+                 console.warn('TRANSFORM PANEL: Height properties missing', {height: obj.height, scaleY: obj.scaleY});
+            }
+
+             // Store original dimensions on selection/modification for aspect ratio
+            if (obj.width && obj.height) {
+                component.set('originalWidth', obj.width);
+                component.set('originalHeight', obj.height);
+                console.log(`TRANSFORM PANEL: Stored original dimensions - W: ${obj.width}, H: ${obj.height}`);
+            }
+        }
+
         window.addEventListener('fabricjs:object-selected', function(event) {
             const obj = event.detail;
-            console.log('TRANSFORM PANEL: fabricjs:object-selected event received', event);
-            
+            console.log('TRANSFORM PANEL: fabricjs:object-selected event received', obj);
             if (obj) {
-                // Direct update using the same approach as layer-panel
-                @this.set('positionX', Math.round(obj.left));
-                @this.set('positionY', Math.round(obj.top));
-                
-                // Also handle rotation if available
-                if (obj.angle !== undefined) {
-                    @this.set('rotation', parseFloat(obj.angle.toFixed(1)));
-                }
-                
-                // Log position for debugging
-                console.log('TRANSFORM PANEL: Selected object position:', { x: obj.left, y: obj.top });
+                updateDimensionsAndPosition(@this, obj);
+                // Indicate that the selection came from canvas, not panel controls
+                // Prevents aspect ratio lock from triggering incorrectly on initial selection
+                @this.set('size_control_used', false); 
             }
         });
         
         window.addEventListener('fabricjs:object-modified', function(event) {
             const obj = event.detail;
-            console.log('TRANSFORM PANEL: fabricjs:object-modified event received', event);
-            
+            console.log('TRANSFORM PANEL: fabricjs:object-modified event received', obj);
             if (obj) {
-                // Direct update using the same approach as layer-panel
-                @this.set('positionX', Math.round(obj.left));
-                @this.set('positionY', Math.round(obj.top));
-                
-                // Also handle rotation if available
-                if (obj.angle !== undefined) {
-                    @this.set('rotation', parseFloat(obj.angle.toFixed(1)));
-                }
-                
-                // Log position for debugging
-                console.log('TRANSFORM PANEL: Object position updated:', { x: obj.left, y: obj.top });
+                updateDimensionsAndPosition(@this, obj);
+                 // Indicate that the modification came from canvas, not panel controls
+                @this.set('size_control_used', false);
             }
         });
-        
-        // Also listen for moving events to update during dragging
+
         window.addEventListener('fabricjs:object-moving', function(event) {
             const obj = event.detail;
-            
             if (obj) {
-                // Direct update of position during dragging
-                @this.set('positionX', Math.round(obj.left));
-                @this.set('positionY', Math.round(obj.top));
-                
-                console.log('TRANSFORM PANEL: Object position during move:', { x: obj.left, y: obj.top });
+                const newPosX = Math.round(obj.left || 0);
+                const newPosY = Math.round(obj.top || 0);
+                // Use .live here for smoother updates during drag if needed, 
+                // but standard set might be sufficient and less chatty.
+                @this.set('positionX', newPosX);
+                @this.set('positionY', newPosY);
+                console.log(`TRANSFORM PANEL: Object moving - X: ${newPosX}, Y: ${newPosY}`);
             }
         });
-        
-        // Listen for rotation events
+
+        window.addEventListener('fabricjs:object-scaling', function(event) {
+            const obj = event.detail;
+            if (obj) {
+                const currentWidth = Math.round(obj.width * obj.scaleX);
+                const currentHeight = Math.round(obj.height * obj.scaleY);
+                // Use .live for smoother updates during scaling
+                @this.livewire.set('width', currentWidth);
+                @this.livewire.set('height', currentHeight);
+
+                // Update position as well, as origin might change during scaling
+                const newPosX = Math.round(obj.left || 0);
+                const newPosY = Math.round(obj.top || 0);
+                 @this.livewire.set('positionX', newPosX);
+                 @this.livewire.set('positionY', newPosY);
+
+                console.log(`TRANSFORM PANEL: Object scaling - W: ${currentWidth}, H: ${currentHeight}, X: ${newPosX}, Y: ${newPosY}`);
+            }
+        });
+
         window.addEventListener('fabricjs:object-rotating', function(event) {
             const obj = event.detail;
-            
             if (obj && obj.angle !== undefined) {
-                @this.set('rotation', parseFloat(obj.angle.toFixed(1)));
-                console.log('TRANSFORM PANEL: Object rotation during rotate:', { angle: obj.angle });
+                const newRotation = parseFloat(obj.angle.toFixed(1));
+                // Use .live for smoother updates during rotation
+                @this.livewire.set('rotation', newRotation);
+                console.log(`TRANSFORM PANEL: Object rotating - Angle: ${newRotation}°`);
+            }
+        });
+
+        Livewire.on('preserveAspectRatioChanged', function(isPreserved) {
+            console.log('TRANSFORM PANEL: Aspect ratio preservation changed:', isPreserved);
+            const widthInputDiv = document.querySelector('input[wire\\:model\\.lazy="width"]')?.closest('.border');
+            const heightInputDiv = document.querySelector('input[wire\\:model\\.lazy="height"]')?.closest('.border');
+
+            if (widthInputDiv && heightInputDiv) {
+                const ringClass = 'ring-2';
+                const ringColorClass = 'ring-[#2C3E50]/10';
+                if (isPreserved) {
+                    widthInputDiv.classList.remove(ringClass, ringColorClass);
+                    heightInputDiv.classList.remove(ringClass, ringColorClass);
+                } else {
+                    widthInputDiv.classList.add(ringClass, ringColorClass);
+                    heightInputDiv.classList.add(ringClass, ringColorClass);
+                }
             }
         });
     });

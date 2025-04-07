@@ -14,13 +14,16 @@ class LayerPanel extends Component
     public $isLayerLocked = false;
     public $positionX = 0;
     public $positionY = 0;
+    public $width = 0;
+    public $height = 0;
     
     // Listen for feature updates from MainCanvas
     protected $listeners = [
         'layers-updated' => 'updateLayers',
         'feature-removed' => 'handleFeatureRemoved',
         'features-cleared' => 'clearLayers',
-        'fabricjs:object-selected' => 'handleObjectSelected'
+        'fabricjs:object-selected' => 'handleObjectSelected',
+        'fabricjs:object-modified' => 'handleObjectModified'
     ];
     
     public function mount($compositeId)
@@ -303,16 +306,109 @@ class LayerPanel extends Component
     }
     
     /**
-     * Handle object selection from Fabric.js canvas
+     * Handle object selection from Fabric.js
      */
-    public function handleObjectSelected($data)
+    public function handleObjectSelected($data = null)
     {
-        if (isset($data['left']) && isset($data['top'])) {
-            $this->positionX = round($data['left']);
-            $this->positionY = round($data['top']);
-            Log::info('Object position updated from canvas', [
-                'x' => $this->positionX,
-                'y' => $this->positionY
+        if (empty($data)) {
+            return;
+        }
+        
+        if (is_array($data)) {
+            $obj = $data;
+        } else {
+            $obj = (array)$data;
+        }
+        
+        // Get the feature ID safely without assuming data structure
+        $featureId = null;
+        if (isset($obj['id'])) {
+            $featureId = $obj['id'];
+        } elseif (isset($obj['data']) && isset($obj['data']['featureId'])) {
+            $featureId = $obj['data']['featureId'];
+        }
+        
+        // Only proceed if we have a valid feature ID
+        if ($featureId) {
+            // Only select the layer if it's not already selected
+            if ($this->selectedLayerId != $featureId) {
+                $this->selectLayer($featureId);
+            }
+            
+            // Update position values
+            if (isset($obj['left'])) {
+                $this->positionX = round($obj['left']);
+            }
+            
+            if (isset($obj['top'])) {
+                $this->positionY = round($obj['top']);
+            }
+            
+            // Update dimension values using width and height multiplied by scale factors
+            if (isset($obj['width']) && isset($obj['scaleX'])) {
+                $this->width = round($obj['width'] * $obj['scaleX']);
+            }
+            
+            if (isset($obj['height']) && isset($obj['scaleY'])) {
+                $this->height = round($obj['height'] * $obj['scaleY']);
+            }
+            
+            Log::info('Object selected in layer panel', [
+                'featureId' => $featureId,
+                'position' => ['x' => $this->positionX, 'y' => $this->positionY],
+                'dimensions' => ['width' => $this->width, 'height' => $this->height]
+            ]);
+        }
+    }
+    
+    /**
+     * Handle object modification from Fabric.js
+     */
+    public function handleObjectModified($data = null)
+    {
+        if (empty($data)) {
+            return;
+        }
+        
+        if (is_array($data)) {
+            $obj = $data;
+        } else {
+            $obj = (array)$data;
+        }
+        
+        // Get the feature ID safely without assuming data structure
+        $featureId = null;
+        if (isset($obj['id'])) {
+            $featureId = $obj['id'];
+        } elseif (isset($obj['data']) && isset($obj['data']['featureId'])) {
+            $featureId = $obj['data']['featureId'];
+        }
+        
+        // Only proceed if we have a valid feature ID and it matches the selected layer
+        if ($featureId && $featureId == $this->selectedLayerId) {
+            
+            // Update position values
+            if (isset($obj['left'])) {
+                $this->positionX = round($obj['left']);
+            }
+            
+            if (isset($obj['top'])) {
+                $this->positionY = round($obj['top']);
+            }
+            
+            // Update dimension values using width and height multiplied by scale factors
+            if (isset($obj['width']) && isset($obj['scaleX'])) {
+                $this->width = round($obj['width'] * $obj['scaleX']);
+            }
+            
+            if (isset($obj['height']) && isset($obj['scaleY'])) {
+                $this->height = round($obj['height'] * $obj['scaleY']);
+            }
+            
+            Log::info('Object modified in layer panel', [
+                'featureId' => $featureId,
+                'position' => ['x' => $this->positionX, 'y' => $this->positionY],
+                'dimensions' => ['width' => $this->width, 'height' => $this->height]
             ]);
         }
     }
@@ -323,17 +419,21 @@ class LayerPanel extends Component
     public function updatePosition()
     {
         if ($this->selectedLayerId) {
+            // Validate and sanitize position values
+            $x = is_numeric($this->positionX) ? (int) $this->positionX : 0;
+            $y = is_numeric($this->positionY) ? (int) $this->positionY : 0;
+            
             // Dispatch event to update canvas object position
             $this->dispatch('updateObjectPosition', [
                 'layerId' => $this->selectedLayerId,
-                'x' => (int) $this->positionX,
-                'y' => (int) $this->positionY
+                'x' => $x,
+                'y' => $y
             ]);
             
             Log::info('Position updated from panel', [
                 'layerId' => $this->selectedLayerId,
-                'x' => $this->positionX,
-                'y' => $this->positionY
+                'x' => $x,
+                'y' => $y
             ]);
         }
     }
