@@ -548,6 +548,86 @@ function setupLivewireHandlers() {
         console.error('Error getting initial state:', error);
     }
     
+    // Setup event listeners for object selection
+    canvas.on('object:selected', function(e) {
+        const obj = e.target;
+        if (obj && obj.data?.featureId) {
+            log(`Object selected on canvas: ${obj.data.featureId}`);
+            console.log('FABRIC POSITION: Object selected', {
+                featureId: obj.data.featureId,
+                left: obj.left,
+                top: obj.top,
+                angle: obj.angle
+            });
+            
+            // Dispatch event to update the layer panel
+            document.dispatchEvent(new CustomEvent('fabricjs:object-selected', {
+                detail: {
+                    id: obj.data.featureId,
+                    left: obj.left,
+                    top: obj.top,
+                    angle: obj.angle,
+                    scaleX: obj.scaleX,
+                    scaleY: obj.scaleY
+                }
+            }));
+            console.log('FABRIC POSITION: Dispatched fabricjs:object-selected event');
+            
+            // Also notify Livewire components
+            if (typeof Livewire !== 'undefined') {
+                Livewire.dispatch('fabricjs:object-selected', {
+                    id: obj.data.featureId,
+                    left: obj.left,
+                    top: obj.top,
+                    angle: obj.angle,
+                    scaleX: obj.scaleX,
+                    scaleY: obj.scaleY
+                });
+                console.log('FABRIC POSITION: Dispatched Livewire fabricjs:object-selected event');
+            }
+        }
+    });
+    
+    // Setup object:modified event to capture position changes
+    canvas.on('object:modified', function(e) {
+        const obj = e.target;
+        if (obj && obj.data?.featureId) {
+            log(`Object modified on canvas: ${obj.data.featureId}`);
+            console.log('FABRIC POSITION: Object modified', {
+                featureId: obj.data.featureId,
+                left: obj.left,
+                top: obj.top,
+                angle: obj.angle
+            });
+            
+            // Dispatch event with position data
+            document.dispatchEvent(new CustomEvent('fabricjs:object-modified', {
+                detail: {
+                    id: obj.data.featureId,
+                    left: obj.left,
+                    top: obj.top,
+                    angle: obj.angle,
+                    scaleX: obj.scaleX,
+                    scaleY: obj.scaleY
+                }
+            }));
+            console.log('FABRIC POSITION: Dispatched fabricjs:object-modified event');
+            
+            // Also notify Livewire components
+            if (typeof Livewire !== 'undefined') {
+                Livewire.dispatch('fabricjs:object-modified', {
+                    id: obj.data.featureId,
+                    left: obj.left,
+                    top: obj.top, 
+                    angle: obj.angle,
+                    scaleX: obj.scaleX,
+                    scaleY: obj.scaleY
+                });
+                console.log('FABRIC POSITION: Dispatched Livewire fabricjs:object-modified event');
+            }
+        }
+    });
+    
     // Listener for layer visibility change
     Livewire.on('layer-visibility-changed', (data) => {
         log('Layer visibility changed event:', data);
@@ -1023,6 +1103,55 @@ function setupLivewireHandlers() {
         
         canvas.renderAll();
     }
+
+    // Handle direct position updates from the layer panel
+    document.addEventListener('livewire:direct-update-object-position', function(event) {
+        log('Direct position update event:', event.detail);
+        console.log('FABRIC POSITION: direct-update-object-position event received', event.detail);
+        
+        const { featureId, x, y } = event.detail;
+        
+        // Find the object on the canvas
+        const objects = canvas.getObjects().filter(obj => 
+            obj.data && obj.data.featureId === featureId
+        );
+        
+        console.log('FABRIC POSITION: Found objects matching featureId', {
+            featureId,
+            objectsCount: objects.length,
+            objects
+        });
+        
+        if (objects.length > 0) {
+            const fabricObject = objects[0];
+            
+            console.log('FABRIC POSITION: Updating object position', {
+                featureId,
+                from: { x: fabricObject.left, y: fabricObject.top },
+                to: { x, y }
+            });
+            
+            // Update position
+            fabricObject.set({
+                left: x,
+                top: y
+            });
+            
+            // If this is the active object, update controls
+            if (canvas.getActiveObject() === fabricObject) {
+                canvas.setActiveObject(fabricObject);
+            }
+            
+            canvas.renderAll();
+            log(`Updated position for object ${featureId} to x:${x}, y:${y}`);
+            
+            // Log position for debugging
+            console.log('FABRIC POSITION: Position updated from panel:', { x, y });
+        } else {
+            log(`Object with ID ${featureId} not found on canvas for position update`);
+            console.log('FABRIC POSITION: Object not found for position update', { featureId });
+        }
+    });
 }
 
 function addFeatureToCanvas(feature) {

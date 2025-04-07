@@ -82,13 +82,50 @@ class FeatureAdjustmentPanel extends Component
      */
     public function handleLayerSelected($layerData)
     {
-        Log::info('Layer selected in adjustment panel', ['layerId' => $layerData['id']]);
-        $this->selectedLayer = $layerData;
-        $this->selectedLayerId = $layerData['id'];
+        // Fix: Handle different data formats that might be passed to this method
+        $layerId = null;
+        
+        // If $layerData is an array with 'id' key
+        if (is_array($layerData) && isset($layerData['id'])) {
+            $layerId = $layerData['id'];
+            $this->selectedLayer = $layerData;
+        }
+        // If $layerData is an array with 'layerId' key (from event payload)
+        elseif (is_array($layerData) && isset($layerData['layerId'])) {
+            $layerId = $layerData['layerId'];
+            
+            // Find the complete layer data from our layers array
+            foreach ($this->layers as $layer) {
+                if ($layer['id'] == $layerId) {
+                    $this->selectedLayer = $layer;
+                    break;
+                }
+            }
+        }
+        // If $layerData is a direct ID value
+        else {
+            $layerId = $layerData;
+            
+            // Find the complete layer data from our layers array
+            foreach ($this->layers as $layer) {
+                if ($layer['id'] == $layerId) {
+                    $this->selectedLayer = $layer;
+                    break;
+                }
+            }
+        }
+        
+        if (!$layerId) {
+            Log::error('Invalid layer data passed to handleLayerSelected', ['layerData' => $layerData]);
+            return;
+        }
+        
+        $this->selectedLayerId = $layerId;
+        Log::info('Layer selected in adjustment panel', ['layerId' => $layerId]);
         
         // Load adjustment values if they exist, otherwise use defaults
-        if (isset($layerData['adjustments'])) {
-            $adjustments = $layerData['adjustments'];
+        if ($this->selectedLayer && isset($this->selectedLayer['adjustments'])) {
+            $adjustments = $this->selectedLayer['adjustments'];
             $this->brightness = $adjustments['brightness'] ?? 50;
             $this->contrast = $adjustments['contrast'] ?? 50;
             $this->saturation = $adjustments['saturation'] ?? 50;

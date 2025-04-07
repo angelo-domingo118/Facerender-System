@@ -12,7 +12,7 @@ class TransformPanel extends Component
     public $positionY = 0;
     public $width = 100;
     public $height = 100;
-    public $rotation = 0;
+    public float $rotation = 0.0;
     public $selectedLayer = null;
     public $selectedLayerId = null;
     public $moveIncrement = 5;
@@ -22,6 +22,7 @@ class TransformPanel extends Component
     public $preserveAspectRatio = true;
     public $originalWidth = 0;
     public $originalHeight = 0;
+    public float $rotationIncrement = 0.5; // Default increment
     
     // Listen for events from LayerPanel and MainCanvas
     protected $listeners = [
@@ -83,19 +84,56 @@ class TransformPanel extends Component
      */
     public function handleLayerSelected($layerData)
     {
-        Log::info('Layer selected in transform panel', ['layerId' => $layerData['id']]);
-        $this->selectedLayer = $layerData;
-        $this->selectedLayerId = $layerData['id'];
+        // Fix: Handle different data formats that might be passed to this method
+        $layerId = null;
         
-        // Initialize transform values from the layer data
-        if (isset($layerData['position'])) {
-            $this->positionX = $layerData['position']['x'] ?? 0;
-            $this->positionY = $layerData['position']['y'] ?? 0;
-            $this->rotation = $layerData['position']['rotation'] ?? 0;
+        // If $layerData is an array with 'id' key
+        if (is_array($layerData) && isset($layerData['id'])) {
+            $layerId = $layerData['id'];
+            $this->selectedLayer = $layerData;
+        }
+        // If $layerData is an array with 'layerId' key (from event payload)
+        elseif (is_array($layerData) && isset($layerData['layerId'])) {
+            $layerId = $layerData['layerId'];
+            
+            // Find the complete layer data from our layers array
+            foreach ($this->layers as $layer) {
+                if ($layer['id'] == $layerId) {
+                    $this->selectedLayer = $layer;
+                    break;
+                }
+            }
+        }
+        // If $layerData is a direct ID value
+        else {
+            $layerId = $layerData;
+            
+            // Find the complete layer data from our layers array
+            foreach ($this->layers as $layer) {
+                if ($layer['id'] == $layerId) {
+                    $this->selectedLayer = $layer;
+                    break;
+                }
+            }
+        }
+        
+        if (!$layerId) {
+            Log::error('Invalid layer data passed to handleLayerSelected', ['layerData' => $layerData]);
+            return;
+        }
+        
+        $this->selectedLayerId = $layerId;
+        Log::info('Layer selected in transform panel', ['layerId' => $layerId]);
+        
+        // Initialize transform values from the layer data if available
+        if ($this->selectedLayer && isset($this->selectedLayer['position'])) {
+            $this->positionX = $this->selectedLayer['position']['x'] ?? 0;
+            $this->positionY = $this->selectedLayer['position']['y'] ?? 0;
+            $this->rotation = $this->selectedLayer['position']['rotation'] ?? 0.0;
             
             // Width and height might be directly on the feature or in the position
-            $this->width = $layerData['width'] ?? ($layerData['position']['width'] ?? 100);
-            $this->height = $layerData['height'] ?? ($layerData['position']['height'] ?? 100);
+            $this->width = $this->selectedLayer['width'] ?? ($this->selectedLayer['position']['width'] ?? 100);
+            $this->height = $this->selectedLayer['height'] ?? ($this->selectedLayer['position']['height'] ?? 100);
             
             // Store the original dimensions for aspect ratio calculations
             $this->originalWidth = $this->width;
@@ -115,7 +153,7 @@ class TransformPanel extends Component
         $this->positionY = 0;
         $this->width = 100;
         $this->height = 100;
-        $this->rotation = 0;
+        $this->rotation = 0.0;
         $this->originalWidth = 100;
         $this->originalHeight = 100;
     }
@@ -312,7 +350,7 @@ class TransformPanel extends Component
             return;
         }
         
-        $this->rotation = 0;
+        $this->rotation = 0.0;
         $this->updateTransform();
     }
     
@@ -322,6 +360,45 @@ class TransformPanel extends Component
     public function setMoveIncrement($size)
     {
         $this->moveIncrement = $size;
+    }
+    
+    /**
+     * Rotate the layer by a specific angle or the current increment
+     */
+    public function rotateBy($direction) // Accepts 'increase' or 'decrease' now
+    {
+        if (!$this->selectedLayer) {
+            return;
+        }
+        
+        // Determine the angle based on direction and increment
+        $angle = ($direction === 'increase') ? (float)$this->rotationIncrement : -(float)$this->rotationIncrement;
+        
+        // Ensure rotation is treated as a float
+        $newRotation = (float)$this->rotation + $angle;
+        
+        // Normalize the rotation angle to be within -180 to 180 degrees
+        while ($newRotation > 180) {
+            $newRotation -= 360;
+        }
+        while ($newRotation <= -180) { // Use <= to include -180
+            $newRotation += 360;
+        }
+        
+        // Round to a reasonable precision (e.g., 1 decimal place)
+        $this->rotation = round($newRotation, 1);
+        
+        $this->updateTransform();
+    }
+    
+    /**
+     * Validation hook for rotationIncrement
+     */
+    public function updatedRotationIncrement($value)
+    {
+        // Ensure the value is within bounds and numeric
+        $this->rotationIncrement = max(0.1, min(45, (float)$value));
+        Log::info('Rotation increment updated', ['new_value' => $this->rotationIncrement]);
     }
     
     public function render()

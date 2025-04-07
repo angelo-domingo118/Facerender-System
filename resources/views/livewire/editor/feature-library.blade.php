@@ -292,26 +292,24 @@
         </div>
 
         @if(!$selectedCategory)
-            <div class="flex flex-col items-center justify-center h-full text-center">
-                <div class="bg-white p-8 rounded-lg border border-gray-200 shadow-sm max-w-sm">
-                    <div class="bg-[#2C3E50]/10 rounded-full p-4 w-16 h-16 flex items-center justify-center mx-auto mb-4">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-[#2C3E50]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                        </svg>
-                    </div>
-                    <h3 class="text-lg font-medium text-gray-800 mb-2">Select a feature category</h3>
-                    <p class="text-gray-600 mb-6">Please select a feature category from the dropdown above to view available facial features.</p>
-                    
-                    <button 
-                        @click="document.querySelector('.feature-category-dropdown').click()"
-                        class="inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-[#2C3E50] hover:bg-[#1e2c38] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#2C3E50] transition-colors duration-150 w-full"
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" />
-                        </svg>
-                        Choose Category
-                    </button>
+            <div class="flex flex-col items-center justify-center h-full text-center px-4">
+                <div class="bg-[#2C3E50]/10 rounded-full p-4 w-16 h-16 flex items-center justify-center mx-auto mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-[#2C3E50]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                    </svg>
                 </div>
+                <h3 class="text-lg font-medium text-gray-800 mb-2">Select a feature category</h3>
+                <p class="text-gray-600 mb-6">Please select a feature category from the dropdown above to view available facial features.</p>
+                
+                <button 
+                    @click="document.querySelector('.feature-category-dropdown').click()"
+                    class="inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-[#2C3E50] hover:bg-[#1e2c38] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#2C3E50] transition-colors duration-150"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" />
+                    </svg>
+                    Choose Category
+                </button>
             </div>
         @else
             @if($selectedCategory)
@@ -339,7 +337,7 @@
                     >
                         <!-- Checkmark overlay for active features -->
                         @if(in_array($feature->id, $activeFeatureIds))
-                            <div class="absolute top-1 right-1 z-10 bg-green-500 text-white rounded-full p-0.5 shadow">
+                            <div class="absolute top-1 right-1 z-[5] bg-[#2C3E50] text-white rounded-full p-0.5 shadow">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
                                 </svg>

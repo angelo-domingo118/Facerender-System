@@ -12,12 +12,15 @@ class LayerPanel extends Component
     public $selectedLayerId = null; // Currently selected layer ID
     public $opacity = 100;
     public $isLayerLocked = false;
+    public $positionX = 0;
+    public $positionY = 0;
     
     // Listen for feature updates from MainCanvas
     protected $listeners = [
         'layers-updated' => 'updateLayers',
         'feature-removed' => 'handleFeatureRemoved',
-        'features-cleared' => 'clearLayers'
+        'features-cleared' => 'clearLayers',
+        'fabricjs:object-selected' => 'handleObjectSelected'
     ];
     
     public function mount($compositeId)
@@ -123,16 +126,18 @@ class LayerPanel extends Component
         $this->selectedLayerId = $layerId;
         
         $layer = $this->findLayer($layerId);
+        
         if ($layer) {
             $this->opacity = $layer['opacity'];
             $this->isLayerLocked = $layer['locked'];
             
-            // Dispatch event to select this feature on the canvas
-            $this->dispatch('select-feature-on-canvas', [
-                'featureId' => $layerId
-            ]);
+            // Set position values if available
+            if (isset($layer['position'])) {
+                $this->positionX = $layer['position']['x'] ?? 0;
+                $this->positionY = $layer['position']['y'] ?? 0;
+            }
             
-            // Dispatch event for the transform panel
+            // Dispatch event to update canvas with the full layer data to ensure consistent format
             $this->dispatch('layer-selected', $layer);
             
             Log::info('Layer selected', ['layerId' => $layerId]);
@@ -295,6 +300,42 @@ class LayerPanel extends Component
         $this->dispatch('remove-feature-requested', [
             'featureId' => $layerId
         ]);
+    }
+    
+    /**
+     * Handle object selection from Fabric.js canvas
+     */
+    public function handleObjectSelected($data)
+    {
+        if (isset($data['left']) && isset($data['top'])) {
+            $this->positionX = round($data['left']);
+            $this->positionY = round($data['top']);
+            Log::info('Object position updated from canvas', [
+                'x' => $this->positionX,
+                'y' => $this->positionY
+            ]);
+        }
+    }
+    
+    /**
+     * Update the position of the selected layer
+     */
+    public function updatePosition()
+    {
+        if ($this->selectedLayerId) {
+            // Dispatch event to update canvas object position
+            $this->dispatch('updateObjectPosition', [
+                'layerId' => $this->selectedLayerId,
+                'x' => (int) $this->positionX,
+                'y' => (int) $this->positionY
+            ]);
+            
+            Log::info('Position updated from panel', [
+                'layerId' => $this->selectedLayerId,
+                'x' => $this->positionX,
+                'y' => $this->positionY
+            ]);
+        }
     }
     
     public function render()

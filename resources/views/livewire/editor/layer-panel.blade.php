@@ -103,6 +103,34 @@
         <div class="space-y-3">
             <h4 class="text-xs font-medium text-gray-500 uppercase">Layer Properties</h4>
             
+            <!-- Position Controls -->
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="text-xs text-gray-600 mb-1 block">X Position</label>
+                    <div class="flex">
+                        <input 
+                            type="number" 
+                            wire:model.defer="positionX" 
+                            wire:change="updatePosition"
+                            class="w-full text-sm border border-gray-300 rounded-md px-2 py-1"
+                            step="1"
+                        >
+                    </div>
+                </div>
+                <div>
+                    <label class="text-xs text-gray-600 mb-1 block">Y Position</label>
+                    <div class="flex">
+                        <input 
+                            type="number" 
+                            wire:model.defer="positionY" 
+                            wire:change="updatePosition"
+                            class="w-full text-sm border border-gray-300 rounded-md px-2 py-1"
+                            step="1"
+                        >
+                    </div>
+                </div>
+            </div>
+            
             <div>
                 <label class="text-xs text-gray-600 mb-1 block">Opacity</label>
                 <input 
@@ -121,3 +149,71 @@
         </div>
     </div>
 </div>
+
+<!-- Add JavaScript for tracking and logging position changes -->
+<script>
+    // TESTING: Log when script loads
+    console.log('POSITION TRACKING: Layer panel script loaded');
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('POSITION TRACKING: DOM content loaded in layer panel');
+        
+        window.addEventListener('fabricjs:object-selected', function(event) {
+            const obj = event.detail;
+            console.log('POSITION TRACKING: fabricjs:object-selected event received', event);
+            
+            if (obj) {
+                // Update position values in Livewire component
+                @this.set('positionX', Math.round(obj.left));
+                @this.set('positionY', Math.round(obj.top));
+                
+                // Log position for debugging
+                console.log('POSITION TRACKING: Selected object position:', { x: obj.left, y: obj.top });
+            }
+        });
+        
+        window.addEventListener('fabricjs:object-modified', function(event) {
+            const obj = event.detail;
+            console.log('POSITION TRACKING: fabricjs:object-modified event received', event);
+            
+            if (obj) {
+                // Update position values in Livewire component
+                @this.set('positionX', Math.round(obj.left));
+                @this.set('positionY', Math.round(obj.top));
+                
+                // Log position for debugging
+                console.log('POSITION TRACKING: Object position updated:', { x: obj.left, y: obj.top });
+            }
+        });
+        
+        // Listen for Livewire events to update the canvas object position
+        Livewire.on('updateObjectPosition', function(x, y) {
+            console.log('POSITION TRACKING: updateObjectPosition event received', { x, y });
+            
+            // This assumes you have a function to update the selected object in your canvas
+            if (window.fabricCanvas && window.fabricCanvas.getActiveObject()) {
+                const obj = window.fabricCanvas.getActiveObject();
+                obj.set({ left: x, top: y });
+                window.fabricCanvas.renderAll();
+                console.log('POSITION TRACKING: Position updated from panel:', { x, y });
+            } else {
+                console.log('POSITION TRACKING: Cannot update position - no active object or canvas not available');
+            }
+        });
+        
+        // Log when input values change
+        document.querySelectorAll('input[wire\\:model\\.defer="positionX"], input[wire\\:model\\.defer="positionY"]').forEach(input => {
+            input.addEventListener('change', function() {
+                console.log('POSITION TRACKING: Position input changed:', { 
+                    inputName: this.getAttribute('wire:model.defer'),
+                    value: this.value 
+                });
+            });
+        });
+    });
+    
+    // Log when position is updated via direct DOM events
+    document.addEventListener('livewire:direct-update-object-position', function(event) {
+        console.log('POSITION TRACKING: direct-update-object-position event received', event.detail);
+    });
+</script>

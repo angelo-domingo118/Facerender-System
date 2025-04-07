@@ -29,7 +29,8 @@ class MainCanvas extends Component
         'select-feature-on-canvas' => 'handleSelectFeatureOnCanvas',
         'layers-reordered' => 'handleLayersReordered',
         'layer-transform-updated' => 'handleLayerTransformUpdated',
-        'layer-adjustments-updated' => 'handleLayerAdjustmentsUpdated'
+        'layer-adjustments-updated' => 'handleLayerAdjustmentsUpdated',
+        'updateObjectPosition' => 'handleUpdateObjectPosition'
     ];
     
     public function mount($compositeId)
@@ -520,6 +521,76 @@ class MainCanvas extends Component
                 
                 break;
             }
+        }
+    }
+    
+    /**
+     * Handle position updates from the layer panel
+     */
+    public function handleUpdateObjectPosition($data)
+    {
+        Log::info('Handling position update from layer panel', [
+            'layerId' => $data['layerId'],
+            'x' => $data['x'],
+            'y' => $data['y'],
+            'data' => $data
+        ]);
+        
+        // Find the feature with the specified layer ID
+        $found = false;
+        foreach ($this->selectedFeatures as $key => $feature) {
+            if ($feature['id'] == $data['layerId']) {
+                $found = true;
+                // Create position object if it doesn't exist
+                if (!isset($this->selectedFeatures[$key]['position'])) {
+                    Log::info('Creating new position object for feature', [
+                        'featureId' => $feature['id']
+                    ]);
+                    $this->selectedFeatures[$key]['position'] = [];
+                }
+                
+                // Log previous position for debugging
+                Log::info('Previous position values', [
+                    'featureId' => $feature['id'],
+                    'previous_x' => $this->selectedFeatures[$key]['position']['x'] ?? 'not set',
+                    'previous_y' => $this->selectedFeatures[$key]['position']['y'] ?? 'not set'
+                ]);
+                
+                // Update position data
+                $this->selectedFeatures[$key]['position']['x'] = $data['x'];
+                $this->selectedFeatures[$key]['position']['y'] = $data['y'];
+                
+                // Maintain other position properties if they exist
+                if (isset($feature['position']['rotation'])) {
+                    $this->selectedFeatures[$key]['position']['rotation'] = $feature['position']['rotation'];
+                }
+                
+                if (isset($feature['position']['scale'])) {
+                    $this->selectedFeatures[$key]['position']['scale'] = $feature['position']['scale'];
+                }
+                
+                // Dispatch event to update the canvas
+                $eventData = [
+                    'featureId' => $data['layerId'],
+                    'x' => $data['x'],
+                    'y' => $data['y']
+                ];
+                Log::info('Dispatching direct-update-object-position event', $eventData);
+                $this->dispatch('direct-update-object-position', $eventData);
+                
+                // Also update the canvas with the full selected features array
+                Log::info('Dispatching update-canvas event');
+                $this->dispatch('update-canvas', ['selectedFeatures' => $this->selectedFeatures]);
+                
+                break;
+            }
+        }
+        
+        if (!$found) {
+            Log::error('Feature not found for position update', [
+                'layerId' => $data['layerId'],
+                'available_features' => array_column($this->selectedFeatures, 'id')
+            ]);
         }
     }
     

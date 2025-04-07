@@ -90,6 +90,28 @@
                         </button>
                     </div>
                     
+                    <!-- Direct Position Inputs -->
+                    <div class="grid grid-cols-2 gap-3 mt-3 mb-3">
+                        <div class="bg-gray-50 p-2 rounded-md text-center border border-gray-200">
+                            <label class="block text-xs text-gray-500 mb-1">X</label>
+                            <input
+                                type="number"
+                                wire:model.lazy="positionX"
+                                wire:change="updateTransform()"
+                                class="w-full bg-white border border-gray-300 text-sm px-2 py-1 text-center rounded-md"
+                            />
+                        </div>
+                        <div class="bg-gray-50 p-2 rounded-md text-center border border-gray-200">
+                            <label class="block text-xs text-gray-500 mb-1">Y</label>
+                            <input
+                                type="number"
+                                wire:model.lazy="positionY"
+                                wire:change="updateTransform()"
+                                class="w-full bg-white border border-gray-300 text-sm px-2 py-1 text-center rounded-md"
+                            />
+                        </div>
+                    </div>
+                    
                     <!-- Movement Increment Slider -->
                     <div class="mt-3">
                         <div class="mb-2 flex justify-between items-center">
@@ -232,26 +254,82 @@
                         Rotation
                     </h4>
                     
-                    <div class="mb-4">
+                    <!-- Main Rotation Slider & Input -->
+                    <div class="mb-3">
                         <input 
                             type="range" 
-                            wire:model="rotation" 
+                            wire:model.live="rotation" 
                             wire:change="updateTransform"
                             min="-180" 
                             max="180" 
-                            step="1" 
+                            step="0.1" 
                             class="w-full h-2 bg-gray-200 rounded-full appearance-none cursor-pointer accent-[#2C3E50]"
                         >
-                        <div class="flex justify-between mt-2">
+                        <div class="flex justify-between items-center mt-2">
                             <span class="text-xs text-gray-500">-180°</span>
-                            <span class="text-xs font-medium">{{ $rotation }}°</span>
+                            <!-- Input and Fine Adjustment Buttons Group -->
+                            <div class="flex items-center space-x-2">
+                                 <button wire:click="rotateBy('decrease')" class="p-1 bg-gray-100 hover:bg-gray-200 rounded disabled:opacity-50" title="Rotate -{{ number_format($rotationIncrement, 1) }}°" {{ $selectedLayer ? '' : 'disabled' }}>
+                                     <!-- SVG for rotate counter-clockwise (Using Redo Icon - Swapped) -->
+                                     <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-600">
+                                        <path d="M4 7H15C16.8692 7 17.8038 7 18.5 7.40193C18.9561 7.66523 19.3348 8.04394 19.5981 8.49999C20 9.19615 20 10.1308 20 12C20 13.8692 20 14.8038 19.5981 15.5C19.3348 15.9561 18.9561 16.3348 18.5 16.5981C17.8038 17 16.8692 17 15 17H8M4 7L7 4M4 7L7 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                     </svg>
+                                 </button>
+                                 <input 
+                                     type="number" 
+                                     wire:model.lazy="rotation"
+                                     wire:change="updateTransform()"
+                                     class="w-16 bg-white border border-gray-300 text-sm px-1 py-0.5 text-center rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
+                                     step="0.1" 
+                                     min="-180" 
+                                     max="180"
+                                     {{ $selectedLayer ? '' : 'disabled' }}
+                                 >
+                                 <button wire:click="rotateBy('increase')" class="p-1 bg-gray-100 hover:bg-gray-200 rounded disabled:opacity-50" title="Rotate +{{ number_format($rotationIncrement, 1) }}°" {{ $selectedLayer ? '' : 'disabled' }}>
+                                      <!-- SVG for rotate clockwise (Using Undo Icon - Swapped) -->
+                                      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-600">
+                                         <path d="M20 7H9.00001C7.13077 7 6.19615 7 5.5 7.40193C5.04395 7.66523 4.66524 8.04394 4.40193 8.49999C4 9.19615 4 10.1308 4 12C4 13.8692 4 14.8038 4.40192 15.5C4.66523 15.9561 5.04394 16.3348 5.5 16.5981C6.19615 17 7.13077 17 9 17H16M20 7L17 4M20 7L17 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                      </svg>
+                                 </button>
+                            </div>
                             <span class="text-xs text-gray-500">180°</span>
+                        </div>
+                    </div>
+
+                    <!-- Rotation Increment Controls -->
+                    <div class="mt-4 mb-4 pt-3 border-t border-gray-100" x-data="{ incrementValue: @entangle('rotationIncrement').live }">
+                        <div class="flex justify-between items-center mb-1">
+                             <label for="rotationIncrementInput" class="text-xs text-gray-500">Increment Step:</label>
+                             <input
+                                 id="rotationIncrementInput"
+                                 type="number"
+                                 x-model.number.lazy="incrementValue" 
+                                 @change="$wire.set('rotationIncrement', Math.max(0, Math.min(45, parseFloat($event.target.value) || 0)))" 
+                                 class="w-16 bg-gray-50 border border-gray-200 text-xs px-1 py-0.5 text-center rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
+                                 step="1" min="0" max="45"
+                                 {{ $selectedLayer ? '' : 'disabled' }}
+                             >
+                         </div>
+                        <input 
+                            id="rotationIncrementSlider" 
+                            type="range" 
+                            x-model.number.debounce.10ms="incrementValue" 
+                            @input="$wire.set('rotationIncrement', Math.max(0, Math.min(45, parseFloat($event.target.value) || 0)))" 
+                            min="0" max="45" step="1" 
+                            class="w-full h-1.5 bg-gray-200 rounded-full appearance-none cursor-pointer accent-[#2C3E50]/50 disabled:opacity-50 disabled:cursor-not-allowed"
+                             {{ $selectedLayer ? '' : 'disabled' }}
+                        >
+                        <div class="flex justify-between text-xs text-gray-400 mt-1">
+                            <span>0°</span>
+                            <span>22.5°</span>
+                            <span>45°</span>
                         </div>
                     </div>
                     
                     <button 
                         wire:click="resetRotation" 
-                        class="w-full text-xs text-center font-medium text-gray-500 bg-gray-100 hover:bg-gray-200 active:bg-gray-300 rounded-md py-2 px-2 transition-colors flex items-center justify-center"
+                        class="w-full text-xs text-center font-medium text-gray-500 bg-gray-100 hover:bg-gray-200 active:bg-gray-300 rounded-md py-2 px-2 transition-colors flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+                         {{ $selectedLayer ? '' : 'disabled' }}
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -272,3 +350,56 @@
         @endif
     </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('TRANSFORM PANEL: Script loaded');
+        
+        // Function to sync a slider's visual position with its Livewire property
+        function syncSliderVisual(sliderElement, livewireValue) {
+            if (!sliderElement) return;
+            const numericValue = parseFloat(livewireValue);
+            if (!isNaN(numericValue) && parseFloat(sliderElement.value) !== numericValue) {
+                sliderElement.value = numericValue;
+                // console.log(`TRANSFORM PANEL: Synced slider [${sliderElement.id || 'no-id'}] to:`, numericValue);
+            }
+        }
+
+        const rotationSlider = document.getElementById('rotationSlider');
+        const rotationIncrementSlider = document.getElementById('rotationIncrementSlider');
+
+        // Initial sync for both sliders
+        syncSliderVisual(rotationSlider, @this.rotation);
+        syncSliderVisual(rotationIncrementSlider, @this.rotationIncrement);
+
+        // Listen for object selection/modification events from Fabric.js
+        function handleFabricEvent(event) {
+            const obj = event.detail;
+            const eventType = event.type;
+            // console.log(`TRANSFORM PANEL: ${eventType} event received`, event.detail);
+            
+            if (obj && @this.selectedLayerId == obj.id) {
+                @this.set('positionX', Math.round(obj.left), true); // Defer network request
+                @this.set('positionY', Math.round(obj.top), true);  // Defer network request
+                const newRotation = parseFloat(obj.angle.toFixed(1));
+                @this.set('rotation', newRotation); 
+                // console.log('TRANSFORM PANEL: Updated positionX/Y/Rotation from Fabric event');
+                // Explicitly sync sliders after direct @this.set from Fabric event
+                syncSliderVisual(rotationSlider, newRotation);
+                syncSliderVisual(rotationIncrementSlider, @this.rotationIncrement);
+            }
+        }
+
+        window.addEventListener('fabricjs:object-selected', handleFabricEvent);
+        window.addEventListener('fabricjs:object-modified', handleFabricEvent);
+        
+        // Sync sliders whenever Livewire finishes updating this component
+        Livewire.hook('morph.updated', ({ el, component }) => {
+             if (component.id === @this.__instance.id) { 
+                // console.log('TRANSFORM PANEL: Livewire component updated, syncing sliders.');
+                syncSliderVisual(rotationSlider, @this.rotation);
+                syncSliderVisual(rotationIncrementSlider, @this.rotationIncrement);
+             }
+        });
+    });
+</script>
