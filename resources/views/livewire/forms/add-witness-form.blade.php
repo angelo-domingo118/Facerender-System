@@ -13,6 +13,7 @@
                 label="Witness Name"
                 placeholder="Enter full name"
                 required
+                id="add-witness-name"
             />
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -21,6 +22,7 @@
                     label="Age"
                     placeholder="Enter age"
                     type="number"
+                    id="add-witness-age"
                 />
                 
                 <x-select
@@ -34,6 +36,7 @@
                     ]"
                     option-label="name"
                     option-value="value"
+                    id="add-witness-gender"
                 />
             </div>
             
@@ -42,6 +45,7 @@
                     wire:model="contact_number"
                     label="Contact Number"
                     placeholder="Enter contact number"
+                    id="add-witness-contact-number"
                 />
             </div>
             
@@ -49,12 +53,14 @@
                 wire:model="address"
                 label="Address"
                 placeholder="Enter address"
+                id="add-witness-address"
             />
             
             <x-input
                 wire:model="relationship_to_case"
                 label="Relationship to Case"
                 placeholder="E.g., Victim, Bystander, Reporting Officer"
+                id="add-witness-relationship-to-case"
             />
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -65,6 +71,7 @@
                     min="1"
                     max="10"
                     type="number"
+                    id="add-witness-reliability-rating"
                 />
                 
                 <x-datetime-picker
@@ -72,6 +79,7 @@
                     label="Interview Date"
                     placeholder="Select interview date"
                     without-time
+                    id="add-witness-interview-date"
                 />
             </div>
             
@@ -80,6 +88,7 @@
                 label="Interview Notes"
                 placeholder="Add any additional information about this witness"
                 rows="3"
+                id="add-witness-notes"
             />
         </div>
         

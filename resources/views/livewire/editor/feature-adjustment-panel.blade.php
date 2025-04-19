@@ -18,14 +18,6 @@
         
         @if($selectedLayer)
             <div class="p-3">
-                <!-- Feature Name -->
-                <div class="mb-4">
-                    <h4 class="text-sm font-medium text-gray-700 mb-2">Feature: Eyes</h4>
-                    <div class="bg-gray-100 p-2 rounded-md border border-gray-200">
-                        <p class="text-xs text-gray-500">Selected feature information</p>
-                    </div>
-                </div>
-                
                 <!-- Basic Adjustments -->
                 <div class="mb-4 bg-white p-3 rounded-lg border shadow-sm">
                     <h4 class="text-sm font-medium text-gray-700 mb-3 flex items-center">
@@ -34,23 +26,6 @@
                         </svg>
                         Basic Adjustments
                     </h4>
-                    
-                    <!-- Brightness Control -->
-                    <div class="mb-3">
-                        <div class="flex justify-between items-center mb-1">
-                            <label class="text-xs font-medium text-gray-500">Brightness</label>
-                            <span class="text-xs bg-gray-100 px-2 py-1 rounded-md font-medium">{{ $brightness }}%</span>
-                        </div>
-                        <input 
-                            type="range" 
-                            wire:model.live="brightness" 
-                            wire:change="updateAdjustments"
-                            min="0" 
-                            max="100" 
-                            step="1" 
-                            class="w-full h-2 bg-gray-200 rounded-full appearance-none cursor-pointer accent-[#2C3E50]"
-                        >
-                    </div>
                     
                     <!-- Contrast Control -->
                     <div class="mb-3">
@@ -62,6 +37,7 @@
                             type="range" 
                             wire:model.live="contrast" 
                             wire:change="updateAdjustments"
+                            x-on:input="$wire.updateAdjustments()"
                             min="0" 
                             max="100" 
                             step="1" 
@@ -78,6 +54,23 @@
                         <input 
                             type="range" 
                             wire:model.live="saturation" 
+                            wire:change="updateAdjustments"
+                            min="0" 
+                            max="100" 
+                            step="1" 
+                            class="w-full h-2 bg-gray-200 rounded-full appearance-none cursor-pointer accent-[#2C3E50]"
+                        >
+                    </div>
+
+                    <!-- Sharpness Control -->
+                    <div class="mb-3">
+                        <div class="flex justify-between items-center mb-1">
+                            <label class="text-xs font-medium text-gray-500">Sharpness</label>
+                            <span class="text-xs bg-gray-100 px-2 py-1 rounded-md font-medium">{{ $sharpness }}%</span>
+                        </div>
+                        <input 
+                            type="range" 
+                            wire:model.live="sharpness" 
                             wire:change="updateAdjustments"
                             min="0" 
                             max="100" 
@@ -105,23 +98,6 @@
                     </div>
                     
                     @if($showAdvanced)
-                        <!-- Sharpness/Blur Control -->
-                        <div class="mb-3">
-                            <div class="flex justify-between items-center mb-1">
-                                <label class="text-xs font-medium text-gray-500">Sharpness/Blur</label>
-                                <span class="text-xs bg-gray-100 px-2 py-1 rounded-md font-medium">{{ $sharpness }}%</span>
-                            </div>
-                            <input 
-                                type="range" 
-                                wire:model.live="sharpness" 
-                                wire:change="updateAdjustments"
-                                min="0" 
-                                max="100" 
-                                step="1" 
-                                class="w-full h-2 bg-gray-200 rounded-full appearance-none cursor-pointer accent-[#2C3E50]"
-                            >
-                        </div>
-                        
                         <!-- Edge Feathering Control -->
                         <div class="mb-3">
                             <div class="flex justify-between items-center mb-1">

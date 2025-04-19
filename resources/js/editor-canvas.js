@@ -73,6 +73,15 @@ window.addEventListener('load', function() {
                         window.addEventListener('livewire:initialized', setupLivewireHandlers);
                     }
                     
+                    // Dispatch canvas initialized event for other modules
+                    window.dispatchEvent(new CustomEvent('canvas:initialized', {
+                        detail: { 
+                            canvas,
+                            fabric  // Include the Fabric.js instance as well
+                        }
+                    }));
+                    console.log('Canvas initialized event dispatched with canvas:', canvas);
+                    
                     // Set up grid after everything else is ready - lowest priority
                     setTimeout(setupGrid, 100);
                 });

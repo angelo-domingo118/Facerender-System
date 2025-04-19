@@ -51,6 +51,7 @@ class DatabaseSeeder extends Seeder
         // Seed the feature library
         $this->call([
             FeatureLibrarySeeder::class,
+            AdminUserSeeder::class,
         ]);
         
         $this->command->info('Database seeded successfully with multiple users and their cases!');

@@ -13,7 +13,6 @@ class FeatureAdjustmentPanel extends Component
     public $layers = [];
     
     // Adjustment properties
-    public $brightness = 50;
     public $contrast = 50;
     public $saturation = 50;
     public $sharpness = 50;
@@ -126,7 +125,6 @@ class FeatureAdjustmentPanel extends Component
         // Load adjustment values if they exist, otherwise use defaults
         if ($this->selectedLayer && isset($this->selectedLayer['adjustments'])) {
             $adjustments = $this->selectedLayer['adjustments'];
-            $this->brightness = $adjustments['brightness'] ?? 50;
             $this->contrast = $adjustments['contrast'] ?? 50;
             $this->saturation = $adjustments['saturation'] ?? 50;
             $this->sharpness = $adjustments['sharpness'] ?? 50;
@@ -204,7 +202,6 @@ class FeatureAdjustmentPanel extends Component
         $adjustmentData = [
             'layerId' => $this->selectedLayerId,
             'adjustments' => [
-                'brightness' => $this->brightness,
                 'contrast' => $this->contrast,
                 'saturation' => $this->saturation,
                 'sharpness' => $this->sharpness,
@@ -214,10 +211,14 @@ class FeatureAdjustmentPanel extends Component
             ]
         ];
         
-        // Dispatch event to update canvas
+        // Dispatch event to update canvas - using named parameters for Livewire 3
         $this->dispatch('layer-adjustments-updated', $adjustmentData);
         
-        Log::info('Layer adjustments updated', ['layerId' => $this->selectedLayerId]);
+        Log::info('Layer adjustments updated', [
+            'layerId' => $this->selectedLayerId,
+            'contrast' => $this->contrast,
+            'data' => $adjustmentData
+        ]);
     }
     
     /**
@@ -234,7 +235,6 @@ class FeatureAdjustmentPanel extends Component
      */
     private function resetAdjustments()
     {
-        $this->brightness = 50;
         $this->contrast = 50;
         $this->saturation = 50;
         $this->sharpness = 50;

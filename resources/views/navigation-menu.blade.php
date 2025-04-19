@@ -118,6 +118,15 @@
                             {{ __('Profile') }}
                         </a>
 
+                        {{-- Add Admin Link --}}
+                        @if(Auth::user()->is_admin)
+                        <div class="border-t border-[#3498DB]/20"></div>
+                        <a href="{{ route('admin.users.index') }}" class="flex items-center px-4 py-2 text-sm text-white hover:bg-[#34495E] transition">
+                            {{ __('User Management') }}
+                        </a>
+                        @endif
+                        {{-- End Admin Link --}}
+
                         @if (Laravel\Jetstream\Jetstream::hasApiFeatures())
                             <a href="{{ route('api-tokens.index') }}" class="flex items-center px-4 py-2 text-sm text-white hover:bg-[#34495E] transition">
                                 {{ __('API Tokens') }}

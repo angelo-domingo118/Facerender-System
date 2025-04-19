@@ -13,6 +13,7 @@
                 label="Composite Title"
                 placeholder="Enter a title for this composite"
                 required
+                id="create-composite-title"
             />
             
             <x-textarea
