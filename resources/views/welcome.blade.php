@@ -32,13 +32,13 @@
         @livewire('navigation-menu')
 
         <!-- Hero Section -->
-        <section class="text-white min-h-screen flex items-center relative overflow-hidden bg-[#2C3E50]">
-            <div class="container mx-auto px-4 z-10 py-20">
-                <div class="max-w-4xl mx-auto">
-                    <h1 class="text-5xl md:text-6xl lg:text-7xl font-bold mb-8 font-lato leading-tight text-center">
+        <section class="text-white min-h-screen flex items-center justify-center relative overflow-hidden bg-[#2C3E50]">
+            <div class="container mx-auto px-4 z-10">
+                <div class="max-w-4xl mx-auto text-center">
+                    <h1 class="text-5xl md:text-6xl lg:text-7xl font-bold mb-8 font-lato leading-tight">
                         Professional Facial <span class="text-[#3498DB]">Composite</span> System
                     </h1>
-                    <p class="text-xl mb-12 text-gray-300 text-center max-w-3xl mx-auto leading-relaxed">
+                    <p class="text-xl mb-12 text-gray-300 max-w-3xl mx-auto leading-relaxed">
                         FACERENDER is a powerful web-based facial composite system designed for forensic professionals. Create accurate facial composites with an intuitive, precision-focused interface.
                     </p>
                     <div class="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-6 justify-center">
