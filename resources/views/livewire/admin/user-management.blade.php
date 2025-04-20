@@ -48,8 +48,7 @@
                                             @if(auth()->id() !== $user->id)
                                                 <x-button 
                                                     circle 
-                                                    wire:click="deleteUser({{ $user->id }})" 
-                                                    wire:confirm="Are you sure you want to delete this user?" 
+                                                    wire:click="confirmDeleteUser({{ $user->id }})" 
                                                     negative 
                                                     icon="trash" 
                                                     title="Delete" 
@@ -83,73 +82,182 @@
         align="center"
     >
         <x-card title="Create New User">
-            <form wire:submit="saveUser">
-                <div class="grid grid-cols-1 gap-4">
-                    <x-input wire:model="name" label="Name" placeholder="Enter user name" id="create-name" />
-                    <x-input wire:model="email" label="Email" placeholder="Enter user email" type="email" id="create-email" />
-                    <x-input wire:model="password" label="Password" placeholder="Enter new password" type="password" id="create-password" />
-                    <x-input wire:model="password_confirmation" label="Confirm Password" placeholder="Confirm new password" type="password" id="create-password-confirmation" />
-                    <x-checkbox wire:model="is_admin" id="create-is-admin" label="Is Admin" />
-                </div>
+            <div class="grid grid-cols-1 gap-4">
+                <x-input wire:model.live="name" label="Name" placeholder="Enter user name" id="create-name" />
+                @error('name') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
                 
-                <x-slot name="footer">
-                    <div class="flex justify-end gap-x-4">
-                        <x-button flat label="Cancel" x-on:click="close" />
-                        <x-button type="submit" primary label="Save User" wire:loading.attr="disabled" />
+                <x-input wire:model.live="email" label="Email" placeholder="Enter user email" type="email" id="create-email" />
+                @error('email') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                
+                <x-input wire:model.defer="password" label="Password" placeholder="Enter new password" type="password" id="create-password" />
+                @error('password') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                
+                <x-input wire:model.defer="password_confirmation" label="Confirm Password" placeholder="Confirm new password" type="password" id="create-password-confirmation" />
+                @error('password_confirmation') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                
+                <x-checkbox wire:model.live="is_admin" id="create-is-admin" label="Is Admin" />
+                @error('is_admin') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+            </div>
+            
+            <x-slot name="footer">
+                <div class="flex justify-between items-center w-full">
+                    <div class="text-red-500 text-sm">
+                        @if($errors->any())
+                            <ul>
+                                @foreach($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        @endif
                     </div>
-                </x-slot>
-            </form>
+                    <div class="flex gap-x-4">
+                        <x-button flat label="Cancel" x-on:click="close" />
+                        <x-button 
+                            wire:click="manualCreateUser"
+                            primary 
+                            label="Save User" 
+                            wire:loading.attr="disabled" 
+                            wire:loading.class="opacity-75"
+                            wire:target="manualCreateUser"
+                            icon="check"
+                        />
+                    </div>
+                </div>
+            </x-slot>
         </x-card>
     </x-modal>
     
     <!-- Edit User Modal -->
     <x-modal 
-        wire:model.defer="showEditModal" 
+        wire:model="showEditModal"
         max-width="lg"
         blur
         align="center"
+        x-on:close="$wire.$refresh()"
     >
         <x-card title="Edit User">
-            <form wire:submit="updateUser">
-                <div class="grid grid-cols-1 gap-4">
-                    <x-input wire:model="name" label="Name" placeholder="Enter user name" id="edit-name" />
-                    @error('name') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
-                    <x-input wire:model="email" label="Email" placeholder="Enter user email" type="email" id="edit-email" />
-                    @error('email') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
-                    <x-checkbox wire:model="is_admin" id="edit-is-admin" label="Is Admin" /> 
-                </div>
+            <div class="grid grid-cols-1 gap-4">
+                <x-input wire:model.live="name" label="Name" placeholder="Enter user name" id="edit-name" />
+                @error('name') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
                 
-                <x-slot name="footer">
-                    <div class="flex justify-end gap-x-4">
-                        <x-button flat label="Cancel" x-on:click="close" />
-                        <x-button type="submit" primary label="Update User" wire:loading.attr="disabled" />
+                <x-input wire:model.live="email" label="Email" placeholder="Enter user email" type="email" id="edit-email" />
+                @error('email') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                
+                <x-checkbox wire:model.live="is_admin" id="edit-is-admin" label="Is Admin" /> 
+                @error('is_admin') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+            </div>
+            
+            <x-slot name="footer">
+                <div class="flex justify-between items-center w-full">
+                    <div class="text-red-500 text-sm">
+                        @if($errors->any())
+                            <ul>
+                                @foreach($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        @endif
                     </div>
-                </x-slot>
-            </form>
+                    <div class="flex gap-x-4">
+                        <x-button 
+                            flat 
+                            label="Cancel" 
+                            x-on:click="close" 
+                        />
+                        <x-button 
+                            wire:click="manualUpdateUser"
+                            primary 
+                            label="Update User" 
+                            wire:loading.attr="disabled" 
+                            wire:loading.class="opacity-75"
+                            wire:target="manualUpdateUser"
+                            icon="check"
+                        />
+                    </div>
+                </div>
+            </x-slot>
         </x-card>
     </x-modal>
 
     <!-- Change Password Modal -->
     <x-modal 
-        wire:model.defer="showPasswordModal" 
+        wire:model="showPasswordModal" 
         max-width="lg"
         blur
         align="center"
+        x-on:close="$wire.$refresh()"
     >
         <x-card title="Change Password for {{ $selectedUser?->name }}">
-            <form wire:submit="updatePassword">
-                <div class="grid grid-cols-1 gap-4">
-                    <x-input wire:model="password" label="New Password" placeholder="Enter new password" type="password" id="change-password" />
-                    <x-input wire:model="password_confirmation" label="Confirm New Password" placeholder="Confirm new password" type="password" id="change-password-confirmation" />
-                </div>
+            <div class="grid grid-cols-1 gap-4">
+                <x-input wire:model.defer="password" label="New Password" placeholder="Enter new password" type="password" id="change-password" />
+                @error('password') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
                 
-                <x-slot name="footer">
-                    <div class="flex justify-end gap-x-4">
-                        <x-button flat label="Cancel" x-on:click="close" />
-                        <x-button type="submit" primary label="Update Password" wire:loading.attr="disabled" />
+                <x-input wire:model.defer="password_confirmation" label="Confirm New Password" placeholder="Confirm new password" type="password" id="change-password-confirmation" />
+                @error('password_confirmation') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+            </div>
+            
+            <x-slot name="footer">
+                <div class="flex justify-between items-center w-full">
+                    <div class="text-red-500 text-sm">
+                        @if($errors->any())
+                            <ul>
+                                @foreach($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        @endif
                     </div>
-                </x-slot>
-            </form>
+                    <div class="flex gap-x-4">
+                        <x-button 
+                            flat 
+                            label="Cancel" 
+                            x-on:click="close" 
+                        />
+                        <x-button 
+                            wire:click="manualUpdatePassword"
+                            primary 
+                            label="Update Password" 
+                            wire:loading.attr="disabled" 
+                            wire:loading.class="opacity-75"
+                            wire:target="manualUpdatePassword"
+                            icon="check"
+                        />
+                    </div>
+                </div>
+            </x-slot>
+        </x-card>
+    </x-modal>
+
+    <!-- Delete User Modal -->
+    <x-modal 
+        wire:model="showDeleteModal" 
+        max-width="md"
+        blur
+        align="center"
+    >
+        <x-card title="Confirm Delete">
+            <div class="p-4 text-center">
+                <x-icon name="trash" class="w-12 h-12 mx-auto text-red-500" />
+                <h3 class="mt-4 text-lg font-medium text-gray-900">Delete User</h3>
+                <p class="mt-2 text-sm text-gray-600">
+                    Are you sure you want to delete {{ $selectedUser?->name }}? This action cannot be undone.
+                </p>
+            </div>
+            
+            <x-slot name="footer">
+                <div class="flex justify-center gap-x-4">
+                    <x-button flat label="Cancel" x-on:click="close" />
+                    <x-button 
+                        wire:click="deleteUser"
+                        negative 
+                        label="Delete User" 
+                        wire:loading.attr="disabled" 
+                        wire:loading.class="opacity-75"
+                        wire:target="deleteUser"
+                        icon="trash"
+                    />
+                </div>
+            </x-slot>
         </x-card>
     </x-modal>
 </div>
