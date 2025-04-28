@@ -100,88 +100,182 @@
                             </svg>
                             Advanced Adjustments
                         </h4>
-                        <button 
-                            wire:click="toggleAdvancedPanel"
-                            class="bg-gray-100 hover:bg-gray-200 rounded p-1 flex items-center justify-center transition-colors duration-150"
-                        >
-                            <span class="text-xs p-1">{{ $showAdvanced ? 'Collapse' : 'Expand' }}</span>
-                        </button>
                     </div>
                     
-                    @if($showAdvanced)
-                        <!-- Edge Feathering Control -->
-                        <div class="mb-3">
-                            <div class="flex justify-between items-center mb-1">
-                                <label class="text-xs font-medium text-gray-500">Edge Feathering</label>
-                                <span class="text-xs bg-gray-100 px-2 py-1 rounded-md font-medium">{{ $feathering }}%</span>
-                            </div>
-                            <input 
-                                type="range" 
-                                wire:model.live="feathering" 
-                                min="0" 
-                                max="100" 
-                                step="1" 
-                                class="w-full h-2 bg-gray-200 rounded-full appearance-none cursor-pointer accent-[#2C3E50]"
-                            >
+                    <!-- Edge Feathering Control -->
+                    <div class="mb-3">
+                        <div class="flex justify-between items-center mb-1">
+                            <label class="text-xs font-medium text-gray-500">Edge Feathering</label>
+                            <span class="text-xs bg-gray-100 px-2 py-1 rounded-md font-medium">{{ $feathering }}%</span>
+                        </div>
+                        <input 
+                            type="range" 
+                            wire:model.live="feathering" 
+                            min="0" 
+                            max="100" 
+                            step="1" 
+                            class="w-full h-2 bg-gray-200 rounded-full appearance-none cursor-pointer accent-[#2C3E50]"
+                        >
+                        <div class="flex justify-between text-xs text-gray-400 mt-1">
+                            <span>None</span>
+                            <span class="font-medium">Medium</span>
+                            <span>Maximum</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Skin Tone Matching -->
+                    <div class="mb-3">
+                        <div class="flex justify-between items-center mb-2">
+                            <label class="text-xs font-medium text-gray-500">Skin Tone</label>
+                            <span class="text-xs bg-gray-100 px-2 py-1 rounded-md font-medium">{{ $skinToneLabel }}</span>
                         </div>
                         
-                        <!-- Skin Tone Matching -->
-                        <div class="mb-3">
-                            <div class="flex justify-between items-center mb-2">
-                                <label class="text-xs font-medium text-gray-500">Skin Tone</label>
-                                <span class="text-xs bg-gray-100 px-2 py-1 rounded-md font-medium">{{ $skinToneLabel }}</span>
+                        <!-- Skin Tone Gradient Slider with visible indicator -->
+                        <div class="mb-3 relative">
+                            <div class="h-6 rounded-lg w-full" style="background: linear-gradient(to right, #FFE4C4, #DEB887, #CD853F, #8B4513, #654321, #3B2F2F, #2F1F1F);"></div>
+                            
+                            <!-- Custom Slider Indicator -->
+                            <div class="absolute top-0 h-6 pointer-events-none" style="left: calc({{ $skinTone }}% - 6px);">
+                                <div class="h-full w-4 border-2 border-white rounded-sm shadow-md"></div>
+                                <div class="absolute -bottom-1.5 left-0 right-0 flex justify-center">
+                                    <div class="w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-t-[5px] border-t-white shadow-sm"></div>
+                                </div>
                             </div>
                             
-                            <!-- Skin Tone Gradient Slider -->
-                            <div class="mb-3 relative">
-                                <div class="h-6 rounded-lg w-full mb-2" style="background: linear-gradient(to right, #FFE4C4, #DEB887, #CD853F, #8B4513, #654321, #3B2F2F, #2F1F1F);"></div>
-                                <input 
-                                    type="range" 
-                                    wire:model.live="skinTone" 
-                                    min="0" 
-                                    max="100" 
-                                    step="1"
-                                    class="absolute top-0 w-full h-6 opacity-0 cursor-pointer"
-                                >
-                            </div>
-
-                            <!-- Preset Buttons -->
-                            <div class="flex flex-wrap gap-2">
-                                <button 
-                                    wire:click="setSkinTone('light')"
-                                    class="px-2 py-1 text-xs rounded-md border transition-all duration-150 hover:border-[#2C3E50] flex items-center space-x-1 bg-[#FFE4C4] text-gray-700"
-                                    title="Very Light"
-                                >
-                                    <div class="w-3 h-3 rounded-full bg-[#FFE4C4] border border-gray-300"></div>
-                                    <span>Light</span>
-                                </button>
-                                <button 
-                                    wire:click="setSkinTone('natural')"
-                                    class="px-2 py-1 text-xs rounded-md border transition-all duration-150 hover:border-[#2C3E50] flex items-center space-x-1 bg-[#CD853F] text-white"
-                                    title="Natural"
-                                >
-                                    <div class="w-3 h-3 rounded-full bg-[#CD853F] border border-gray-300"></div>
-                                    <span>Natural</span>
-                                </button>
-                                <button 
-                                    wire:click="setSkinTone('medium')"
-                                    class="px-2 py-1 text-xs rounded-md border transition-all duration-150 hover:border-[#2C3E50] flex items-center space-x-1 bg-[#8B4513] text-white"
-                                    title="Medium"
-                                >
-                                    <div class="w-3 h-3 rounded-full bg-[#8B4513] border border-gray-300"></div>
-                                    <span>Medium</span>
-                                </button>
-                                <button 
-                                    wire:click="setSkinTone('dark')"
-                                    class="px-2 py-1 text-xs rounded-md border transition-all duration-150 hover:border-[#2C3E50] flex items-center space-x-1 bg-[#2F1F1F] text-white"
-                                    title="Dark"
-                                >
-                                    <div class="w-3 h-3 rounded-full bg-[#2F1F1F] border border-gray-300"></div>
-                                    <span>Dark</span>
-                                </button>
+                            <input 
+                                type="range" 
+                                wire:model.live="skinTone" 
+                                min="0" 
+                                max="100" 
+                                step="1"
+                                class="absolute top-0 w-full h-6 opacity-0 cursor-pointer"
+                            >
+                            
+                            <!-- Slider markers -->
+                            <div class="w-full flex justify-between px-1 mt-1">
+                                <div class="flex flex-col items-center">
+                                    <div class="h-2 w-0.5 bg-gray-400"></div>
+                                    <span class="text-[9px] text-gray-500">Light</span>
+                                </div>
+                                <div class="flex flex-col items-center">
+                                    <div class="h-2 w-0.5 bg-gray-400"></div>
+                                    <span class="text-[9px] text-gray-500">Natural</span>
+                                </div>
+                                <div class="flex flex-col items-center">
+                                    <div class="h-2 w-0.5 bg-gray-400"></div>
+                                    <span class="text-[9px] text-gray-500">Medium</span>
+                                </div>
+                                <div class="flex flex-col items-center">
+                                    <div class="h-2 w-0.5 bg-gray-400"></div>
+                                    <span class="text-[9px] text-gray-500">Dark</span>
+                                </div>
                             </div>
                         </div>
-                    @endif
+                        
+                        <!-- Skin Tone Color Grid -->
+                        <div class="grid grid-cols-6 gap-1.5 mb-2 mt-3">
+                            <button 
+                                wire:click="setSkinToneExact(5)" 
+                                class="h-8 rounded-md border hover:ring-1 hover:ring-[#2C3E50] {{ $skinTone == 5 ? 'ring-2 ring-[#2C3E50]' : '' }}" 
+                                style="background-color: #FFEFD5;"
+                                title="Very Light (5)"
+                            ></button>
+                            <button 
+                                wire:click="setSkinToneExact(15)" 
+                                class="h-8 rounded-md border hover:ring-1 hover:ring-[#2C3E50] {{ $skinTone == 15 ? 'ring-2 ring-[#2C3E50]' : '' }}" 
+                                style="background-color: #FFE4C4;"
+                                title="Light (15)"
+                            ></button>
+                            <button 
+                                wire:click="setSkinToneExact(25)" 
+                                class="h-8 rounded-md border hover:ring-1 hover:ring-[#2C3E50] {{ $skinTone == 25 ? 'ring-2 ring-[#2C3E50]' : '' }}" 
+                                style="background-color: #F5DEB3;"
+                                title="Light Medium (25)"
+                            ></button>
+                            <button 
+                                wire:click="setSkinToneExact(35)" 
+                                class="h-8 rounded-md border hover:ring-1 hover:ring-[#2C3E50] {{ $skinTone == 35 ? 'ring-2 ring-[#2C3E50]' : '' }}" 
+                                style="background-color: #DEB887;"
+                                title="Medium Light (35)"
+                            ></button>
+                            <button 
+                                wire:click="setSkinToneExact(45)" 
+                                class="h-8 rounded-md border hover:ring-1 hover:ring-[#2C3E50] {{ $skinTone == 45 ? 'ring-2 ring-[#2C3E50]' : '' }}" 
+                                style="background-color: #D2B48C;"
+                                title="Medium (45)"
+                            ></button>
+                            <button 
+                                wire:click="setSkinToneExact(55)" 
+                                class="h-8 rounded-md border hover:ring-1 hover:ring-[#2C3E50] {{ $skinTone == 55 ? 'ring-2 ring-[#2C3E50]' : '' }}" 
+                                style="background-color: #CD853F;"
+                                title="Medium Tan (55)"
+                            ></button>
+                            <button 
+                                wire:click="setSkinToneExact(65)" 
+                                class="h-8 rounded-md border hover:ring-1 hover:ring-[#2C3E50] {{ $skinTone == 65 ? 'ring-2 ring-[#2C3E50]' : '' }}" 
+                                style="background-color: #A0522D;"
+                                title="Medium Dark (65)"
+                            ></button>
+                            <button 
+                                wire:click="setSkinToneExact(70)" 
+                                class="h-8 rounded-md border hover:ring-1 hover:ring-[#2C3E50] {{ $skinTone == 70 ? 'ring-2 ring-[#2C3E50]' : '' }}" 
+                                style="background-color: #8B4513;"
+                                title="Dark Medium (70)"
+                            ></button>
+                            <button 
+                                wire:click="setSkinToneExact(75)" 
+                                class="h-8 rounded-md border hover:ring-1 hover:ring-[#2C3E50] {{ $skinTone == 75 ? 'ring-2 ring-[#2C3E50]' : '' }}" 
+                                style="background-color: #6B4423;"
+                                title="Dark (75)"
+                            ></button>
+                            <button 
+                                wire:click="setSkinToneExact(80)" 
+                                class="h-8 rounded-md border hover:ring-1 hover:ring-[#2C3E50] {{ $skinTone == 80 ? 'ring-2 ring-[#2C3E50]' : '' }}" 
+                                style="background-color: #5C4033;"
+                                title="Dark Brown (80)"
+                            ></button>
+                            <button 
+                                wire:click="setSkinToneExact(90)" 
+                                class="h-8 rounded-md border hover:ring-1 hover:ring-[#2C3E50] {{ $skinTone == 90 ? 'ring-2 ring-[#2C3E50]' : '' }}" 
+                                style="background-color: #3B2F2F;"
+                                title="Very Dark (90)"
+                            ></button>
+                            <button 
+                                wire:click="setSkinToneExact(95)" 
+                                class="h-8 rounded-md border hover:ring-1 hover:ring-[#2C3E50] {{ $skinTone == 95 ? 'ring-2 ring-[#2C3E50]' : '' }}" 
+                                style="background-color: #2F1F1F;"
+                                title="Deep (95)"
+                            ></button>
+                        </div>
+                        
+                        <!-- Preset Buttons -->
+                        <div class="flex flex-wrap gap-2 justify-center mb-1">
+                            <button 
+                                wire:click="setSkinTone('light')"
+                                class="px-2 py-1 text-xs rounded-md border transition-all duration-150 hover:bg-opacity-90 flex items-center space-x-1 bg-[#FFE4C4] text-gray-700 {{ $skinToneLabel === 'Light' ? 'ring-1 ring-[#2C3E50]' : '' }}"
+                            >
+                                <span>Light</span>
+                            </button>
+                            <button 
+                                wire:click="setSkinTone('natural')"
+                                class="px-2 py-1 text-xs rounded-md border transition-all duration-150 hover:bg-opacity-90 flex items-center space-x-1 bg-[#CD853F] text-white {{ $skinToneLabel === 'Natural' ? 'ring-1 ring-[#2C3E50]' : '' }}"
+                            >
+                                <span>Natural</span>
+                            </button>
+                            <button 
+                                wire:click="setSkinTone('medium')"
+                                class="px-2 py-1 text-xs rounded-md border transition-all duration-150 hover:bg-opacity-90 flex items-center space-x-1 bg-[#8B4513] text-white {{ $skinToneLabel === 'Medium' ? 'ring-1 ring-[#2C3E50]' : '' }}"
+                            >
+                                <span>Medium</span>
+                            </button>
+                            <button 
+                                wire:click="setSkinTone('dark')"
+                                class="px-2 py-1 text-xs rounded-md border transition-all duration-150 hover:bg-opacity-90 flex items-center space-x-1 bg-[#2F1F1F] text-white {{ $skinToneLabel === 'Dark' ? 'ring-1 ring-[#2C3E50]' : '' }}"
+                            >
+                                <span>Dark</span>
+                            </button>
+                        </div>
+                    </div>
                 </div>
                 
                 <!-- Reset Button -->

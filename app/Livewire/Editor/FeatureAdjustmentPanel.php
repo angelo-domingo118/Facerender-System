@@ -19,7 +19,6 @@ class FeatureAdjustmentPanel extends Component
     public $feathering = 0;
     public $skinTone = 50; // This is a special case, 50 is the middle/neutral
     public $skinToneLabel = 'Natural';
-    public $showAdvanced = false;
     
     // Listen for events
     protected $listeners = [
@@ -137,14 +136,6 @@ class FeatureAdjustmentPanel extends Component
     }
     
     /**
-     * Toggle the advanced panel visibility
-     */
-    public function toggleAdvancedPanel()
-    {
-        $this->showAdvanced = !$this->showAdvanced;
-    }
-    
-    /**
      * Set skin tone by preset
      */
     public function setSkinTone($preset)
@@ -168,6 +159,16 @@ class FeatureAdjustmentPanel extends Component
                 break;
         }
         
+        $this->updateAdjustments();
+    }
+    
+    /**
+     * Set skin tone to an exact value when clicking a color grid button
+     */
+    public function setSkinToneExact($value)
+    {
+        $this->skinTone = $value;
+        $this->updateSkinToneLabel();
         $this->updateAdjustments();
     }
     
@@ -237,6 +238,9 @@ class FeatureAdjustmentPanel extends Component
             'contrast' => $contrast,
             'saturation' => $saturation,
             'sharpness' => $sharpness,
+            'feathering' => $feathering,
+            'skinTone' => $skinTone,
+            'skinToneLabel' => $this->skinToneLabel,
             'data' => $adjustmentData
         ]);
     }

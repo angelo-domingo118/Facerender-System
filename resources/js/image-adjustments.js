@@ -78,6 +78,7 @@ class ImageAdjustments {
         }
         
         console.log(`Applying adjustments to layer ${layerId}:`, adjustments);
+        console.log('Advanced adjustments - Feathering:', adjustments.feathering, 'Skin Tone:', adjustments.skinTone, adjustments.skinToneLabel);
         
         // Find the object on canvas with matching ID
         const targetObject = this.findObjectById(layerId);
@@ -225,6 +226,8 @@ class ImageAdjustments {
             const contrastValue = parseInt(adjustments.contrast); 
             const saturationValue = parseInt(adjustments.saturation);
             const sharpnessValue = parseInt(adjustments.sharpness);
+            const featheringValue = parseInt(adjustments.feathering || 0);
+            const skinToneValue = parseInt(adjustments.skinTone || 50);
             
             // Calculate adjustment factors - for 0 values, these should have no effect
             
@@ -255,6 +258,7 @@ class ImageAdjustments {
                 let r = data[i];
                 let g = data[i + 1];
                 let b = data[i + 2];
+                const a = data[i + 3]; // Alpha channel
                 
                 // If we have sharpened data and sharpness is positive, blend with the sharpened version
                 if (sharpenedData && sharpnessValue > 0) {
@@ -287,10 +291,67 @@ class ImageAdjustments {
                     b = this.truncate(gray + saturationFactor * (b - gray));
                 }
                 
+                // Apply skin tone adjustment (if value is not at the default 50)
+                if (skinToneValue !== 50) {
+                    // Determine if the pixel is a skin tone pixel using a simple heuristic
+                    // Check if the color falls within a typical skin tone range
+                    if (this.isSkinTonePixel(r, g, b)) {
+                        // Adjust the skin tone based on the skin tone value
+                        // Map the value from 0-100 to a skin tone adjustment
+                        let toneShift = (skinToneValue - 50) / 50; // Range from -1 to 1
+                        
+                        // Lighten or darken based on the tone shift
+                        if (toneShift > 0) {
+                            // Darker skin tone (increase red, decrease blue)
+                            r = this.truncate(r * (1 + toneShift * 0.2));
+                            b = this.truncate(b * (1 - toneShift * 0.3));
+                        } else if (toneShift < 0) {
+                            // Lighter skin tone (decrease red, increase blue slightly)
+                            r = this.truncate(r * (1 + toneShift * 0.2));
+                            g = this.truncate(g * (1 + toneShift * 0.1));
+                            b = this.truncate(b * (1 - toneShift * 0.1));
+                        }
+                    }
+                }
+                
+                // Apply edge feathering (only if feathering value is positive)
+                if (featheringValue > 0) {
+                    // Calculate distance from edge for feathering
+                    const x = (i / 4) % tempCanvas.width;
+                    const y = Math.floor((i / 4) / tempCanvas.width);
+                    
+                    // Calculate distance from nearest edge as a percentage of image size
+                    const distFromLeftEdge = x;
+                    const distFromRightEdge = tempCanvas.width - x;
+                    const distFromTopEdge = y;
+                    const distFromBottomEdge = tempCanvas.height - y;
+                    
+                    // Find minimum distance to any edge
+                    const minDist = Math.min(
+                        distFromLeftEdge, 
+                        distFromRightEdge, 
+                        distFromTopEdge, 
+                        distFromBottomEdge
+                    );
+                    
+                    // Calculate feathering effect radius (percentage of image width/height)
+                    const featherRadius = (tempCanvas.width + tempCanvas.height) / 2 * (featheringValue / 100) * 0.2;
+                    
+                    // Apply feathering if within the feathering radius
+                    if (minDist < featherRadius) {
+                        // Calculate opacity factor based on distance from edge
+                        const opacityFactor = minDist / featherRadius;
+                        
+                        // Adjust alpha channel based on distance from edge and feathering value
+                        data[i + 3] = Math.floor(a * opacityFactor);
+                    }
+                }
+                
                 // Store the processed values back to the image data
                 data[i] = r;
                 data[i + 1] = g;
                 data[i + 2] = b;
+                // Alpha is already modified if needed
             }
             
             // Put the modified image data back
@@ -482,6 +543,48 @@ class ImageAdjustments {
     // Helper function to ensure pixel values are in valid range
     truncate(value) {
         return Math.min(255, Math.max(0, value));
+    }
+
+    /**
+     * Helper function to determine if a pixel is likely a skin tone
+     * This is a simple heuristic that works for many skin tones
+     */
+    isSkinTonePixel(r, g, b) {
+        // Convert RGB to HSV
+        const max = Math.max(r, g, b);
+        const min = Math.min(r, g, b);
+        const delta = max - min;
+        
+        let h = 0;
+        if (delta !== 0) {
+            if (max === r) {
+                h = ((g - b) / delta) % 6;
+            } else if (max === g) {
+                h = (b - r) / delta + 2;
+            } else {
+                h = (r - g) / delta + 4;
+            }
+        }
+        
+        h = h * 60;
+        if (h < 0) h += 360;
+        
+        const s = max === 0 ? 0 : delta / max;
+        const v = max / 255;
+        
+        // Skin tone typically has hue in this range (in HSV)
+        // Hue: 0-50 (reddish to yellowish)
+        // Saturation: 0.20-0.60 (not too gray, not too saturated)
+        // Value: 0.40-1.00 (medium to light)
+        return (
+            (h >= 0 && h <= 50) && 
+            (s >= 0.20 && s <= 0.60) && 
+            (v >= 0.40 && v <= 1.00) &&
+            // Also check for typical skin tone RGB relationships
+            (r > g) && (g > b) && 
+            // Additional test for skin tones
+            (r - g > 15) // Red channel is significantly higher than green in skin tones
+        );
     }
 }
 
