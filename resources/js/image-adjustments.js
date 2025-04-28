@@ -221,19 +221,27 @@ class ImageAdjustments {
             
             const data = imageData.data;
             
-            // Get adjustment values - convert from 0-100 scale to appropriate ranges
-            const contrastValue = adjustments.contrast - 50; // Convert from 0-100 to -50-50
-            const saturationValue = adjustments.saturation - 50; // Convert from 0-100 to -50-50
-            const sharpnessValue = adjustments.sharpness - 50; // Convert from 0-100 to -50-50
+            // Get adjustment values - map from 0-100 scale to appropriate processing ranges
+            const contrastValue = parseInt(adjustments.contrast); 
+            const saturationValue = parseInt(adjustments.saturation);
+            const sharpnessValue = parseInt(adjustments.sharpness);
             
-            // Calculate adjustment factors
-            const normalizedContrast = contrastValue + 100;
-            const factor = (259 * (normalizedContrast - 0) + 255) / (255 * (259 - normalizedContrast));
+            // Calculate adjustment factors - for 0 values, these should have no effect
             
-            const normalizedSaturation = saturationValue + 100;
-            const saturationFactor = normalizedSaturation / 100;
+            // Contrast: 0 = normal (1.0), negative = less contrast, positive = more contrast
+            const contrastFactor = contrastValue === 0 ? 1.0 : 
+                contrastValue > 0 
+                    ? (259 * (contrastValue + 255)) / (255 * (259 - contrastValue))  // Positive values - full range
+                    : 1.0 - (Math.abs(contrastValue) / 200);  // Negative values - gentler curve
             
-            console.log("Processing factors - contrast:", factor, "saturation:", saturationFactor, "sharpness:", sharpnessValue);
+            // Saturation: 0 = normal (1.0), negative = less saturation, positive = more saturation
+            const saturationFactor = saturationValue === 0 ? 1.0 : 
+                saturationValue > 0
+                    ? (saturationValue + 100) / 100  // Positive values - full range 
+                    : Math.max(0.2, 1.0 - (Math.abs(saturationValue) / 125));  // Negative values - limit to 0.2 min
+            
+            console.log("Processing adjustments - contrast:", contrastValue, "saturation:", saturationValue, "sharpness:", sharpnessValue);
+            console.log("Calculated factors - contrastFactor:", contrastFactor, "saturationFactor:", saturationFactor);
             
             // Create a copy of the image data for sharpness processing (if needed)
             let sharpenedData = null;
@@ -256,7 +264,7 @@ class ImageAdjustments {
                     const sb = sharpenedData[i + 2];
                     
                     // Calculate blend amount based on sharpness (0 to 1 range)
-                    const blendAmount = Math.min(sharpnessValue / 50, 1);
+                    const blendAmount = Math.min(sharpnessValue / 100, 1);
                     
                     // Blend between original and sharpened
                     r = r * (1 - blendAmount) + sr * blendAmount;
@@ -264,14 +272,14 @@ class ImageAdjustments {
                     b = b * (1 - blendAmount) + sb * blendAmount;
                 }
                 
-                // Apply contrast
+                // Apply contrast (only if contrast value is not 0)
                 if (contrastValue !== 0) {
-                    r = this.truncate(factor * (r - 128) + 128);
-                    g = this.truncate(factor * (g - 128) + 128);
-                    b = this.truncate(factor * (b - 128) + 128);
+                    r = this.truncate((r - 128) * contrastFactor + 128);
+                    g = this.truncate((g - 128) * contrastFactor + 128);
+                    b = this.truncate((b - 128) * contrastFactor + 128);
                 }
                 
-                // Apply saturation
+                // Apply saturation (only if saturation value is not 0)
                 if (saturationValue !== 0) {
                     const gray = 0.2989 * r + 0.5870 * g + 0.1140 * b;
                     r = this.truncate(gray + saturationFactor * (r - gray));
@@ -349,7 +357,7 @@ class ImageAdjustments {
     
     // Apply sharpness filter using convolution
     applySharpnessFilter(originalImageData, sharpnessValue) {
-        // Skip processing if sharpness is zero or negative
+        // Skip processing if sharpness is zero
         if (sharpnessValue <= 0) {
             return originalImageData.data.slice();
         }
@@ -372,7 +380,10 @@ class ImageAdjustments {
         const halfSide = Math.floor(side / 2);
         
         // Calculate alpha factor for blending between original and sharpened
+        // Map from 0-100 to 0-1 range for blending factor
         const alphaFactor = sharpnessValue / 100;
+        
+        console.log("Applying sharpness with alpha factor:", alphaFactor);
         
         // Apply convolution for each pixel
         for (let y = 0; y < height; y++) {

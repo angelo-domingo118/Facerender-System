@@ -31,39 +31,49 @@
                     <div class="mb-3">
                         <div class="flex justify-between items-center mb-1">
                             <label class="text-xs font-medium text-gray-500">Contrast</label>
-                            <span class="text-xs bg-gray-100 px-2 py-1 rounded-md font-medium">{{ $contrast }}%</span>
+                            <span class="text-xs bg-gray-100 px-2 py-1 rounded-md font-medium">{{ $contrast < 0 ? $contrast : '+' . $contrast }}</span>
                         </div>
                         <input 
                             type="range" 
                             wire:model.live="contrast" 
-                            min="0" 
+                            min="-100" 
                             max="100" 
                             step="1" 
                             class="w-full h-2 bg-gray-200 rounded-full appearance-none cursor-pointer accent-[#2C3E50]"
                         >
+                        <div class="flex justify-between text-xs text-gray-400 mt-1">
+                            <span>Less</span>
+                            <span class="font-medium">Normal</span>
+                            <span>More</span>
+                        </div>
                     </div>
                     
                     <!-- Saturation Control -->
                     <div class="mb-3">
                         <div class="flex justify-between items-center mb-1">
                             <label class="text-xs font-medium text-gray-500">Saturation</label>
-                            <span class="text-xs bg-gray-100 px-2 py-1 rounded-md font-medium">{{ $saturation }}%</span>
+                            <span class="text-xs bg-gray-100 px-2 py-1 rounded-md font-medium">{{ $saturation < 0 ? $saturation : '+' . $saturation }}</span>
                         </div>
                         <input 
                             type="range" 
                             wire:model.live="saturation" 
-                            min="0" 
+                            min="-100" 
                             max="100" 
                             step="1" 
                             class="w-full h-2 bg-gray-200 rounded-full appearance-none cursor-pointer accent-[#2C3E50]"
                         >
+                        <div class="flex justify-between text-xs text-gray-400 mt-1">
+                            <span>Less</span>
+                            <span class="font-medium">Normal</span>
+                            <span>More</span>
+                        </div>
                     </div>
 
                     <!-- Sharpness Control -->
                     <div class="mb-3">
                         <div class="flex justify-between items-center mb-1">
                             <label class="text-xs font-medium text-gray-500">Sharpness</label>
-                            <span class="text-xs bg-gray-100 px-2 py-1 rounded-md font-medium">{{ $sharpness }}%</span>
+                            <span class="text-xs bg-gray-100 px-2 py-1 rounded-md font-medium">{{ $sharpness }}</span>
                         </div>
                         <input 
                             type="range" 
@@ -73,6 +83,11 @@
                             step="1" 
                             class="w-full h-2 bg-gray-200 rounded-full appearance-none cursor-pointer accent-[#2C3E50]"
                         >
+                        <div class="flex justify-between text-xs text-gray-400 mt-1">
+                            <span>None</span>
+                            <span class="font-medium"></span>
+                            <span>Maximum</span>
+                        </div>
                     </div>
                 </div>
                 

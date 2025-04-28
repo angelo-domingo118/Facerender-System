@@ -12,12 +12,12 @@ class FeatureAdjustmentPanel extends Component
     public $selectedLayerId = null;
     public $layers = [];
     
-    // Adjustment properties
-    public $contrast = 50;
-    public $saturation = 50;
-    public $sharpness = 50;
-    public $feathering = 20;
-    public $skinTone = 50;
+    // Adjustment properties - default values represent no effect (0)
+    public $contrast = 0;
+    public $saturation = 0;
+    public $sharpness = 0;
+    public $feathering = 0;
+    public $skinTone = 50; // This is a special case, 50 is the middle/neutral
     public $skinToneLabel = 'Natural';
     public $showAdvanced = false;
     
@@ -125,10 +125,10 @@ class FeatureAdjustmentPanel extends Component
         // Load adjustment values if they exist, otherwise use defaults
         if ($this->selectedLayer && isset($this->selectedLayer['adjustments'])) {
             $adjustments = $this->selectedLayer['adjustments'];
-            $this->contrast = $adjustments['contrast'] ?? 50;
-            $this->saturation = $adjustments['saturation'] ?? 50;
-            $this->sharpness = $adjustments['sharpness'] ?? 50;
-            $this->feathering = $adjustments['feathering'] ?? 20;
+            $this->contrast = $adjustments['contrast'] ?? 0;
+            $this->saturation = $adjustments['saturation'] ?? 0;
+            $this->sharpness = $adjustments['sharpness'] ?? 0;
+            $this->feathering = $adjustments['feathering'] ?? 0;
             $this->skinTone = $adjustments['skinTone'] ?? 50;
             $this->updateSkinToneLabel();
         } else {
@@ -209,15 +209,22 @@ class FeatureAdjustmentPanel extends Component
         
         $this->updateSkinToneLabel();
         
+        // Ensure all values are integers
+        $contrast = (int)$this->contrast;
+        $saturation = (int)$this->saturation;
+        $sharpness = (int)$this->sharpness;
+        $feathering = (int)$this->feathering;
+        $skinTone = (int)$this->skinTone;
+        
         // Create adjustments data structure
         $adjustmentData = [
             'layerId' => $this->selectedLayerId,
             'adjustments' => [
-                'contrast' => $this->contrast,
-                'saturation' => $this->saturation,
-                'sharpness' => $this->sharpness,
-                'feathering' => $this->feathering,
-                'skinTone' => $this->skinTone,
+                'contrast' => $contrast,
+                'saturation' => $saturation,
+                'sharpness' => $sharpness,
+                'feathering' => $feathering,
+                'skinTone' => $skinTone,
                 'skinToneLabel' => $this->skinToneLabel
             ]
         ];
@@ -227,7 +234,9 @@ class FeatureAdjustmentPanel extends Component
         
         Log::info('Layer adjustments updated', [
             'layerId' => $this->selectedLayerId,
-            'contrast' => $this->contrast,
+            'contrast' => $contrast,
+            'saturation' => $saturation,
+            'sharpness' => $sharpness,
             'data' => $adjustmentData
         ]);
     }
@@ -244,10 +253,10 @@ class FeatureAdjustmentPanel extends Component
             'layerId' => $this->selectedLayerId,
             'action' => 'reset',
             'adjustments' => [
-                'contrast' => 50,
-                'saturation' => 50,
-                'sharpness' => 50,
-                'feathering' => 20,
+                'contrast' => 0,
+                'saturation' => 0,
+                'sharpness' => 0,
+                'feathering' => 0,
                 'skinTone' => 50,
                 'skinToneLabel' => 'Natural'
             ]
@@ -267,10 +276,10 @@ class FeatureAdjustmentPanel extends Component
      */
     private function resetAdjustments()
     {
-        $this->contrast = 50;
-        $this->saturation = 50;
-        $this->sharpness = 50;
-        $this->feathering = 20;
+        $this->contrast = 0;
+        $this->saturation = 0;
+        $this->sharpness = 0;
+        $this->feathering = 0;
         $this->skinTone = 50;
         $this->skinToneLabel = 'Natural';
     }
