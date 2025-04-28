@@ -188,6 +188,17 @@ class FeatureAdjustmentPanel extends Component
     }
     
     /**
+     * Lifecycle hook for when a public property is updated.
+     */
+    public function updated($propertyName)
+    {
+        // Check if the updated property is one of the adjustment sliders
+        if (in_array($propertyName, ['contrast', 'saturation', 'sharpness', 'feathering', 'skinTone'])) {
+            $this->updateAdjustments();
+        }
+    }
+    
+    /**
      * Update adjustment values and dispatch change event
      */
     public function updateAdjustments()
@@ -227,7 +238,28 @@ class FeatureAdjustmentPanel extends Component
     public function resetAllAdjustments()
     {
         $this->resetAdjustments();
+        
+        // Create reset event data
+        $resetData = [
+            'layerId' => $this->selectedLayerId,
+            'action' => 'reset',
+            'adjustments' => [
+                'contrast' => 50,
+                'saturation' => 50,
+                'sharpness' => 50,
+                'feathering' => 20,
+                'skinTone' => 50,
+                'skinToneLabel' => 'Natural'
+            ]
+        ];
+        
+        // First dispatch a reset event to tell the canvas to reset this layer
+        $this->dispatch('reset-layer-adjustments', $resetData);
+        
+        // Then update with default values
         $this->updateAdjustments();
+        
+        Log::info('Reset all adjustments', ['layerId' => $this->selectedLayerId]);
     }
     
     /**

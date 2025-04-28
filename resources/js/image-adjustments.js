@@ -8,6 +8,7 @@ class ImageAdjustments {
     constructor(canvas) {
         this.canvas = canvas;
         this.fabric = fabric; // Store fabric reference for later use
+        this.originalImages = new Map(); // Track original images for reset
         this.initListeners();
         console.log('Image adjustments initialized with canvas:', canvas);
     }
@@ -33,7 +34,24 @@ class ImageAdjustments {
                     console.log('Received direct Livewire.on event:', data);
                     this.handleAdjustmentUpdate(data);
                 });
+                
+                window.Livewire.on('reset-layer-adjustments', (data) => {
+                    console.log('Received reset layer adjustments event:', data);
+                    this.handleResetAdjustments(data);
+                });
             }
+        });
+        
+        // Listen for update-feature-adjustments from Livewire
+        window.addEventListener('update-feature-adjustments', (event) => {
+            console.log('Received update-feature-adjustments event:', event.detail);
+            this.handleAdjustmentUpdate(event.detail);
+        });
+        
+        // Listen for reset-layer-adjustments from Livewire
+        window.addEventListener('reset-layer-adjustments', (event) => {
+            console.log('Received reset-layer-adjustments event:', event.detail);
+            this.handleResetAdjustments(event.detail);
         });
     }
 
@@ -46,17 +64,18 @@ class ImageAdjustments {
         }
         
         // Handle nested data structure (where data might be in data.data)
-        if (data && data.data && (data.data.layerId || data.data.adjustments)) {
+        if (data && data.data && (data.data.layerId || data.data.adjustments || data.data.featureId)) {
             data = data.data;
         }
         
-        if (!data || !data.layerId || !data.adjustments) {
+        // Handle different property names (layerId/featureId)
+        const layerId = data.layerId || data.featureId;
+        const adjustments = data.adjustments;
+        
+        if (!layerId || !adjustments) {
             console.error('Invalid adjustment data received:', data);
             return;
         }
-
-        const layerId = data.layerId;
-        const adjustments = data.adjustments;
         
         console.log(`Applying adjustments to layer ${layerId}:`, adjustments);
         
@@ -69,140 +88,389 @@ class ImageAdjustments {
         }
         
         // Apply adjustments to the object
-        this.applyAdjustments(targetObject, adjustments);
+        this.applyDirectPixelManipulation(targetObject, adjustments);
+    }
+    
+    handleResetAdjustments(data) {
+        // Handle both direct data and array-wrapped data
+        if (Array.isArray(data) && data.length > 0) {
+            data = data[0];
+        }
+        
+        // Handle nested data structure
+        if (data && data.data) {
+            data = data.data;
+        }
+        
+        const layerId = data.layerId || data.featureId;
+        
+        if (!layerId) {
+            console.error('Invalid reset data received:', data);
+            return;
+        }
+        
+        console.log(`Resetting adjustments for layer ${layerId}`);
+        this.resetImageAdjustments(layerId);
     }
     
     findObjectById(id) {
         const objects = this.canvas.getObjects();
         console.log(`Searching for object with ID ${id} among ${objects.length} objects`);
         
-        // Debug all objects to check their data structure
-        objects.forEach((obj, index) => {
-            console.log(`Object ${index}:`, obj.data);
-        });
+        // First try to find object with data.featureId
+        let foundObject = objects.find(obj => obj.data && obj.data.featureId === id);
         
-        const foundObject = objects.find(obj => obj.data && obj.data.featureId === id);
+        // If not found, try finding object by other ID properties
+        if (!foundObject) {
+            foundObject = objects.find(obj => 
+                obj.id === id || 
+                (obj.data && (obj.data.id === id || obj.data.layerId === id))
+            );
+        }
+        
         console.log('Found object:', foundObject);
         return foundObject;
     }
     
-    applyAdjustments(object, adjustments) {
-        console.log('Applying adjustments to object:', object);
+    // Apply direct pixel manipulation instead of Fabric.js filters
+    applyDirectPixelManipulation(imgObject, adjustments) {
+        console.log("Direct pixel manipulation with:", adjustments);
         
-        // Check if this is a Fabric.js image object
-        if (!object.filters && object.type !== 'image') {
-            console.error('Object is not an image that supports filters:', object);
+        if (!imgObject || imgObject.type !== 'image') {
+            console.error("Object is not an image that can be manipulated");
             return;
         }
         
-        // For Fabric.js images
-        if (object.type === 'image') {
-            // Initialize filters array if needed
-            if (!object.filters) {
-                object.filters = [];
+        try {
+            // Get the image element
+            const imgElement = imgObject.getElement();
+            if (!imgElement) {
+                console.error("No image element found");
+                throw new Error("No image element found in the fabric object");
             }
             
-            // We'll focus on contrast for this implementation
-            const contrastValue = this.calculateContrastValue(adjustments.contrast);
-            console.log(`Calculated contrast value: ${contrastValue} from slider value: ${adjustments.contrast}`);
+            console.log("Image element properties:", {
+                width: imgElement.width, 
+                height: imgElement.height,
+                complete: imgElement.complete,
+                naturalWidth: imgElement.naturalWidth,
+                naturalHeight: imgElement.naturalHeight
+            });
             
-            try {
-                // Debug Fabric.js availability
-                console.log('Fabric global:', window.fabric);
-                console.log('this.fabric:', this.fabric);
-                console.log('fabric from import:', fabric);
+            // Store the original image when first processing
+            if (!this.originalImages.has(imgObject.data?.featureId)) {
+                console.log("Capturing original image for the first time");
                 
-                // Remove any existing contrast filters to avoid stacking
-                object.filters = object.filters.filter(filter => 
-                    filter.type !== 'Contrast' && 
-                    filter.constructor.name !== 'Contrast'
-                );
-                
-                // Create a contrast filter directly
-                // Use a more direct approach that doesn't rely on fabric.Image
-                let contrastFilter;
-                
-                // Try different ways to access the Contrast filter constructor
-                if (fabric && fabric.Image && fabric.Image.filters && fabric.Image.filters.Contrast) {
-                    console.log('Using imported fabric');
-                    contrastFilter = new fabric.Image.filters.Contrast({
-                        contrast: contrastValue
-                    });
-                } else if (window.fabric && window.fabric.Image && window.fabric.Image.filters && window.fabric.Image.filters.Contrast) {
-                    console.log('Using global window.fabric');
-                    contrastFilter = new window.fabric.Image.filters.Contrast({
-                        contrast: contrastValue
-                    });
+                // Save original source
+                if (imgElement.src) {
+                    // Create a new image from the original source
+                    const originalImg = new Image();
+                    originalImg.src = imgElement.src;
+                    originalImg.crossOrigin = "Anonymous";
+                    originalImg.width = imgElement.width;
+                    originalImg.height = imgElement.height;
+                    
+                    // Store the original image for this object
+                    this.originalImages.set(imgObject.data?.featureId, originalImg);
+                    imgElement._originalSrc = imgElement.src;
+                    console.log("Original image captured and stored");
+                } else if (imgElement._originalElement && imgElement._originalElement.src) {
+                    this.originalImages.set(imgObject.data?.featureId, imgElement._originalElement);
+                    imgElement._originalSrc = imgElement._originalElement.src;
+                    console.log("Original element source saved");
                 } else {
-                    // As a fallback, create a basic filter
-                    console.log('Using fallback filter implementation');
-                    contrastFilter = {
-                        type: 'Contrast',
-                        contrast: contrastValue,
-                        applyTo: function(canvasEl) {
-                            const context = canvasEl.getContext('2d');
-                            const imageData = context.getImageData(0, 0, canvasEl.width, canvasEl.height);
-                            const data = imageData.data;
-                            const contrast = 1 + this.contrast;
-                            const intercept = 128 * (1 - contrast);
-                            
-                            for (let i = 0; i < data.length; i += 4) {
-                                data[i] = data[i] * contrast + intercept;
-                                data[i + 1] = data[i + 1] * contrast + intercept;
-                                data[i + 2] = data[i + 2] * contrast + intercept;
-                            }
-                            
-                            context.putImageData(imageData, 0, 0);
-                        }
-                    };
+                    console.warn("Could not find original source to save");
                 }
-                
-                object.filters.push(contrastFilter);
-                console.log('Added contrast filter to object:', contrastFilter);
-                
-                // Apply filters and render
-                console.log('Applying filters to object');
-                object.applyFilters();
-                this.canvas.renderAll();
-                console.log('Applied filters and rendered canvas');
-                
-                // Store adjustment values on the object for future reference
-                if (!object.data) {
-                    object.data = {};
-                }
-                object.data.adjustments = adjustments;
-                
-                console.log(`Successfully applied contrast ${contrastValue} to object ${object.data.featureId}`);
-            } catch (error) {
-                console.error('Error applying contrast filter:', error);
-                // Log the full stack trace for debugging
-                console.error(error.stack);
             }
-        } else {
-            console.warn('Object is not an image, cannot apply filter adjustments');
+            
+            // Get the original image
+            const originalImage = this.originalImages.get(imgObject.data?.featureId) || imgElement;
+            
+            // Create a temporary canvas for manipulation
+            const tempCanvas = document.createElement('canvas');
+            // Use the dimensions from the original image if available, otherwise use current
+            const sourceWidth = originalImage ? (originalImage.naturalWidth || originalImage.width) : (imgElement.naturalWidth || imgElement.width);
+            const sourceHeight = originalImage ? (originalImage.naturalHeight || originalImage.height) : (imgElement.naturalHeight || imgElement.height);
+            tempCanvas.width = sourceWidth;
+            tempCanvas.height = sourceHeight;
+            
+            if (tempCanvas.width === 0 || tempCanvas.height === 0) {
+                console.error("Invalid canvas dimensions:", tempCanvas.width, tempCanvas.height);
+                throw new Error("Invalid canvas dimensions");
+            }
+            
+            console.log("Created temp canvas with dimensions:", tempCanvas.width, "x", tempCanvas.height);
+            
+            const tempCtx = tempCanvas.getContext('2d', { willReadFrequently: true });
+            
+            // Draw the ORIGINAL image (not the filtered one)
+            const sourceImage = originalImage || imgElement;
+            console.log("Drawing from source:", sourceImage === originalImage ? "original stored image" : "current image");
+            tempCtx.drawImage(sourceImage, 0, 0);
+            console.log("Drew image to temp canvas");
+            
+            // Get the image data
+            let imageData;
+            try {
+                imageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+                console.log("Got image data:", imageData.width, "x", imageData.height);
+            } catch (e) {
+                console.error("Error getting image data:", e);
+                throw new Error("Cannot get image data: " + e.message);
+            }
+            
+            const data = imageData.data;
+            
+            // Get adjustment values - convert from 0-100 scale to appropriate ranges
+            const contrastValue = adjustments.contrast - 50; // Convert from 0-100 to -50-50
+            const saturationValue = adjustments.saturation - 50; // Convert from 0-100 to -50-50
+            const sharpnessValue = adjustments.sharpness - 50; // Convert from 0-100 to -50-50
+            
+            // Calculate adjustment factors
+            const normalizedContrast = contrastValue + 100;
+            const factor = (259 * (normalizedContrast - 0) + 255) / (255 * (259 - normalizedContrast));
+            
+            const normalizedSaturation = saturationValue + 100;
+            const saturationFactor = normalizedSaturation / 100;
+            
+            console.log("Processing factors - contrast:", factor, "saturation:", saturationFactor, "sharpness:", sharpnessValue);
+            
+            // Create a copy of the image data for sharpness processing (if needed)
+            let sharpenedData = null;
+            if (sharpnessValue > 0) {
+                // Only create a copy and process if sharpness is positive
+                sharpenedData = this.applySharpnessFilter(imageData, sharpnessValue);
+            }
+            
+            // Process each pixel
+            for (let i = 0; i < data.length; i += 4) {
+                let r = data[i];
+                let g = data[i + 1];
+                let b = data[i + 2];
+                
+                // If we have sharpened data and sharpness is positive, blend with the sharpened version
+                if (sharpenedData && sharpnessValue > 0) {
+                    // Get sharpened pixel values
+                    const sr = sharpenedData[i];
+                    const sg = sharpenedData[i + 1];
+                    const sb = sharpenedData[i + 2];
+                    
+                    // Calculate blend amount based on sharpness (0 to 1 range)
+                    const blendAmount = Math.min(sharpnessValue / 50, 1);
+                    
+                    // Blend between original and sharpened
+                    r = r * (1 - blendAmount) + sr * blendAmount;
+                    g = g * (1 - blendAmount) + sg * blendAmount;
+                    b = b * (1 - blendAmount) + sb * blendAmount;
+                }
+                
+                // Apply contrast
+                if (contrastValue !== 0) {
+                    r = this.truncate(factor * (r - 128) + 128);
+                    g = this.truncate(factor * (g - 128) + 128);
+                    b = this.truncate(factor * (b - 128) + 128);
+                }
+                
+                // Apply saturation
+                if (saturationValue !== 0) {
+                    const gray = 0.2989 * r + 0.5870 * g + 0.1140 * b;
+                    r = this.truncate(gray + saturationFactor * (r - gray));
+                    g = this.truncate(gray + saturationFactor * (g - gray));
+                    b = this.truncate(gray + saturationFactor * (b - gray));
+                }
+                
+                // Store the processed values back to the image data
+                data[i] = r;
+                data[i + 1] = g;
+                data[i + 2] = b;
+            }
+            
+            // Put the modified image data back
+            tempCtx.putImageData(imageData, 0, 0);
+            console.log("Put modified image data back to canvas");
+            
+            // Create a new image from our canvas
+            const newImgURL = tempCanvas.toDataURL();
+            console.log("Created new image URL from canvas");
+            
+            // DIRECT APPROACH: Create a new image element and update the fabric object directly
+            const newImg = new Image();
+            newImg.onload = () => {
+                console.log("New image loaded, updating fabric object directly");
+                
+                // Store the old image's properties before replacing it
+                const oldLeft = imgObject.left;
+                const oldTop = imgObject.top;
+                const oldScaleX = imgObject.scaleX;
+                const oldScaleY = imgObject.scaleY;
+                const oldAngle = imgObject.angle;
+                
+                // Update the fabric object's element with our filtered image
+                imgObject.setElement(newImg);
+                
+                // Ensure the position and scale are maintained
+                imgObject.set({
+                    left: oldLeft,
+                    top: oldTop,
+                    scaleX: oldScaleX,
+                    scaleY: oldScaleY,
+                    angle: oldAngle
+                });
+                
+                // This is critical - mark the object as dirty to force a re-render
+                imgObject.dirty = true;
+                
+                // Force the canvas to re-render
+                this.canvas.renderAll();
+                
+                console.log("Image updated directly with filtered version");
+            };
+            
+            // Set the source of the new image to our filtered canvas
+            newImg.src = newImgURL;
+            
+            // If the image is already loaded, manually trigger the onload handler
+            if (newImg.complete) {
+                console.log("New image already loaded, triggering handler manually");
+                newImg.onload();
+            }
+            
+            // Store adjustment values on the object for future reference
+            if (!imgObject.data) {
+                imgObject.data = {};
+            }
+            imgObject.data.adjustments = adjustments;
+            
+        } catch (error) {
+            console.error("Error in direct pixel manipulation:", error);
+            console.error(error.stack);
         }
     }
     
-    /**
-     * Calculate contrast value from the 0-100 scale to Fabric.js scale (-1 to 1)
-     * 
-     * This is our custom algorithm:
-     * - 50 is neutral (no contrast change)
-     * - 0 to 50 reduces contrast (maps to -1 to 0)
-     * - 50 to 100 increases contrast (maps to 0 to 1)
-     */
-    calculateContrastValue(contrast) {
-        // Convert from 0-100 scale to -1 to 1 scale 
-        // where 50 is the neutral point (0)
-        if (contrast === 50) {
-            return 0; // Neutral - no contrast change
-        } else if (contrast < 50) {
-            // Map 0-50 to -1-0 (decrease contrast)
-            return -1 + (contrast / 50);
-        } else {
-            // Map 50-100 to 0-1 (increase contrast)
-            return (contrast - 50) / 50;
+    // Apply sharpness filter using convolution
+    applySharpnessFilter(originalImageData, sharpnessValue) {
+        // Skip processing if sharpness is zero or negative
+        if (sharpnessValue <= 0) {
+            return originalImageData.data.slice();
         }
+        
+        const width = originalImageData.width;
+        const height = originalImageData.height;
+        const src = originalImageData.data;
+        
+        // Create output array for the result
+        const dst = new Uint8ClampedArray(src.length);
+        
+        // Use the same 3x3 kernel as in image-adjustments.blade.php
+        const weights = [
+            0, -1, 0,
+            -1, 5, -1,
+            0, -1, 0
+        ];
+        
+        const side = 3; // 3x3 kernel
+        const halfSide = Math.floor(side / 2);
+        
+        // Calculate alpha factor for blending between original and sharpened
+        const alphaFactor = sharpnessValue / 100;
+        
+        // Apply convolution for each pixel
+        for (let y = 0; y < height; y++) {
+            for (let x = 0; x < width; x++) {
+                const dstOff = (y * width + x) * 4;
+                
+                // Process RGB channels with convolution
+                let r = 0, g = 0, b = 0;
+                
+                for (let cy = 0; cy < side; cy++) {
+                    for (let cx = 0; cx < side; cx++) {
+                        const scy = y + cy - halfSide;
+                        const scx = x + cx - halfSide;
+                        
+                        // Skip pixels outside the image boundary
+                        if (scy >= 0 && scy < height && scx >= 0 && scx < width) {
+                            const srcOff = (scy * width + scx) * 4;
+                            const wt = weights[cy * side + cx];
+                            r += src[srcOff] * wt;
+                            g += src[srcOff + 1] * wt;
+                            b += src[srcOff + 2] * wt;
+                        }
+                    }
+                }
+                
+                // Apply the convolution result with alpha blending
+                dst[dstOff] = this.truncate(src[dstOff] * (1 - alphaFactor) + r * alphaFactor);
+                dst[dstOff + 1] = this.truncate(src[dstOff + 1] * (1 - alphaFactor) + g * alphaFactor);
+                dst[dstOff + 2] = this.truncate(src[dstOff + 2] * (1 - alphaFactor) + b * alphaFactor);
+                dst[dstOff + 3] = src[dstOff + 3]; // Keep original alpha
+            }
+        }
+        
+        return dst;
+    }
+    
+    // Helper function to reset filters
+    resetImageAdjustments(layerId) {
+        const imgObject = this.findObjectById(layerId);
+        
+        if (!imgObject || imgObject.type !== 'image') {
+            console.error("Cannot reset - object not found or not an image");
+            return;
+        }
+        
+        console.log("Resetting filters for image:", imgObject);
+        
+        // If we have the original image element stored, use it directly
+        if (this.originalImages.has(imgObject.data?.featureId)) {
+            console.log("Resetting using stored original image element");
+            
+            const originalImage = this.originalImages.get(imgObject.data?.featureId);
+            
+            // Create a fresh image
+            const freshImg = new Image();
+            freshImg.src = originalImage.src;
+            freshImg.onload = () => {
+                // Store the old image's properties
+                const oldLeft = imgObject.left;
+                const oldTop = imgObject.top;
+                const oldScaleX = imgObject.scaleX;
+                const oldScaleY = imgObject.scaleY;
+                const oldAngle = imgObject.angle;
+                
+                // Update the fabric object with our fresh image
+                imgObject.setElement(freshImg);
+                
+                // Ensure the position and scale are maintained
+                imgObject.set({
+                    left: oldLeft,
+                    top: oldTop,
+                    scaleX: oldScaleX,
+                    scaleY: oldScaleY,
+                    angle: oldAngle
+                });
+                
+                // Mark the object as dirty to force re-render
+                imgObject.dirty = true;
+                
+                // Re-render the canvas
+                this.canvas.renderAll();
+                
+                console.log("Image reset to original using stored element");
+            };
+            
+            if (freshImg.complete) {
+                console.log("Fresh image already loaded, triggering onload");
+                freshImg.onload();
+            }
+            return;
+        }
+        
+        console.warn("Cannot reset - no original image available");
+    }
+    
+    // Helper function to ensure pixel values are in valid range
+    truncate(value) {
+        return Math.min(255, Math.max(0, value));
     }
 }
 

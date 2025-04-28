@@ -37,6 +37,34 @@
                     </div>
                 </div>
                 
+                <div class="mb-4">
+                    <h3 class="text-lg font-medium text-gray-900">Image Adjustments</h3>
+                    <div class="mt-3 space-y-4">
+                        <div class="slider-container">
+                            <label for="contrast-slider" class="block text-sm font-medium text-gray-700 mb-1">Contrast</label>
+                            <div class="flex items-center space-x-3">
+                                <input type="range" id="contrast-slider" min="-100" max="100" value="0" step="1" class="w-full h-2 bg-gray-200 rounded-full appearance-none cursor-pointer accent-blue-500">
+                                <span id="contrast-value" class="text-sm font-medium text-gray-600 w-12 text-right">0%</span>
+                            </div>
+                        </div>
+                        <div class="slider-container">
+                            <label for="saturation-slider" class="block text-sm font-medium text-gray-700 mb-1">Saturation</label>
+                            <div class="flex items-center space-x-3">
+                                <input type="range" id="saturation-slider" min="-100" max="100" value="0" step="1" class="w-full h-2 bg-gray-200 rounded-full appearance-none cursor-pointer accent-green-500">
+                                <span id="saturation-value" class="text-sm font-medium text-gray-600 w-12 text-right">0%</span>
+                            </div>
+                        </div>
+                        <button id="reset-adjustments" class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition text-sm">Reset Adjustments</button>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label for="object-selector" class="block text-sm font-medium text-gray-700 mb-1">Select Object</label>
+                    <select id="object-selector" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 text-sm">
+                        <option value="">-- Select an object --</option>
+                    </select>
+                </div>
+
                 <div class="border-2 border-gray-300 rounded-lg">
                     <canvas id="fabric-canvas" width="800" height="600"></canvas>
                 </div>

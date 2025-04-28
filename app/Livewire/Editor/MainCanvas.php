@@ -20,17 +20,19 @@ class MainCanvas extends Component
     protected $listeners = [
         'feature-selected' => 'handleFeatureSelected',
         'direct-update-canvas' => 'handleDirectCanvasUpdate',
-        'updateFeaturePosition' => 'updateFeaturePosition',
-        'removeFeature' => 'removeFeature',
+        'update-feature-position' => 'updateFeaturePosition',
+        'remove-feature' => 'removeFeature',
         'remove-feature-requested' => 'removeFeature',
-        'clearFeatures' => 'clearFeatures',
+        'clear-features' => 'clearFeatures',
         'layer-visibility-changed' => 'handleLayerVisibilityChange',
         'layer-opacity-changed' => 'handleLayerOpacityChange',
         'select-feature-on-canvas' => 'handleSelectFeatureOnCanvas',
         'layers-reordered' => 'handleLayersReordered',
         'layer-transform-updated' => 'handleLayerTransformUpdated',
         'layer-adjustments-updated' => 'handleLayerAdjustmentsUpdated',
-        'updateObjectPosition' => 'handleUpdateObjectPosition'
+        'update-object-position' => 'handleUpdateObjectPosition',
+        'reset-layer-adjustments' => 'handleResetLayerAdjustments',
+        'request-active-feature-ids' => 'dispatchActiveFeatureIds'
     ];
     
     public function mount($compositeId)
@@ -591,6 +593,42 @@ class MainCanvas extends Component
                 'layerId' => $data['layerId'],
                 'available_features' => array_column($this->selectedFeatures, 'id')
             ]);
+        }
+    }
+    
+    /**
+     * Handle resetting layer adjustments from the FeatureAdjustmentPanel
+     */
+    public function handleResetLayerAdjustments($data)
+    {
+        Log::info('Handling reset layer adjustments', [
+            'layerId' => $data['layerId'],
+            'action' => $data['action'] ?? 'reset',
+        ]);
+        
+        // Find the feature with the specified layer ID
+        foreach ($this->selectedFeatures as $key => $feature) {
+            if ($feature['id'] == $data['layerId']) {
+                // Remove the adjustments property if it exists
+                if (isset($this->selectedFeatures[$key]['adjustments'])) {
+                    unset($this->selectedFeatures[$key]['adjustments']);
+                }
+                
+                // Dispatch event to reset image on the canvas
+                $this->dispatch('update-feature-adjustments', [
+                    'featureId' => $data['layerId'],
+                    'action' => 'reset',
+                    'adjustments' => $data['adjustments'] ?? null
+                ]);
+                
+                // Also update the main canvas state
+                $this->dispatch('update-canvas', ['selectedFeatures' => $this->selectedFeatures]);
+                
+                // Update the layer panel
+                $this->dispatch('layers-updated', $this->selectedFeatures);
+                
+                break;
+            }
         }
     }
     

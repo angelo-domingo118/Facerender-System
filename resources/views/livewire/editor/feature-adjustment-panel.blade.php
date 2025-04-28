@@ -36,8 +36,6 @@
                         <input 
                             type="range" 
                             wire:model.live="contrast" 
-                            wire:change="updateAdjustments"
-                            x-on:input="$wire.updateAdjustments()"
                             min="0" 
                             max="100" 
                             step="1" 
@@ -54,7 +52,6 @@
                         <input 
                             type="range" 
                             wire:model.live="saturation" 
-                            wire:change="updateAdjustments"
                             min="0" 
                             max="100" 
                             step="1" 
@@ -71,7 +68,6 @@
                         <input 
                             type="range" 
                             wire:model.live="sharpness" 
-                            wire:change="updateAdjustments"
                             min="0" 
                             max="100" 
                             step="1" 
@@ -107,7 +103,6 @@
                             <input 
                                 type="range" 
                                 wire:model.live="feathering" 
-                                wire:change="updateAdjustments"
                                 min="0" 
                                 max="100" 
                                 step="1" 
@@ -128,7 +123,6 @@
                                 <input 
                                     type="range" 
                                     wire:model.live="skinTone" 
-                                    wire:change="updateAdjustments"
                                     min="0" 
                                     max="100" 
                                     step="1"

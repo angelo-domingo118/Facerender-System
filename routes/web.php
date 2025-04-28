@@ -26,6 +26,11 @@ Route::middleware([
         return view('fabric-test');
     })->name('fabric.test');
     
+    // Add this new route for the image adjustments test page
+    Route::get('/image-adjustments', function () {
+        return view('image-adjustments');
+    })->name('image-adjustments');
+    
     // Admin Routes
     Route::middleware(['admin'])->prefix('admin')->name('admin.')->group(function () {
         Route::get('/users', UserManagement::class)->name('users.index');
