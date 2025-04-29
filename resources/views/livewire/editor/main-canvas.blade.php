@@ -66,6 +66,97 @@
         </div>
     </div>
     
+    <!-- Export Options Modal -->
+    <div id="export-options-modal" class="fixed inset-0 bg-gray-900 bg-opacity-50 z-50 flex items-center justify-center hidden">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-md p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-medium text-gray-900">Export Options</h3>
+                <button id="close-export-modal" class="text-gray-400 hover:text-gray-500">
+                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <div class="space-y-4">
+                <!-- File Format -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">File Format</label>
+                    <div class="flex space-x-4">
+                        <label class="inline-flex items-center">
+                            <input type="radio" name="file-format" value="png" class="form-radio h-4 w-4 text-blue-600" checked>
+                            <span class="ml-2 text-gray-700">PNG</span>
+                        </label>
+                        <label class="inline-flex items-center">
+                            <input type="radio" name="file-format" value="jpeg" class="form-radio h-4 w-4 text-blue-600">
+                            <span class="ml-2 text-gray-700">JPEG</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- Transparency Option (Only for PNG) -->
+                <div id="transparency-option" class="transition-opacity duration-200">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Transparency</label>
+                    <div class="flex space-x-4">
+                        <label class="inline-flex items-center">
+                            <input type="radio" name="transparency" value="keep" class="form-radio h-4 w-4 text-blue-600" checked>
+                            <span class="ml-2 text-gray-700">Keep transparency</span>
+                        </label>
+                        <label class="inline-flex items-center">
+                            <input type="radio" name="transparency" value="remove" class="form-radio h-4 w-4 text-blue-600">
+                            <span class="ml-2 text-gray-700">White background</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- Background Grid Option -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Background Grid</label>
+                    <div class="flex space-x-4">
+                        <label class="inline-flex items-center">
+                            <input type="radio" name="grid" value="hide" class="form-radio h-4 w-4 text-blue-600" checked>
+                            <span class="ml-2 text-gray-700">Hide grid</span>
+                        </label>
+                        <label class="inline-flex items-center">
+                            <input type="radio" name="grid" value="show" class="form-radio h-4 w-4 text-blue-600">
+                            <span class="ml-2 text-gray-700">Show grid</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- Quality Option (Only for JPEG) -->
+                <div id="quality-option" class="hidden transition-opacity duration-200">
+                    <label for="quality-slider" class="block text-sm font-medium text-gray-700 mb-2">
+                        Quality: <span id="quality-value">90</span>%
+                    </label>
+                    <input type="range" id="quality-slider" min="10" max="100" value="90" step="5"
+                        class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                </div>
+                
+                <!-- Export Size Option -->
+                <div>
+                    <label for="export-size" class="block text-sm font-medium text-gray-700 mb-2">
+                        Export Size
+                    </label>
+                    <select id="export-size" class="w-full border border-gray-300 px-3 py-2 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                        <option value="1">Original size (1x)</option>
+                        <option value="2" selected>Double size (2x)</option>
+                        <option value="3">Triple size (3x)</option>
+                        <option value="4">Quadruple size (4x)</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="mt-6 flex justify-end space-x-3">
+                <button id="cancel-export" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200">
+                    Cancel
+                </button>
+                <button id="confirm-export" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                    Export
+                </button>
+            </div>
+        </div>
+    </div>
+    
     @vite(['resources/js/editor-canvas.js'])
 
     <script>

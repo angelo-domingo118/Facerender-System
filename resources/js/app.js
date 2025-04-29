@@ -4,3 +4,6 @@ import './bootstrap';
 
 // Import our image adjustments module for editor functionality
 import './image-adjustments';
+
+// Import canvas export functionality
+import './canvas-export';

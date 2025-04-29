@@ -35,14 +35,14 @@
                     </svg>
                     <span class="text-sm">Save</span>
                 </button>
-                <button class="p-1.5 rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors duration-200 flex items-center" x-tooltip="'Print (Ctrl+P)'">
+                <button class="p-1.5 rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors duration-200 flex items-center" x-tooltip="'Print (Ctrl+P)'" id="print-canvas-btn" data-action="print-canvas">
                     <!-- Printer Icon -->
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
                     </svg>
                     <span class="text-sm">Print</span>
                 </button>
-                <button class="p-1.5 rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors duration-200 flex items-center" x-tooltip="'Download'">
+                <button class="p-1.5 rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors duration-200 flex items-center" x-tooltip="'Download'" id="download-canvas-btn" data-action="download-canvas">
                     <!-- Arrow Down Tray Icon -->
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
