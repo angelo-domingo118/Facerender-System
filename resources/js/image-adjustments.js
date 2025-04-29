@@ -136,6 +136,7 @@ class ImageAdjustments {
     // Apply direct pixel manipulation instead of Fabric.js filters
     applyDirectPixelManipulation(imgObject, adjustments) {
         console.log("Direct pixel manipulation with:", adjustments);
+        console.time("image-processing");
         
         if (!imgObject || imgObject.type !== 'image') {
             console.error("Object is not an image that can be manipulated");
@@ -227,7 +228,17 @@ class ImageAdjustments {
             const saturationValue = parseInt(adjustments.saturation);
             const sharpnessValue = parseInt(adjustments.sharpness);
             const featheringValue = parseInt(adjustments.feathering || 0);
+            const featherCurve = parseInt(adjustments.featheringCurve || 3);
             const skinToneValue = parseInt(adjustments.skinTone || 50);
+            
+            console.log("Processing adjustments:", {
+                contrast: contrastValue,
+                saturation: saturationValue,
+                sharpness: sharpnessValue,
+                feathering: featheringValue, 
+                featheringCurve: featherCurve,
+                skinTone: skinToneValue
+            });
             
             // Calculate adjustment factors - for 0 values, these should have no effect
             
@@ -243,8 +254,35 @@ class ImageAdjustments {
                     ? (saturationValue + 100) / 100  // Positive values - full range 
                     : Math.max(0.2, 1.0 - (Math.abs(saturationValue) / 125));  // Negative values - limit to 0.2 min
             
-            console.log("Processing adjustments - contrast:", contrastValue, "saturation:", saturationValue, "sharpness:", sharpnessValue);
-            console.log("Calculated factors - contrastFactor:", contrastFactor, "saturationFactor:", saturationFactor);
+            // Prepare for edge feathering if needed
+            let distanceMap = null;
+            let featherRadius = 0;
+            
+            if (featheringValue > 0) {
+                console.log(`Preparing feathering with value: ${featheringValue}, curve: ${featherCurve}`);
+                
+                // PERFORMANCE: Precalculate width, height and edge constants once
+                const imgWidth = tempCanvas.width;
+                const imgHeight = tempCanvas.height;
+                
+                // Create an alpha map to track transparent areas if we haven't already
+                console.log("Creating alpha map for feathering");
+                
+                // Create the alpha map - 1 for visible pixels, 0 for transparent
+                const alphaMap = new Uint8Array(imgWidth * imgHeight);
+                for (let i = 0; i < imgWidth * imgHeight; i++) {
+                    alphaMap[i] = data[i * 4 + 3] > 10 ? 1 : 0;
+                }
+                
+                // Calculate the actual distance map - distance from each pixel to the nearest transparent pixel
+                console.log("Calculating distance map for feathering");
+                distanceMap = this._calculateDistanceMap(alphaMap, imgWidth, imgHeight);
+                
+                // Calculate feathering radius based on image dimensions and feathering value
+                const minDimension = Math.min(imgWidth, imgHeight);
+                featherRadius = minDimension * (featheringValue / 100) * 0.2;
+                console.log(`Feathering radius: ${featherRadius}px based on min dimension: ${minDimension}px`);
+            }
             
             // Create a copy of the image data for sharpness processing (if needed)
             let sharpenedData = null;
@@ -254,11 +292,15 @@ class ImageAdjustments {
             }
             
             // Process each pixel
+            console.time("pixel-processing");
             for (let i = 0; i < data.length; i += 4) {
                 let r = data[i];
                 let g = data[i + 1];
                 let b = data[i + 2];
                 const a = data[i + 3]; // Alpha channel
+                
+                // Skip fully transparent pixels
+                if (a === 0) continue;
                 
                 // If we have sharpened data and sharpness is positive, blend with the sharpened version
                 if (sharpenedData && sharpnessValue > 0) {
@@ -294,10 +336,8 @@ class ImageAdjustments {
                 // Apply skin tone adjustment (if value is not at the default 50)
                 if (skinToneValue !== 50) {
                     // Determine if the pixel is a skin tone pixel using a simple heuristic
-                    // Check if the color falls within a typical skin tone range
                     if (this.isSkinTonePixel(r, g, b)) {
                         // Adjust the skin tone based on the skin tone value
-                        // Map the value from 0-100 to a skin tone adjustment
                         let toneShift = (skinToneValue - 50) / 50; // Range from -1 to 1
                         
                         // Lighten or darken based on the tone shift
@@ -314,36 +354,30 @@ class ImageAdjustments {
                     }
                 }
                 
-                // Apply edge feathering (only if feathering value is positive)
-                if (featheringValue > 0) {
-                    // Calculate distance from edge for feathering
-                    const x = (i / 4) % tempCanvas.width;
-                    const y = Math.floor((i / 4) / tempCanvas.width);
+                // Apply edge feathering based on the distance map (if feathering is enabled)
+                if (featheringValue > 0 && distanceMap) {
+                    const pixelIndex = i / 4;
+                    const distance = distanceMap[pixelIndex] || 0;
                     
-                    // Calculate distance from nearest edge as a percentage of image size
-                    const distFromLeftEdge = x;
-                    const distFromRightEdge = tempCanvas.width - x;
-                    const distFromTopEdge = y;
-                    const distFromBottomEdge = tempCanvas.height - y;
-                    
-                    // Find minimum distance to any edge
-                    const minDist = Math.min(
-                        distFromLeftEdge, 
-                        distFromRightEdge, 
-                        distFromTopEdge, 
-                        distFromBottomEdge
-                    );
-                    
-                    // Calculate feathering effect radius (percentage of image width/height)
-                    const featherRadius = (tempCanvas.width + tempCanvas.height) / 2 * (featheringValue / 100) * 0.2;
-                    
-                    // Apply feathering if within the feathering radius
-                    if (minDist < featherRadius) {
-                        // Calculate opacity factor based on distance from edge
-                        const opacityFactor = minDist / featherRadius;
+                    if (distance < featherRadius) {
+                        // Calculate normalized distance (0 to 1)
+                        const normalizedDist = distance / featherRadius;
                         
-                        // Adjust alpha channel based on distance from edge and feathering value
-                        data[i + 3] = Math.floor(a * opacityFactor);
+                        // Convert featherCurve (1-5) to softness factor (2.0-0.2)
+                        const softnessFactor = 2.2 - (featherCurve * 0.4);
+                        
+                        // Use sine curve for smoother transition
+                        const progress = Math.sin((normalizedDist * Math.PI) / 2);
+                        
+                        // Apply curve adjustment based on softness factor
+                        const alphaMultiplier = Math.pow(progress, softnessFactor);
+                        
+                        // Apply minimum opacity to prevent completely transparent edges
+                        const minOpacity = 0.1;
+                        const finalAlpha = alphaMultiplier * (1 - minOpacity) + minOpacity;
+                        
+                        // Adjust alpha channel
+                        data[i + 3] = Math.floor(a * finalAlpha);
                     }
                 }
                 
@@ -351,8 +385,9 @@ class ImageAdjustments {
                 data[i] = r;
                 data[i + 1] = g;
                 data[i + 2] = b;
-                // Alpha is already modified if needed
+                // Alpha is already modified if needed for feathering
             }
+            console.timeEnd("pixel-processing");
             
             // Put the modified image data back
             tempCtx.putImageData(imageData, 0, 0);
@@ -393,6 +428,7 @@ class ImageAdjustments {
                 this.canvas.renderAll();
                 
                 console.log("Image updated directly with filtered version");
+                console.timeEnd("image-processing");
             };
             
             // Set the source of the new image to our filtered canvas
@@ -413,6 +449,7 @@ class ImageAdjustments {
         } catch (error) {
             console.error("Error in direct pixel manipulation:", error);
             console.error(error.stack);
+            console.timeEnd("image-processing");
         }
     }
     
@@ -585,6 +622,95 @@ class ImageAdjustments {
             // Additional test for skin tones
             (r - g > 15) // Red channel is significantly higher than green in skin tones
         );
+    }
+
+    // Helper function to calculate distance map
+    _calculateDistanceMap(alphaMap, width, height) {
+        console.time("feathering-distance-map");
+        
+        // Create a new array to store distances
+        const distanceMap = new Array(width * height).fill(255);
+        
+        // First pass: Find edge pixels (pixels with alpha that have at least one transparent neighbor)
+        const edgePixels = [];
+        
+        for (let y = 0; y < height; y++) {
+            for (let x = 0; x < width; x++) {
+                const idx = y * width + x;
+                
+                if (alphaMap[idx] === 1) { // This is a non-transparent pixel
+                    // Check if any of the 4 neighbors are transparent
+                    const hasTransparentNeighbor = 
+                        (x > 0 && alphaMap[idx - 1] === 0) ||                  // left
+                        (x < width - 1 && alphaMap[idx + 1] === 0) ||          // right
+                        (y > 0 && alphaMap[idx - width] === 0) ||              // top
+                        (y < height - 1 && alphaMap[idx + width] === 0);       // bottom
+                    
+                    if (hasTransparentNeighbor) {
+                        // This is an edge pixel
+                        edgePixels.push(idx);
+                        distanceMap[idx] = 1; // Distance 1 from the edge
+                    }
+                } else {
+                    // Transparent pixels have distance 0
+                    distanceMap[idx] = 0;
+                }
+            }
+        }
+        
+        console.log(`Found ${edgePixels.length} edge pixels for feathering`);
+        
+        // Second pass: Propagate distances from the edges using BFS
+        let queue = [...edgePixels]; // Start with all edge pixels
+        const processed = new Set();
+        
+        // Mark edge pixels as processed
+        for (const idx of queue) {
+            processed.add(idx);
+        }
+        
+        // Mark transparent pixels as processed
+        for (let i = 0; i < width * height; i++) {
+            if (alphaMap[i] === 0) {
+                processed.add(i);
+            }
+        }
+        
+        let currentDistance = 1;
+        
+        // Use a breadth-first approach to propagate distances inward
+        while (queue.length > 0) {
+            const nextQueue = [];
+            currentDistance++;
+            
+            for (const idx of queue) {
+                const x = idx % width;
+                const y = Math.floor(idx / width);
+                
+                // Check the 4 neighboring pixels
+                const neighbors = [
+                    x > 0 ? idx - 1 : -1,                    // left
+                    x < width - 1 ? idx + 1 : -1,            // right
+                    y > 0 ? idx - width : -1,                // top
+                    y < height - 1 ? idx + width : -1        // bottom
+                ];
+                
+                for (const nIdx of neighbors) {
+                    if (nIdx !== -1 && !processed.has(nIdx) && alphaMap[nIdx] === 1) {
+                        distanceMap[nIdx] = currentDistance;
+                        nextQueue.push(nIdx);
+                        processed.add(nIdx);
+                    }
+                }
+            }
+            
+            queue = nextQueue;
+        }
+        
+        console.timeEnd("feathering-distance-map");
+        console.log("Distance map calculation completed");
+        
+        return distanceMap;
     }
 }
 

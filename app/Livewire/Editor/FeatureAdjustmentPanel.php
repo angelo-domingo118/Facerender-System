@@ -17,6 +17,7 @@ class FeatureAdjustmentPanel extends Component
     public $saturation = 0;
     public $sharpness = 0;
     public $feathering = 0;
+    public $featheringCurve = 3; // Default middle value for curve amount (1-5 range)
     public $skinTone = 50; // This is a special case, 50 is the middle/neutral
     public $skinToneLabel = 'Natural';
     
@@ -128,6 +129,7 @@ class FeatureAdjustmentPanel extends Component
             $this->saturation = $adjustments['saturation'] ?? 0;
             $this->sharpness = $adjustments['sharpness'] ?? 0;
             $this->feathering = $adjustments['feathering'] ?? 0;
+            $this->featheringCurve = $adjustments['featheringCurve'] ?? 3;
             $this->skinTone = $adjustments['skinTone'] ?? 50;
             $this->updateSkinToneLabel();
         } else {
@@ -194,7 +196,7 @@ class FeatureAdjustmentPanel extends Component
     public function updated($propertyName)
     {
         // Check if the updated property is one of the adjustment sliders
-        if (in_array($propertyName, ['contrast', 'saturation', 'sharpness', 'feathering', 'skinTone'])) {
+        if (in_array($propertyName, ['contrast', 'saturation', 'sharpness', 'feathering', 'featheringCurve', 'skinTone'])) {
             $this->updateAdjustments();
         }
     }
@@ -215,6 +217,7 @@ class FeatureAdjustmentPanel extends Component
         $saturation = (int)$this->saturation;
         $sharpness = (int)$this->sharpness;
         $feathering = (int)$this->feathering;
+        $featheringCurve = (int)$this->featheringCurve;
         $skinTone = (int)$this->skinTone;
         
         // Create adjustments data structure
@@ -225,6 +228,7 @@ class FeatureAdjustmentPanel extends Component
                 'saturation' => $saturation,
                 'sharpness' => $sharpness,
                 'feathering' => $feathering,
+                'featheringCurve' => $featheringCurve,
                 'skinTone' => $skinTone,
                 'skinToneLabel' => $this->skinToneLabel
             ]
@@ -239,6 +243,7 @@ class FeatureAdjustmentPanel extends Component
             'saturation' => $saturation,
             'sharpness' => $sharpness,
             'feathering' => $feathering,
+            'featheringCurve' => $featheringCurve,
             'skinTone' => $skinTone,
             'skinToneLabel' => $this->skinToneLabel,
             'data' => $adjustmentData
@@ -261,6 +266,7 @@ class FeatureAdjustmentPanel extends Component
                 'saturation' => 0,
                 'sharpness' => 0,
                 'feathering' => 0,
+                'featheringCurve' => 3,
                 'skinTone' => 50,
                 'skinToneLabel' => 'Natural'
             ]
@@ -284,6 +290,7 @@ class FeatureAdjustmentPanel extends Component
         $this->saturation = 0;
         $this->sharpness = 0;
         $this->feathering = 0;
+        $this->featheringCurve = 3;
         $this->skinTone = 50;
         $this->skinToneLabel = 'Natural';
     }

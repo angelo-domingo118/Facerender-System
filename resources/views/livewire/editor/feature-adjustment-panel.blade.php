@@ -121,6 +121,53 @@
                             <span class="font-medium">Medium</span>
                             <span>Maximum</span>
                         </div>
+                        
+                        <!-- Feathering Curve Control - always visible -->
+                        <div class="mt-2 border-t pt-2 border-gray-100">
+                            <div class="flex justify-between items-center mb-1">
+                                <label class="text-xs font-medium text-gray-500">Edge Softness</label>
+                                <div class="flex items-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-3.5 h-3.5 text-gray-500 mr-1">
+                                        <path d="M5.433 13.917l1.262-3.155A4 4 0 017.58 9.42l6.92-6.918a2.121 2.121 0 013 3l-6.92 6.918c-.383.383-.84.685-1.343.886l-3.154 1.262a.5.5 0 01-.65-.65z" />
+                                    </svg>
+                                    <span class="text-xs bg-gray-100 px-2 py-1 rounded-md font-medium">
+                                        {{ $featheringCurve < 3 ? 'Soft' : ($featheringCurve > 3 ? 'Sharp' : 'Medium') }}
+                                    </span>
+                                </div>
+                            </div>
+                            <input 
+                                type="range" 
+                                wire:model.live="featheringCurve" 
+                                min="1" 
+                                max="5" 
+                                step="1" 
+                                class="w-full h-2 bg-gray-200 rounded-full appearance-none cursor-pointer accent-[#2C3E50]"
+                            >
+                            <div class="flex justify-between text-xs text-gray-400 mt-1">
+                                <span>Soft Edge</span>
+                                <span class="font-medium">Medium</span>
+                                <span>Sharp Edge</span>
+                            </div>
+                            
+                            <!-- Feathering visualization -->
+                            <div class="mt-2 h-7 w-full rounded-md overflow-hidden relative bg-gray-50">
+                                <!-- Left side - original edge -->
+                                <div class="absolute inset-y-0 left-0 w-1/2 bg-white"></div>
+                                
+                                <!-- Right side - transparent part -->
+                                <div class="absolute inset-y-0 right-0 w-1/2 bg-gray-200 bg-opacity-30"></div>
+                                
+                                <!-- Feathering visualization -->
+                                <div class="absolute inset-y-0 w-1/3 border-r border-dashed border-gray-300"
+                                    style="
+                                        left: calc(33% + {{ ($feathering / 100) * 10 }}%);
+                                        background: linear-gradient(to right, rgba(255,255,255,1) 0%, 
+                                        rgba(255,255,255,{{ ($featheringCurve < 3) ? '0.1' : '0.4' }}) 100%);
+                                        transition: all 0.2s ease-in-out;
+                                    "
+                                ></div>
+                            </div>
+                        </div>
                     </div>
                     
                     <!-- Skin Tone Matching -->
