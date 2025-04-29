@@ -434,7 +434,6 @@ class ImageAdjustments {
                 this.canvas.renderAll();
                 
                 console.log("Image updated directly with filtered version");
-                console.timeEnd("image-processing");
             };
             
             // Set the source of the new image to our filtered canvas
@@ -455,7 +454,6 @@ class ImageAdjustments {
         } catch (error) {
             console.error("Error in direct pixel manipulation:", error);
             console.error(error.stack);
-            console.timeEnd("image-processing");
         }
     }
     
