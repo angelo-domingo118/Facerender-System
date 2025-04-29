@@ -342,14 +342,20 @@ class ImageAdjustments {
                         
                         // Lighten or darken based on the tone shift
                         if (toneShift > 0) {
-                            // Darker skin tone (increase red, decrease blue)
-                            r = this.truncate(r * (1 + toneShift * 0.2));
-                            b = this.truncate(b * (1 - toneShift * 0.3));
+                            // Darker skin tone - balanced approach to prevent orange tint
+                            const darkFactor = toneShift * 0.4;
+                            // Reduce brightness while maintaining tone
+                            r = this.truncate(r * (1 - darkFactor * 0.5));
+                            g = this.truncate(g * (1 - darkFactor * 0.6));
+                            b = this.truncate(b * (1 - darkFactor * 0.7));
                         } else if (toneShift < 0) {
-                            // Lighter skin tone (decrease red, increase blue slightly)
-                            r = this.truncate(r * (1 + toneShift * 0.2));
-                            g = this.truncate(g * (1 + toneShift * 0.1));
-                            b = this.truncate(b * (1 - toneShift * 0.1));
+                            // Lighter skin tone - balanced approach to prevent gray tint
+                            const lightFactor = Math.abs(toneShift) * 0.6;
+                            // Increase brightness while maintaining proper skin tone balance
+                            const baseLightening = 255 - r;
+                            r = this.truncate(r + baseLightening * lightFactor * 0.7);
+                            g = this.truncate(g + baseLightening * lightFactor * 0.6);
+                            b = this.truncate(b + baseLightening * lightFactor * 0.5);
                         }
                     }
                 }
@@ -609,18 +615,17 @@ class ImageAdjustments {
         const s = max === 0 ? 0 : delta / max;
         const v = max / 255;
         
-        // Skin tone typically has hue in this range (in HSV)
-        // Hue: 0-50 (reddish to yellowish)
-        // Saturation: 0.20-0.60 (not too gray, not too saturated)
-        // Value: 0.40-1.00 (medium to light)
+        // Enhanced skin tone detection with broader range
+        // Hue: expanded range to include more diverse skin tones
+        // Saturation: allowing slightly lower and higher values
+        // Value: expanded to cover very dark to very light skin tones
         return (
-            (h >= 0 && h <= 50) && 
-            (s >= 0.20 && s <= 0.60) && 
-            (v >= 0.40 && v <= 1.00) &&
-            // Also check for typical skin tone RGB relationships
-            (r > g) && (g > b) && 
-            // Additional test for skin tones
-            (r - g > 15) // Red channel is significantly higher than green in skin tones
+            ((h >= 0 && h <= 50) || (h >= 340 && h <= 360)) && // Include reddish tones for both light and dark skin
+            (s >= 0.10 && s <= 0.70) && // Wider saturation range
+            (v >= 0.20 && v <= 1.00) && // Wider brightness range to include very dark tones
+            // RGB relationship checks, with more lenient conditions
+            ((r > g) || (Math.abs(r - g) <= 20)) && // Allow more equal R-G values
+            ((g > b) || (Math.abs(g - b) <= 10)) // Allow more equal G-B values for certain skin tones
         );
     }
 

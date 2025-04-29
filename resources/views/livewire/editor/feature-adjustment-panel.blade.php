@@ -102,20 +102,20 @@
                         </h4>
                     </div>
                     
-                    <!-- Edge Feathering Control -->
-                    <div class="mb-3">
-                        <div class="flex justify-between items-center mb-1">
-                            <label class="text-xs font-medium text-gray-500">Edge Feathering</label>
-                            <span class="text-xs bg-gray-100 px-2 py-1 rounded-md font-medium">{{ $feathering }}%</span>
-                        </div>
-                        <input 
-                            type="range" 
-                            wire:model.live="feathering" 
-                            min="0" 
-                            max="100" 
-                            step="1" 
-                            class="w-full h-2 bg-gray-200 rounded-full appearance-none cursor-pointer accent-[#2C3E50]"
-                        >
+                        <!-- Edge Feathering Control -->
+                        <div class="mb-3">
+                            <div class="flex justify-between items-center mb-1">
+                                <label class="text-xs font-medium text-gray-500">Edge Feathering</label>
+                                <span class="text-xs bg-gray-100 px-2 py-1 rounded-md font-medium">{{ $feathering }}%</span>
+                            </div>
+                            <input 
+                                type="range" 
+                                wire:model.live="feathering" 
+                                min="0" 
+                                max="100" 
+                                step="1" 
+                                class="w-full h-2 bg-gray-200 rounded-full appearance-none cursor-pointer accent-[#2C3E50]"
+                            >
                         <div class="flex justify-between text-xs text-gray-400 mt-1">
                             <span>None</span>
                             <span class="font-medium">Medium</span>
@@ -168,17 +168,17 @@
                                 ></div>
                             </div>
                         </div>
-                    </div>
-                    
-                    <!-- Skin Tone Matching -->
-                    <div class="mb-3">
-                        <div class="flex justify-between items-center mb-2">
-                            <label class="text-xs font-medium text-gray-500">Skin Tone</label>
-                            <span class="text-xs bg-gray-100 px-2 py-1 rounded-md font-medium">{{ $skinToneLabel }}</span>
                         </div>
                         
+                        <!-- Skin Tone Matching -->
+                        <div class="mb-3">
+                            <div class="flex justify-between items-center mb-2">
+                                <label class="text-xs font-medium text-gray-500">Skin Tone</label>
+                                <span class="text-xs bg-gray-100 px-2 py-1 rounded-md font-medium">{{ $skinToneLabel }}</span>
+                            </div>
+                            
                         <!-- Skin Tone Gradient Slider with visible indicator -->
-                        <div class="mb-3 relative">
+                            <div class="mb-3 relative">
                             <div class="h-6 rounded-lg w-full" style="background: linear-gradient(to right, #FFE4C4, #DEB887, #CD853F, #8B4513, #654321, #3B2F2F, #2F1F1F);"></div>
                             
                             <!-- Custom Slider Indicator -->
@@ -189,14 +189,14 @@
                                 </div>
                             </div>
                             
-                            <input 
-                                type="range" 
-                                wire:model.live="skinTone" 
-                                min="0" 
-                                max="100" 
-                                step="1"
-                                class="absolute top-0 w-full h-6 opacity-0 cursor-pointer"
-                            >
+                                <input 
+                                    type="range" 
+                                    wire:model.live="skinTone" 
+                                    min="0" 
+                                    max="100" 
+                                    step="1"
+                                    class="absolute top-0 w-full h-6 opacity-0 cursor-pointer"
+                                >
                             
                             <!-- Slider markers -->
                             <div class="w-full flex justify-between px-1 mt-1">
@@ -293,36 +293,36 @@
                                 style="background-color: #2F1F1F;"
                                 title="Deep (95)"
                             ></button>
-                        </div>
-                        
-                        <!-- Preset Buttons -->
+                            </div>
+
+                            <!-- Preset Buttons -->
                         <div class="flex flex-wrap gap-2 justify-center mb-1">
-                            <button 
-                                wire:click="setSkinTone('light')"
+                                <button 
+                                    wire:click="setSkinTone('light')"
                                 class="px-2 py-1 text-xs rounded-md border transition-all duration-150 hover:bg-opacity-90 flex items-center space-x-1 bg-[#FFE4C4] text-gray-700 {{ $skinToneLabel === 'Light' ? 'ring-1 ring-[#2C3E50]' : '' }}"
-                            >
-                                <span>Light</span>
-                            </button>
-                            <button 
-                                wire:click="setSkinTone('natural')"
+                                >
+                                    <span>Light</span>
+                                </button>
+                                <button 
+                                    wire:click="setSkinTone('natural')"
                                 class="px-2 py-1 text-xs rounded-md border transition-all duration-150 hover:bg-opacity-90 flex items-center space-x-1 bg-[#CD853F] text-white {{ $skinToneLabel === 'Natural' ? 'ring-1 ring-[#2C3E50]' : '' }}"
-                            >
-                                <span>Natural</span>
-                            </button>
-                            <button 
-                                wire:click="setSkinTone('medium')"
+                                >
+                                    <span>Natural</span>
+                                </button>
+                                <button 
+                                    wire:click="setSkinTone('medium')"
                                 class="px-2 py-1 text-xs rounded-md border transition-all duration-150 hover:bg-opacity-90 flex items-center space-x-1 bg-[#8B4513] text-white {{ $skinToneLabel === 'Medium' ? 'ring-1 ring-[#2C3E50]' : '' }}"
-                            >
-                                <span>Medium</span>
-                            </button>
-                            <button 
-                                wire:click="setSkinTone('dark')"
+                                >
+                                    <span>Medium</span>
+                                </button>
+                                <button 
+                                    wire:click="setSkinTone('dark')"
                                 class="px-2 py-1 text-xs rounded-md border transition-all duration-150 hover:bg-opacity-90 flex items-center space-x-1 bg-[#2F1F1F] text-white {{ $skinToneLabel === 'Dark' ? 'ring-1 ring-[#2C3E50]' : '' }}"
-                            >
-                                <span>Dark</span>
-                            </button>
+                                >
+                                    <span>Dark</span>
+                                </button>
+                            </div>
                         </div>
-                    </div>
                 </div>
                 
                 <!-- Reset Button -->

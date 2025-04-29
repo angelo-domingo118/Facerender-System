@@ -148,15 +148,15 @@ class FeatureAdjustmentPanel extends Component
                 $this->skinToneLabel = 'Light';
                 break;
             case 'natural':
-                $this->skinTone = 40;
+                $this->skinTone = 50;
                 $this->skinToneLabel = 'Natural';
                 break;
             case 'medium':
-                $this->skinTone = 65;
+                $this->skinTone = 70;
                 $this->skinToneLabel = 'Medium';
                 break;
             case 'dark':
-                $this->skinTone = 85;
+                $this->skinTone = 90;
                 $this->skinToneLabel = 'Dark';
                 break;
         }
@@ -179,11 +179,11 @@ class FeatureAdjustmentPanel extends Component
      */
     private function updateSkinToneLabel()
     {
-        if ($this->skinTone <= 25) {
+        if ($this->skinTone <= 20) {
             $this->skinToneLabel = 'Light';
-        } elseif ($this->skinTone <= 50) {
+        } elseif ($this->skinTone <= 60) {
             $this->skinToneLabel = 'Natural';
-        } elseif ($this->skinTone <= 75) {
+        } elseif ($this->skinTone <= 80) {
             $this->skinToneLabel = 'Medium';
         } else {
             $this->skinToneLabel = 'Dark';
