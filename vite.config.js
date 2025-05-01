@@ -8,7 +8,8 @@ export default defineConfig({
                 'resources/css/app.css', 
                 'resources/js/app.js',
                 'resources/js/fabric-test.js',
-                'resources/js/editor-canvas.js'
+                'resources/js/editor-canvas.js',
+                'resources/js/livewire-sortable.js'
             ],
             refresh: true,
         }),

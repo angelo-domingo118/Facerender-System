@@ -7,3 +7,6 @@ import './image-adjustments';
 
 // Import canvas export functionality
 import './canvas-export';
+
+// Import layer sortable functionality
+import './livewire-sortable';

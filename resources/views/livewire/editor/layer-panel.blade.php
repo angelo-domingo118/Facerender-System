@@ -1,15 +1,24 @@
 <div class="h-full flex flex-col bg-gray-50">
     <!-- Layer List - Adding flex-1 and min-height to ensure it takes available space -->
     <div class="flex-1 overflow-y-auto min-h-0">
-        <div class="p-2">
-            @forelse($layers as $layer)
+        <div class="p-2" wire:sortable="updateLayerOrder">
+            @php
+                // Reverse the layers array for display purposes only
+                // This keeps the visual order consistent with the canvas stacking
+                $displayLayers = array_reverse($layers);
+            @endphp
+            @forelse($displayLayers as $index => $layer)
+                <script>
+                    console.log('LAYER DEBUG (Blade): Rendering layer', {{ $index }}, {{ json_encode($layer['name']) }});
+                </script>
                 <div 
                     wire:key="layer-{{ $layer['id'] }}"
+                    wire:sortable.item="{{ $layer['id'] }}"
                     wire:click="selectLayer({{ $layer['id'] }})" 
-                    class="mb-2 {{ $selectedLayerId == $layer['id'] ? 'bg-[#2C3E50]/5 border-[#2C3E50]/20' : 'bg-white border-gray-200' }} border p-2 rounded-md transition-colors duration-150 hover:border-[#2C3E50]/20"
+                    class="mb-2 {{ $selectedLayerId == $layer['id'] ? 'bg-[#2C3E50]/5 border-[#2C3E50]/20' : 'bg-white border-gray-200' }} border p-2 rounded-md transition-colors duration-150 hover:border-[#2C3E50]/20 cursor-move"
                 >
                     <div class="flex items-center justify-between">
-                        <div class="flex items-center space-x-2">
+                        <div class="flex items-center space-x-2" wire:sortable.handle>
                             <button 
                                 wire:click.stop="toggleVisibility({{ $layer['id'] }})"
                                 class="{{ $layer['visible'] ? 'text-[#2C3E50]' : 'text-gray-400' }} hover:text-indigo-500 transition-colors duration-150 p-1"
@@ -46,31 +55,13 @@
                                     </svg>
                                 @endif
                             </button>
+                            <!-- Drag Handle Icon -->
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-5 w-5 text-gray-400">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 9h16.5m-16.5 6.75h16.5" />
+                            </svg>
                             <span class="{{ $selectedLayerId == $layer['id'] ? 'text-[#2C3E50] font-medium' : 'text-gray-600' }} text-sm truncate">{{ $layer['name'] }}</span>
                         </div>
-                        <div class="flex items-center space-x-3">
-                            <!-- Move Layer Up -->
-                            <button 
-                                wire:click.stop="moveLayerUp({{ $layer['id'] }})"
-                                class="text-gray-500 hover:text-indigo-500 transition-colors duration-150 p-1 bg-gray-100 rounded-md"
-                                title="Move layer up"
-                            >
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
-                                </svg>
-                            </button>
-                            
-                            <!-- Move Layer Down -->
-                            <button 
-                                wire:click.stop="moveLayerDown({{ $layer['id'] }})"
-                                class="text-gray-500 hover:text-indigo-500 transition-colors duration-150 p-1 bg-gray-100 rounded-md"
-                                title="Move layer down"
-                            >
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                                </svg>
-                            </button>
-
+                        <div>
                             <!-- Delete Layer Button -->
                             <button 
                                 wire:click.stop="requestDeletion({{ $layer['id'] }})"

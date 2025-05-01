@@ -105,6 +105,7 @@ class MainCanvas extends Component
             
             // After updating features, notify layer panel
             // Send layers in canvas order - last item in array = top most layer visually
+            Log::info('LAYER DEBUG: Dispatching layers-updated from MainCanvas::addFeature', ['features' => $this->selectedFeatures]);
             $this->dispatch('layers-updated', $this->selectedFeatures);
 
             // Dispatch active feature IDs to the feature library
@@ -636,7 +637,7 @@ class MainCanvas extends Component
     {
         // Re-enable dispatch in render to ensure panels update if their state is stale
         // when they become visible again.
-        $this->dispatch('layers-updated', $this->selectedFeatures);
+        // $this->dispatch('layers-updated', $this->selectedFeatures); // Commented out - potentially causing order issues
         
         return view('livewire.editor.main-canvas');
     }

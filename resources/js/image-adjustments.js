@@ -280,7 +280,7 @@ class ImageAdjustments {
                 
                 // Calculate feathering radius based on image dimensions and feathering value
                 const minDimension = Math.min(imgWidth, imgHeight);
-                featherRadius = minDimension * (featheringValue / 100) * 0.2;
+                featherRadius = minDimension * (featheringValue / 100) * 0.8;
                 console.log(`Feathering radius: ${featherRadius}px based on min dimension: ${minDimension}px`);
             }
             

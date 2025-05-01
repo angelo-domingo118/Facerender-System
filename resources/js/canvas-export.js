@@ -249,10 +249,10 @@ function exportCanvas(canvas, options) {
 }
 
 /**
- * Print the canvas content
+ * Print the canvas content, including composite details
  * @param {fabric.Canvas} canvas - The Fabric.js canvas instance
  */
-function printCanvas(canvas) {
+async function printCanvas(canvas) {
     try {
         console.log('Print canvas function called');
         
@@ -262,7 +262,81 @@ function printCanvas(canvas) {
             return;
         }
         
-        // Save the current state of the canvas
+        // Find the parent Livewire component (CompositeEditor)
+        const selector = `[wire\\:id][wire\\:initial-data*="App\\\\Livewire\\\\Editor\\\\CompositeEditor"]`;
+        const editorComponentElement = document.querySelector(selector);
+        let compositeDetails = {};
+        let detailsFound = false;
+        
+        // First try with CompositeEditor component
+        if (editorComponentElement && typeof Livewire !== 'undefined') {
+            const editorComponentId = editorComponentElement.getAttribute('wire:id');
+            console.log('Found Livewire component element with ID:', editorComponentId);
+            const component = Livewire.find(editorComponentId);
+            if (component) {
+                console.log('Fetching composite details from Livewire...');
+                try {
+                    compositeDetails = await component.call('getCompositeDetailsForPrint');
+                    console.log('Fetched details:', compositeDetails);
+                    detailsFound = Object.keys(compositeDetails).length > 0;
+                } catch (error) {
+                    console.error('Error fetching composite details from Livewire:', error);
+                }
+            }
+        }
+        
+        // If that didn't work, try with MainToolbar component
+        if (!detailsFound && typeof Livewire !== 'undefined') {
+            console.log('Trying to find MainToolbar component...');
+            const toolbarSelector = `[wire\\:id][wire\\:initial-data*="App\\\\Livewire\\\\Editor\\\\MainToolbar"]`;
+            const toolbarElement = document.querySelector(toolbarSelector);
+            
+            if (toolbarElement) {
+                const toolbarComponentId = toolbarElement.getAttribute('wire:id');
+                console.log('Found MainToolbar component with ID:', toolbarComponentId);
+                const toolbarComponent = Livewire.find(toolbarComponentId);
+                
+                if (toolbarComponent) {
+                    console.log('Attempting to get details from MainToolbar...');
+                    try {
+                        const toolbarDetails = await toolbarComponent.call('getCompositeDetailsForPrint');
+                        console.log('Got details from MainToolbar:', toolbarDetails);
+                        
+                        if (toolbarDetails && Object.keys(toolbarDetails).length > 0) {
+                            compositeDetails = toolbarDetails;
+                            detailsFound = true;
+                        }
+                    } catch (error) {
+                        console.error('Error getting details from MainToolbar:', error);
+                    }
+                }
+            } else {
+                console.warn('MainToolbar component not found');
+            }
+        }
+        
+        // If we still don't have details, try to get basic information from the DOM
+        if (!detailsFound) {
+            console.warn('Could not find any Livewire components with data. Using DOM fallback.');
+            console.log('Selector used:', selector);
+            console.log('Available Livewire components:', typeof Livewire !== 'undefined' ? Object.keys(Livewire.components || {}) : 'Livewire not defined');
+            
+            // Try to get basic information from the DOM as fallback
+            const titleElement = document.querySelector('h2[title]');
+            if (titleElement) {
+                compositeDetails = {
+                    title: titleElement.textContent || 'Composite Print'
+                };
+                console.log('Using title from DOM:', compositeDetails.title);
+            } else {
+                compositeDetails = {
+                    title: document.title || 'Composite Print'
+                };
+                console.log('Using document title as fallback:', compositeDetails.title);
+            }
+        }
+        
+        // --- Temporarily modify canvas for printing --- 
         const originalObjects = [...canvas.getObjects()];
         const gridLines = originalObjects.filter(obj => 
             obj.type === 'line' && 
@@ -270,65 +344,170 @@ function printCanvas(canvas) {
             !obj.selectable && 
             !obj.evented
         );
+        const originalBackgroundColor = canvas.backgroundColor;
         
         // Temporarily remove grid lines for printing
         if (gridLines.length > 0) {
             console.log(`Temporarily hiding ${gridLines.length} grid lines for printing`);
             gridLines.forEach(line => canvas.remove(line));
         }
+        // Set background to white for printing (even if original was transparent)
+        canvas.backgroundColor = '#ffffff';
         
         // Force canvas re-rendering
         canvas.renderAll();
         
-        // Create a data URL of the canvas
+        // Create a data URL of the modified canvas
         const dataUrl = canvas.toDataURL({
             format: 'png',
             quality: 1.0,
             multiplier: 2 // Higher quality for printing
         });
         
-        // Create a new window
+        // --- Restore canvas state --- 
+        // Restore grid lines 
+        if (gridLines.length > 0) {
+            console.log('Restoring grid lines after generating data URL');
+            gridLines.forEach(line => canvas.add(line));
+            // Send grid lines to back
+            gridLines.forEach(line => canvas.sendObjectToBack(line));
+        }
+        // Restore original background color
+        canvas.backgroundColor = originalBackgroundColor;
+        // Re-render the canvas to its original state
+        canvas.renderAll();
+        
+        // --- Create Print Window --- 
         const printWindow = window.open('', '_blank');
         if (!printWindow) {
             alert('Please allow pop-ups to print the canvas');
             return;
         }
         
-        // Get composite title if available
-        let title = 'Canvas Print';
-        const titleElement = document.querySelector('.composite-title, h2[title]');
-        if (titleElement) {
-            title = titleElement.textContent || title;
+        const title = compositeDetails.title || 'Composite Print';
+        
+        // Helper function to safely render details
+        const renderDetail = (label, value) => {
+            return value ? `<div class="detail-item"><span class="label">${label}:</span> <span class="value">${value}</span></div>` : '';
+        };
+        
+        // If we couldn't find the component using the selector, try using Livewire's getAllsByName method
+        if (Object.keys(compositeDetails).length === 0 && typeof Livewire !== 'undefined' && typeof Livewire.all === 'function') {
+            console.log('Attempting to find CompositeEditor using Livewire.all()');
+            const components = Livewire.all();
+            console.log('Available components:', components);
+            
+            // Try to find the CompositeEditor component
+            const editorComponent = components.find(c => {
+                // The name might be stored in different formats depending on Livewire version
+                return (c.name && c.name.includes('composite-editor')) || 
+                       (c.fingerprint && c.fingerprint.name && c.fingerprint.name.includes('composite-editor'));
+            });
+            
+            if (editorComponent) {
+                console.log('Found editor component via Livewire.all():', editorComponent);
+                try {
+                    compositeDetails = await editorComponent.call('getCompositeDetailsForPrint');
+                    console.log('Successfully fetched details via Livewire.all():', compositeDetails);
+                } catch (error) {
+                    console.error('Error calling getCompositeDetailsForPrint via Livewire.all():', error);
+                }
+            }
         }
         
         // Write HTML content to the new window
         printWindow.document.write(`
             <html>
                 <head>
-                    <title>${title}</title>
+                    <title>Print - ${title}</title>
                     <style>
-                        @media print {
-                            body {
-                                margin: 0;
-                                padding: 0;
-                            }
-                            img {
-                                max-width: 100%;
-                                max-height: 100%;
-                            }
-                        }
                         body {
-                            margin: 0;
-                            padding: 20px;
+                            font-family: Arial, sans-serif;
+                            margin: 20px;
+                            color: #333;
+                        }
+                        .print-container {
                             display: flex;
                             flex-direction: column;
-                            justify-content: center;
                             align-items: center;
-                            min-height: 100vh;
-                            font-family: Arial, sans-serif;
+                        }
+                        .header {
+                            width: 100%;
+                            text-align: center;
+                            margin-bottom: 20px;
+                            border-bottom: 1px solid #ccc;
+                            padding-bottom: 10px;
+                        }
+                        .header h1 {
+                            margin: 0;
+                            font-size: 24px;
+                        }
+                        .content {
+                            display: flex;
+                            flex-direction: column;
+                            width: 100%;
+                            margin-bottom: 20px;
+                        }
+                        @media (min-width: 768px) {
+                            .content {
+                                flex-direction: row;
+                                gap: 30px;
+                            }
+                        }
+                        .image-container {
+                            flex: 1;
+                            text-align: center;
+                            margin-bottom: 20px;
+                        }
+                        @media (min-width: 768px) {
+                            .image-container {
+                                margin-bottom: 0;
+                            }
+                        }
+                        .image-container img {
+                            max-width: 100%;
+                            max-height: 60vh; /* Adjust as needed */
+                            border: 1px solid #eee;
+                        }
+                        .details-container {
+                            flex: 1;
+                        }
+                        @media (min-width: 768px) {
+                            .details-container {
+                                border-left: 1px solid #eee;
+                                padding-left: 20px;
+                            }
+                        }
+                        .details-container h2 {
+                            margin-top: 0;
+                            font-size: 18px;
+                            border-bottom: 1px solid #eee;
+                            padding-bottom: 5px;
+                            margin-bottom: 15px;
+                        }
+                        .detail-item {
+                            margin-bottom: 8px;
+                            font-size: 14px;
+                        }
+                        .detail-item .label {
+                            font-weight: bold;
+                            min-width: 120px; /* Adjust as needed */
+                            display: inline-block;
+                        }
+                        .detail-item .value {
+                            color: #555;
+                        }
+                        .description, .notes {
+                            margin-top: 15px;
+                            font-size: 14px;
+                            line-height: 1.5;
+                        }
+                        .description p, .notes p {
+                            margin-top: 5px;
+                            white-space: pre-wrap; /* Preserve line breaks */
                         }
                         .controls {
-                            margin-bottom: 20px;
+                            margin-top: 20px;
                             text-align: center;
                         }
                         .controls button {
@@ -340,32 +519,69 @@ function printCanvas(canvas) {
                             cursor: pointer;
                             margin: 0 5px;
                         }
-                        h1 {
-                            margin-bottom: 20px;
-                            color: #333;
-                            font-size: 24px;
+                        .no-details-message {
+                            text-align: center;
+                            color: #888;
+                            font-style: italic;
+                            margin: 10px 0;
                         }
-                        img {
-                            max-width: 100%;
-                            max-height: 80vh;
-                            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+                        @media print {
+                            body { margin: 1cm; }
+                            .controls { display: none; }
+                            .content { page-break-inside: avoid; }
                         }
                     </style>
                 </head>
                 <body>
-                    <div class="controls">
-                        <h1>${title}</h1>
-                        <button onclick="window.print()">Print</button>
-                        <button onclick="window.close()">Close</button>
+                    <div class="print-container">
+                        <div class="header">
+                            <h1>${title}</h1>
+                            ${renderDetail('Created', compositeDetails.created_at)}
+                        </div>
+                        
+                        <div class="content">
+                            <div class="image-container">
+                                <img src="${dataUrl}" alt="Canvas Image">
+                            </div>
+                            <div class="details-container">
+                                <h2>Composite Information</h2>
+                                ${compositeDetails.witness_name || compositeDetails.case_title || compositeDetails.description ? 
+                                    `
+                                    ${renderDetail('Witness', compositeDetails.witness_name)}
+                                    ${renderDetail('Case', compositeDetails.case_title)}
+                                    ${compositeDetails.description ? 
+                                        `<div class="description"><strong>Description:</strong><p>${compositeDetails.description}</p></div>` : ''}
+                                    ` : 
+                                    `<div class="no-details-message">No composite information available</div>`
+                                }
+                                
+                                <h2 style="margin-top: 20px;">Suspect Description</h2>
+                                ${compositeDetails.suspect_gender || compositeDetails.suspect_ethnicity || 
+                                  compositeDetails.suspect_age_range || compositeDetails.suspect_height || 
+                                  compositeDetails.suspect_body_build || compositeDetails.suspect_additional_notes ? 
+                                    `
+                                    ${renderDetail('Gender', compositeDetails.suspect_gender)}
+                                    ${renderDetail('Ethnicity', compositeDetails.suspect_ethnicity)}
+                                    ${renderDetail('Age Range', compositeDetails.suspect_age_range)}
+                                    ${renderDetail('Height', compositeDetails.suspect_height)}
+                                    ${renderDetail('Body Build', compositeDetails.suspect_body_build)}
+                                    ${compositeDetails.suspect_additional_notes ? 
+                                        `<div class="notes"><strong>Additional Notes:</strong><p>${compositeDetails.suspect_additional_notes}</p></div>` : ''}
+                                    ` : 
+                                    `<div class="no-details-message">No suspect description available</div>`
+                                }
+                            </div>
+                        </div>
+                        
+                        <div class="controls">
+                            <button onclick="window.print()">Print</button>
+                            <button onclick="window.close()">Close</button>
+                        </div>
                     </div>
-                    <img src="${dataUrl}" alt="Canvas Image">
                     <script>
-                        // Auto print when loaded
+                        // Optional: Auto print when loaded
                         window.onload = function() {
-                            // Auto print option - uncommenting this will auto-print
-                            // setTimeout(function() {
-                            //     window.print();
-                            // }, 500);
+                            console.log('Print window loaded');
                         };
                     </script>
                 </body>
@@ -373,16 +589,7 @@ function printCanvas(canvas) {
         `);
         
         printWindow.document.close();
-        console.log('Print window created successfully');
-        
-        // Restore grid lines after print window is created
-        if (gridLines.length > 0) {
-            console.log('Restoring grid lines after printing');
-            gridLines.forEach(line => canvas.add(line));
-            // Send grid lines to back
-            gridLines.forEach(line => canvas.sendObjectToBack(line));
-            canvas.renderAll();
-        }
+        console.log('Print window created successfully with composite details');
         
     } catch (error) {
         console.error('Error during print canvas operation:', error);

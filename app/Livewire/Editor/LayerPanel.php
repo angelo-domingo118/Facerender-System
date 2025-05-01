@@ -37,18 +37,17 @@ class LayerPanel extends Component
      */
     public function updateLayers($features)
     {
+        Log::info('LAYER DEBUG: Received features in LayerPanel', ['features' => $features]); // Log raw features
         Log::info('Updating layers in panel', ['features_count' => count($features)]);
         
         // Convert features to layers format with additional properties
         $updatedLayers = [];
         
-        // In fabric.js, the last item in the array is the topmost one visually
-        // We want the topmost item to appear at the top of our panel
-        // Process features from last to first to make top items appear first in the panel
-        $reversedFeatures = array_reverse($features);
-        
-        foreach ($reversedFeatures as $feature) {
+        // We want the visually bottom item to appear at the bottom of our panel
+        // Process features in their original order (same as Fabric.js)
+        foreach ($features as $index => $feature) {
             $featureId = $feature['id'];
+            Log::info('LAYER DEBUG: Processing feature', ['index' => $index, 'id' => $featureId, 'name' => $feature['name'] ?? 'N/A']); // Log each feature
             
             // Check if this layer already exists to preserve its settings
             $existingLayer = $this->findLayer($featureId);
@@ -66,6 +65,7 @@ class LayerPanel extends Component
         }
         
         $this->layers = $updatedLayers;
+        Log::info('LAYER DEBUG: Final layers array set in LayerPanel', ['layers' => $this->layers]); // Log final array
         
         // If no layer is selected and we have layers, select the first one
         if ($this->selectedLayerId === null && !empty($this->layers)) {
@@ -436,6 +436,43 @@ class LayerPanel extends Component
                 'y' => $y
             ]);
         }
+    }
+    
+    /**
+     * Handle sortable (drag-and-drop) layer reordering
+     */
+    public function updateLayerOrder($items)
+    {
+        Log::info('Handling layer reordering via drag-and-drop', ['item_order' => $items]);
+        
+        // The items array contains layer IDs in the new order (from visual top to bottom)
+        // We need to reverse it since we're displaying in reverse but the data is stored in Fabric's order
+        $newOrderIds = array_reverse($items);
+        
+        // Create a new array to hold the reordered layers
+        $reorderedLayers = [];
+        
+        // Rebuild the layers array in the new order
+        foreach ($newOrderIds as $layerId) {
+            foreach ($this->layers as $layer) {
+                if ($layer['id'] == $layerId) {
+                    $reorderedLayers[] = $layer;
+                    break;
+                }
+            }
+        }
+        
+        // Update the layers array
+        $this->layers = $reorderedLayers;
+        
+        // Dispatch event to update canvas with the reordered layers
+        $this->dispatch('layers-reordered', [
+            'layers' => $this->layers
+        ]);
+        
+        Log::info('Layers reordered via drag-and-drop', [
+            'new_order' => array_column($this->layers, 'id')
+        ]);
     }
     
     public function render()
