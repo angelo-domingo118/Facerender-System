@@ -1481,8 +1481,8 @@ function setupFabricImageFromElement(imgElement, feature, moveEnabled) {
         log(`Setting up Fabric image for feature ${feature.id} from element.`);
 
         const fabricImage = new fabric.Image(imgElement, {
-            left: feature.position?.x || canvas.width / 2,
-            top: feature.position?.y || canvas.height / 2,
+            left: feature.position?.x || getDefaultPositionForFeature(feature.feature_type).x,
+            top: feature.position?.y || getDefaultPositionForFeature(feature.feature_type).y,
             angle: feature.position?.rotation || 0,
             originX: 'center', // Center origin for easier positioning/rotation
             originY: 'center',
@@ -1537,9 +1537,22 @@ function setupFabricImageFromElement(imgElement, feature, moveEnabled) {
                     maxWidth = 120;
                     maxHeight = 70;
                     break;
-                case 5: // ears
-                    maxWidth = 100;
-                    maxHeight = 130;
+                case 5: // ears - Set specific width
+                    const targetWidth = 370;
+                    if (fabricImage.width && fabricImage.width > 0) { // Check if width is valid
+                        const scaleFactor = targetWidth / fabricImage.width;
+                        fabricImage.scale(scaleFactor);
+                        log(`Applied specific width scaling (${scaleFactor.toFixed(2)}) for ears (feature ${feature.id}) to target width ${targetWidth}px`);
+                        // Store this scale factor in the feature data if needed
+                        if (feature.position) {
+                            feature.position.scale = scaleFactor;
+                        }
+                    } else {
+                        log(`Skipping scaling for ears (feature ${feature.id}) due to invalid initial width: ${fabricImage.width}`);
+                    }
+                    // Skip the general scaling logic below for ears
+                    // We set a flag or modify maxWidth/maxHeight to prevent double scaling
+                    maxWidth = 0; // Set to 0 to ensure the general scaling below doesn't apply
                     break;
                 case 6: // hair
                     maxWidth = 350;
@@ -1563,19 +1576,26 @@ function setupFabricImageFromElement(imgElement, feature, moveEnabled) {
             }
         }
         
-        if (fabricImage.width > maxWidth || fabricImage.height > maxHeight) {
-            const scaleFactor = Math.min(
-                maxWidth / fabricImage.width,
-                maxHeight / fabricImage.height
-            );
-            fabricImage.scale(scaleFactor);
+        // Apply general scaling ONLY if not handled by a specific case (like ears)
+        if (maxWidth > 0 && (fabricImage.width * fabricImage.scaleX > maxWidth || fabricImage.height * fabricImage.scaleY > maxHeight)) {
+            // Use current scaled width/height for calculation if already scaled by a specific case (but ears case prevents this)
+            const currentWidth = fabricImage.width * fabricImage.scaleX;
+            const currentHeight = fabricImage.height * fabricImage.scaleY;
             
-            // Log the scaling applied
-            log(`Applied scaling of ${scaleFactor.toFixed(2)} to feature ${feature.id} (type: ${featureTypeId})`);
+            const scaleFactor = Math.min(
+                maxWidth / currentWidth, 
+                maxHeight / currentHeight
+            );
+            
+            // Apply scaling relative to current scale
+            fabricImage.scaleX *= scaleFactor;
+            fabricImage.scaleY *= scaleFactor;
+            
+            log(`Applied general scaling of ${scaleFactor.toFixed(2)} to feature ${feature.id} (type: ${featureTypeId})`);
             
             // Store this as the feature's initial scale in the position object if it exists
             if (feature.position) {
-                feature.position.scale = scaleFactor;
+                feature.position.scale = fabricImage.scaleX; // Assuming uniform scaling
             }
         }
 
@@ -1673,4 +1693,79 @@ function loadImageAndSetupFabricImage(feature, moveEnabled, imagePath, operation
 
     // Set the src to start loading
     imgElement.src = imagePath;
+}
+
+/**
+ * Helper function to calculate anatomically correct default positions for facial features.
+ * Uses the center point (300,300) and a standard face shape size (324×450).
+ * @param {number} featureTypeId - The type of facial feature.
+ * @return {Object} - The x,y coordinates.
+ */
+function getDefaultPositionForFeature(featureTypeId) {
+    // Canvas center point
+    const centerX = 300;
+    const centerY = 300;
+    
+    // Average face dimensions from the UI
+    const faceWidth = 324;
+    const faceHeight = 450;
+    
+    // Default to center if not a recognized feature
+    const defaultPosition = { x: centerX, y: centerY };
+    
+    // Return anatomically positioned coordinates based on feature type
+    if (!featureTypeId) return defaultPosition;
+    
+    switch (parseInt(featureTypeId)) {
+        case 1: // eyes - upper third of face, horizontally spaced
+            return { 
+                x: centerX, 
+                y: centerY - faceHeight * 0.15 // 15% up from center
+            };
+            
+        case 2: // eyebrows - above eyes
+            return { 
+                x: centerX, 
+                y: centerY - faceHeight * 0.22 // 22% up from center
+            };
+            
+        case 3: // nose - middle of face
+            return { 
+                x: centerX, 
+                y: centerY + faceHeight * 0.05 // 5% down from center
+            };
+            
+        case 4: // mouth - lower third of face
+            return { 
+                x: centerX, 
+                y: centerY + faceHeight * 0.18 // 18% down from center
+            };
+            
+        case 5: // ears - sides of face
+            return { 
+                x: centerX + (faceWidth * 0.48), // Right side of face
+                y: centerY
+            };
+            
+        case 6: // hair - slightly above top of face
+            return { 
+                x: centerX, 
+                y: centerY - faceHeight * 0.28 // 28% up from center
+            };
+            
+        case 7: // face - dead center
+            return defaultPosition;
+            
+        case 8: // neck - below face
+            return { 
+                x: centerX, 
+                y: centerY + faceHeight * 0.45 // 45% down from center
+            };
+            
+        case 9: // accessories - depends on accessory type, center by default
+            return defaultPosition;
+            
+        default:
+            return defaultPosition;
+    }
 } 
