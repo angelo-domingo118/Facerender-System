@@ -3,47 +3,46 @@
  * Adds drag-and-drop functionality to reorder layers
  */
 
-document.addEventListener('DOMContentLoaded', function() {
-    // Check if Sortable library exists
-    if (typeof Sortable === 'undefined') {
-        // Load Sortable.js from CDN if not available
-        const script = document.createElement('script');
-        script.src = 'https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js';
-        script.onload = initSortable;
-        document.head.appendChild(script);
-    } else {
-        initSortable();
-    }
+import Sortable from 'sortablejs';
+
+document.addEventListener('livewire:initialized', () => {
+    let sortables = [];
 
     function initSortable() {
-        let el = document.querySelector('[wire\\:sortable]');
-        if (!el) {
-            console.warn('No sortable element found');
-            return;
-        }
-
-        // Extract the sortable method name
-        const sortableMethodName = el.getAttribute('wire:sortable');
-
-        // Initialize Sortable
-        new Sortable(el, {
-            animation: 150,
-            ghostClass: 'bg-gray-100',
-            handle: '[wire\\:sortable\\.handle]',
-            onEnd: function(evt) {
-                // Get all items
-                const items = Array.from(el.querySelectorAll('[wire\\:sortable\\.item]')).map(item => {
-                    return item.getAttribute('wire:sortable.item');
-                });
-
-                // Call the Livewire method with the new order
-                if (window.Livewire) {
-                    window.Livewire.find(el.closest('[wire\\:id]').getAttribute('wire:id'))
-                        .call(sortableMethodName, items);
-                }
+        document.querySelectorAll('[wire\\:sortable]').forEach(el => {
+            const component = Livewire.find(el.closest('[wire\\:id]')?.getAttribute('wire:id'));
+            
+            if (!component) return;
+            
+            const methodName = el.getAttribute('wire:sortable');
+            
+            // Destroy existing sortable instance if it exists
+            if (el._sortable) {
+                el._sortable.destroy();
             }
+            
+            // Initialize SortableJS
+            el._sortable = Sortable.create(el, {
+                draggable: '[wire\\:sortable\\.item]',
+                handle: '[wire\\:sortable\\.handle]',
+                animation: 150,
+                onEnd: function(evt) {
+                    // Get all item IDs in order
+                    const items = Array.from(el.querySelectorAll('[wire\\:sortable\\.item]'));
+                    const ids = items.map(item => item.getAttribute('wire:sortable.item'));
+                    
+                    // Call the method with the ordered IDs
+                    component.call(methodName, ids);
+                }
+            });
+            
+            sortables.push(el._sortable);
         });
-
-        console.log('Layer sortable initialized');
     }
+    
+    // Initialize sortable on page load
+    initSortable();
+    
+    // Re-initialize on Livewire updates
+    document.addEventListener('livewire:update', initSortable);
 }); 

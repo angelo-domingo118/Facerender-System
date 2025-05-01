@@ -358,6 +358,7 @@ class MainCanvas extends Component
         ]);
         
         // Rebuild the selectedFeatures array in the new order
+        // The top item in the layer panel should be rendered last (on top) in the canvas
         $orderedFeatures = [];
         foreach ($orderedLayerIds as $featureId) {
             foreach ($this->selectedFeatures as $feature) {
@@ -372,7 +373,8 @@ class MainCanvas extends Component
         
         // Dispatch event to update canvas with new order
         $this->dispatch('update-canvas', [
-            'selectedFeatures' => $this->selectedFeatures
+            'selectedFeatures' => $this->selectedFeatures,
+            'updateZOrder' => true
         ]);
         
         // Log the new order for debugging

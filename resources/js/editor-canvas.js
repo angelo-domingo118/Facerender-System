@@ -222,8 +222,10 @@ function initializeEventListeners() {
             // --- Rebuild Canvas based on received order --- 
             // No sorting or reversing - simply use features in the order they were added
             const incomingFeatures = updateData.selectedFeatures;
+            const updateZOrder = updateData.updateZOrder === true;
             
             log('Processing features in original order:', incomingFeatures.map(f => `${f.name} (type: ${f.feature_type})`));
+            log('Update Z order flag:', updateZOrder);
             
             const existingObjectsMap = {};
             
@@ -234,44 +236,72 @@ function initializeEventListeners() {
                 }
             });
             
-            // 2. Remove all *existing* feature objects from the canvas
-            //    (We don't remove gridlines or other non-feature objects)
-            Object.values(existingObjectsMap).forEach(obj => {
-                canvas.remove(obj);
-            });
-            
-            log('Removed existing features, preparing to re-add in order.');
-            
-            // 3. Add features back in the order received from the backend.
-            //    Fabric.js adds objects to the top, so this order naturally creates the correct stacking.
-            incomingFeatures.forEach((feature, index) => {
-                log(`Adding/Updating feature at index ${index}: ${feature.id} (${feature.name})`);
-                const existingObject = existingObjectsMap[feature.id];
+            if (updateZOrder) {
+                // When updateZOrder is true, we're handling layer reordering from the panel
+                // 2. Remove all *existing* feature objects from the canvas
+                Object.values(existingObjectsMap).forEach(obj => {
+                    canvas.remove(obj);
+                });
                 
-                if (existingObject) {
-                    // Re-add the existing object instance (preserves transformations)
-                    // Update properties like visibility/opacity if needed
-                    existingObject.set({
-                        visible: feature.visible !== undefined ? feature.visible : true,
-                        opacity: feature.opacity ? feature.opacity / 100 : 1,
-                        // Add other properties to update if necessary (e.g., lock state)
-                        locked: feature.locked || false,
-                        hasControls: feature.locked ? false : moveEnabled,
-                        hasBorders: feature.locked ? false : moveEnabled,
-                        selectable: feature.locked ? false : moveEnabled,
-                        evented: feature.locked ? false : moveEnabled,
-                        lockMovementX: feature.locked ? true : !moveEnabled,
-                        lockMovementY: feature.locked ? true : !moveEnabled,
-                        lockRotation: feature.locked ? true : !moveEnabled,
-                        lockScalingX: feature.locked ? true : !moveEnabled,
-                        lockScalingY: feature.locked ? true : !moveEnabled,
-                    });
-                    canvas.add(existingObject);
-                } else {
-                    // Feature is new, add it to the canvas
-                    addFeatureToCanvas(feature);
-                }
-            });
+                log('Removed existing features for reordering, preparing to re-add in order.');
+                
+                // 3. Add features in the exact order provided by the backend
+                // The order in incomingFeatures already represents the desired stacking order in the canvas
+                incomingFeatures.forEach((feature, index) => {
+                    log(`Adding/Updating feature at index ${index}: ${feature.id} (${feature.name})`);
+                    const existingObject = existingObjectsMap[feature.id];
+                    
+                    if (existingObject) {
+                        // Re-add the existing object instance (preserves transformations)
+                        existingObject.set({
+                            visible: feature.visible !== undefined ? feature.visible : true,
+                            opacity: feature.opacity ? feature.opacity / 100 : 1,
+                            locked: feature.locked || false,
+                            hasControls: feature.locked ? false : moveEnabled,
+                            hasBorders: feature.locked ? false : moveEnabled,
+                            selectable: feature.locked ? false : moveEnabled,
+                            evented: feature.locked ? false : moveEnabled,
+                            lockMovementX: feature.locked ? true : !moveEnabled,
+                            lockMovementY: feature.locked ? true : !moveEnabled,
+                            lockRotation: feature.locked ? true : !moveEnabled,
+                            lockScalingX: feature.locked ? true : !moveEnabled,
+                            lockScalingY: feature.locked ? true : !moveEnabled,
+                        });
+                        canvas.add(existingObject);
+                    } else {
+                        // Feature is new, add it to the canvas
+                        addFeatureToCanvas(feature);
+                    }
+                });
+            } else {
+                // Standard update without reordering
+                incomingFeatures.forEach((feature, index) => {
+                    log(`Processing feature at index ${index}: ${feature.id} (${feature.name})`);
+                    const existingObject = existingObjectsMap[feature.id];
+                    
+                    if (existingObject) {
+                        // Just update properties without changing z-order
+                        existingObject.set({
+                            visible: feature.visible !== undefined ? feature.visible : true,
+                            opacity: feature.opacity ? feature.opacity / 100 : 1,
+                            locked: feature.locked || false,
+                            hasControls: feature.locked ? false : moveEnabled,
+                            hasBorders: feature.locked ? false : moveEnabled,
+                            selectable: feature.locked ? false : moveEnabled,
+                            evented: feature.locked ? false : moveEnabled,
+                            lockMovementX: feature.locked ? true : !moveEnabled,
+                            lockMovementY: feature.locked ? true : !moveEnabled,
+                            lockRotation: feature.locked ? true : !moveEnabled,
+                            lockScalingX: feature.locked ? true : !moveEnabled,
+                            lockScalingY: feature.locked ? true : !moveEnabled,
+                        });
+                        canvas.renderAll();
+                    } else {
+                        // Feature is new, add it to the canvas
+                        addFeatureToCanvas(feature);
+                    }
+                });
+            }
             
             // 4. Ensure grid lines are behind everything
             gridLines.forEach(line => {
@@ -281,15 +311,6 @@ function initializeEventListeners() {
             // 5. Render the canvas with the updated order and features
             canvas.renderAll();
             log('Canvas re-rendered with updated feature order.');
-            
-            // --- Old processing logic (commented out/removed) ---
-            /*
-            const features = updateData.selectedFeatures;
-            const processFeatures = (index) => {
-                // ... (old logic removed) ...
-            };
-            processFeatures(0);
-            */
         }
     });
     

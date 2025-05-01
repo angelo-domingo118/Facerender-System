@@ -43,9 +43,13 @@ class LayerPanel extends Component
         // Convert features to layers format with additional properties
         $updatedLayers = [];
         
-        // We want the visually bottom item to appear at the bottom of our panel
-        // Process features in their original order (same as Fabric.js)
-        foreach ($features as $index => $feature) {
+        // Process features in their original order
+        // In FabricJS and our canvas, the last item in the array is rendered on top
+        // In the layer panel, we want to display the topmost visual layer at the top of the panel
+        // This means we need to reverse the order of layers just for display
+        $displayFeatures = array_reverse($features);
+        
+        foreach ($displayFeatures as $index => $feature) {
             $featureId = $feature['id'];
             Log::info('LAYER DEBUG: Processing feature', ['index' => $index, 'id' => $featureId, 'name' => $feature['name'] ?? 'N/A']); // Log each feature
             
@@ -445,15 +449,12 @@ class LayerPanel extends Component
     {
         Log::info('Handling layer reordering via drag-and-drop', ['item_order' => $items]);
         
-        // The items array contains layer IDs in the new order (from visual top to bottom)
-        // We need to reverse it since we're displaying in reverse but the data is stored in Fabric's order
-        $newOrderIds = array_reverse($items);
-        
         // Create a new array to hold the reordered layers
         $reorderedLayers = [];
         
         // Rebuild the layers array in the new order
-        foreach ($newOrderIds as $layerId) {
+        // Note: The items array already represents the visual order from top to bottom in the panel
+        foreach ($items as $layerId) {
             foreach ($this->layers as $layer) {
                 if ($layer['id'] == $layerId) {
                     $reorderedLayers[] = $layer;

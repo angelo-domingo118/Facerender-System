@@ -2,12 +2,7 @@
     <!-- Layer List - Adding flex-1 and min-height to ensure it takes available space -->
     <div class="flex-1 overflow-y-auto min-h-0">
         <div class="p-2" wire:sortable="updateLayerOrder">
-            @php
-                // Reverse the layers array for display purposes only
-                // This keeps the visual order consistent with the canvas stacking
-                $displayLayers = array_reverse($layers);
-            @endphp
-            @forelse($displayLayers as $index => $layer)
+            @forelse($layers as $index => $layer)
                 <script>
                     console.log('LAYER DEBUG (Blade): Rendering layer', {{ $index }}, {{ json_encode($layer['name']) }});
                 </script>
