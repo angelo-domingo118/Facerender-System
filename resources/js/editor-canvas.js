@@ -811,6 +811,26 @@ function setupLivewireHandlers() {
         }
     });
     
+    // Add listener for feature-removed event
+    Livewire.on('feature-removed', (featureId) => {
+        log('Feature removed event received:', featureId);
+        
+        // Handle both direct value and array formats for compatibility
+        const id = typeof featureId === 'object' ? (featureId[0] || featureId) : featureId;
+        
+        // Find and remove the object from canvas
+        const objects = canvas.getObjects().filter(obj => obj.data && obj.data.featureId == id);
+        if (objects.length > 0) {
+            objects.forEach(obj => {
+                canvas.remove(obj);
+                log(`Removed object with feature ID ${id} from canvas`);
+            });
+            canvas.renderAll();
+        } else {
+            log(`No object found with feature ID ${id} on canvas`);
+        }
+    });
+    
     // Listener for layer transform update
     Livewire.on('layer-transform-updated', (data) => {
         log('Layer transform updated event:', data);

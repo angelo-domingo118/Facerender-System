@@ -304,9 +304,7 @@ class LayerPanel extends Component
     public function requestDeletion($layerId)
     {
         Log::info('Requesting layer deletion', ['layerId' => $layerId]);
-        $this->dispatch('remove-feature-requested', [
-            'featureId' => $layerId
-        ]);
+        $this->dispatch('remove-feature-requested', $layerId);
     }
     
     /**
