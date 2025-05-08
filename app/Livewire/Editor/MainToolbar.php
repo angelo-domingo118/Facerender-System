@@ -75,4 +75,12 @@ class MainToolbar extends Component
         
         return [];
     }
+
+    /**
+     * Trigger the save features functionality
+     */
+    public function saveCompositeFeatures()
+    {
+        $this->dispatch('save-composite-features');
+    }
 }

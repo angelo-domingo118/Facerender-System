@@ -108,6 +108,9 @@ class CompositeDetailsPanel extends Component
             // Emit an event to notify other components
             $this->dispatch('compositeUpdated', $this->compositeId);
             
+            // Also trigger the facial features to be saved
+            $this->dispatch('save-composite-features');
+            
         } catch (\Exception $e) {
             Log::error('Error saving composite: ' . $e->getMessage());
             $this->dispatch('notify', [

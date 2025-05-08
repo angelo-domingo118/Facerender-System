@@ -4,6 +4,7 @@ namespace App\Livewire\Editor;
 
 use Livewire\Component;
 use App\Models\Composite;
+use App\Services\CompositeFeaturesService;
 use Illuminate\Support\Facades\Log;
 
 class MainCanvas extends Component
@@ -32,7 +33,10 @@ class MainCanvas extends Component
         'layer-adjustments-updated' => 'handleLayerAdjustmentsUpdated',
         'update-object-position' => 'handleUpdateObjectPosition',
         'reset-layer-adjustments' => 'handleResetLayerAdjustments',
-        'request-active-feature-ids' => 'dispatchActiveFeatureIds'
+        'request-active-feature-ids' => 'dispatchActiveFeatureIds',
+        'save-composite-features' => 'saveCompositeFeaturesHandler',
+        'compositeUpdated' => 'loadSavedFeatures',
+        'request-features-for-layer-panel' => 'sendFeaturesToLayerPanel'
     ];
     
     public function mount($compositeId)
@@ -45,7 +49,10 @@ class MainCanvas extends Component
             'listeners' => $this->listeners
         ]);
         
-        // Initially, notify the layer panel of the current features (empty at start)
+        // Load any saved features from the database
+        $this->loadSavedFeatures();
+        
+        // Initially, notify the layer panel of the current features
         $this->dispatch('layers-updated', $this->selectedFeatures);
     }
     
@@ -204,8 +211,14 @@ class MainCanvas extends Component
 
         // After updating position, notify layer panel of the change
         $this->dispatch('layers-updated', $this->selectedFeatures);
+        
+        // Automatically save the updated features to the database
+        $this->saveCompositeFeatures();
     }
     
+    /**
+     * Remove a feature from the canvas and delete it from the database
+     */
     public function removeFeature($featureId)
     {
         // Remove a feature from the selectedFeatures array
@@ -226,8 +239,36 @@ class MainCanvas extends Component
 
         // Dispatch updated active feature IDs
         $this->dispatchActiveFeatureIds();
+        
+        // Also remove the feature from the database
+        try {
+            $featuresService = app(CompositeFeaturesService::class);
+            
+            // Find the composite facial feature record based on composite ID and facial feature ID
+            $compositeFacialFeatures = \App\Models\CompositeFacialFeature::where('composite_id', $this->compositeId)
+                ->where('facial_feature_id', $featureId)
+                ->get();
+                
+            foreach ($compositeFacialFeatures as $feature) {
+                $featuresService->removeFeature($feature->id);
+            }
+            
+            Log::info('Feature removed from database', [
+                'featureId' => $featureId,
+                'compositeId' => $this->compositeId
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error removing feature from database: ' . $e->getMessage(), [
+                'featureId' => $featureId,
+                'compositeId' => $this->compositeId,
+                'error' => $e->getMessage()
+            ]);
+        }
     }
     
+    /**
+     * Clear all features from the canvas and the database
+     */
     public function clearFeatures()
     {
         // Clear all features from the canvas
@@ -239,6 +280,21 @@ class MainCanvas extends Component
 
         // Dispatch updated active feature IDs (which will be empty)
         $this->dispatchActiveFeatureIds();
+        
+        // Also clear features from the database
+        try {
+            $featuresService = app(CompositeFeaturesService::class);
+            $featuresService->clearFeatures($this->compositeId);
+            
+            Log::info('All features cleared from database', [
+                'compositeId' => $this->compositeId
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error clearing features from database: ' . $e->getMessage(), [
+                'compositeId' => $this->compositeId,
+                'error' => $e->getMessage()
+            ]);
+        }
     }
     
     /**
@@ -348,39 +404,66 @@ class MainCanvas extends Component
      */
     public function handleLayersReordered($data)
     {
-        Log::info('Layer reordering received', ['layer_count' => count($data['layers'])]);
+        // Support both data formats (new with layers array, old with just newOrder)
+        $newOrder = $data['newOrder'] ?? null;
         
-        // Get the layer order as presented in the layer panel
-        $orderedLayerIds = array_column($data['layers'], 'id');
+        if (!$newOrder || !is_array($newOrder)) {
+            Log::warning('Invalid layer reordering data - missing newOrder', ['data' => $data]);
+            return;
+        }
         
-        Log::info('New layer ordering from panel', [
-            'layer_order' => $orderedLayerIds
+        Log::info('Reordering layers', [
+            'newOrder' => $newOrder,
+            'format' => isset($data['layers']) ? 'full' : 'ids-only'
         ]);
         
-        // Rebuild the selectedFeatures array in the new order
-        // The top item in the layer panel should be rendered last (on top) in the canvas
-        $orderedFeatures = [];
-        foreach ($orderedLayerIds as $featureId) {
-            foreach ($this->selectedFeatures as $feature) {
-                if ($feature['id'] == $featureId) {
-                    $orderedFeatures[] = $feature;
-                    break;
-                }
+        // Create a new array to hold reordered features
+        $reorderedFeatures = [];
+        
+        // Map featureIds to the current feature objects
+        $featureMap = [];
+        foreach ($this->selectedFeatures as $feature) {
+            $featureMap[$feature['id']] = $feature;
+        }
+        
+        // Reconstruct the features array in the new order
+        foreach ($newOrder as $featureId) {
+            if (isset($featureMap[$featureId])) {
+                $reorderedFeatures[] = $featureMap[$featureId];
+            } else {
+                Log::warning('Feature not found during reordering', ['featureId' => $featureId]);
             }
         }
         
-        $this->selectedFeatures = $orderedFeatures;
+        // Update the selectedFeatures array
+        $this->selectedFeatures = $reorderedFeatures;
         
-        // Dispatch event to update canvas with new order
+        // Re-dispatch the event to ensure JS picks it up
         $this->dispatch('update-canvas', [
             'selectedFeatures' => $this->selectedFeatures,
-            'updateZOrder' => true
+            'forceUpdate' => true  // Add forceUpdate flag to ensure canvas redraws properly
         ]);
         
-        // Log the new order for debugging
-        Log::info('Features reordered', [
-            'new_order' => array_column($this->selectedFeatures, 'id')
-        ]);
+        // Save the new ordering to the database
+        try {
+            $featuresService = app(CompositeFeaturesService::class);
+        
+            // Extract just the feature IDs in the current order for the service
+            $orderedIds = array_column($this->selectedFeatures, 'id');
+            
+            // Update the feature order in the database
+            $featuresService->updateFeatureOrder($this->compositeId, $orderedIds);
+            
+            Log::info('Layer order saved to database', [
+                'compositeId' => $this->compositeId,
+                'orderedIds' => $orderedIds
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error saving layer order: ' . $e->getMessage(), [
+                'compositeId' => $this->compositeId,
+                'error' => $e->getMessage()
+            ]);
+        }
     }
     
     /**
@@ -500,32 +583,64 @@ class MainCanvas extends Component
     }
     
     /**
-     * Handle layer adjustments updates from the FeatureAdjustmentPanel
+     * Handle layer adjustments updated from the adjustment panel
      */
     public function handleLayerAdjustmentsUpdated($data)
     {
-        Log::info('Handling layer adjustments update', [
-            'layerId' => $data['layerId'],
-            'adjustments' => $data['adjustments']
+        if (!isset($data['featureId']) || !isset($data['adjustments'])) {
+            Log::warning('Invalid layer adjustment data', ['data' => $data]);
+            return;
+        }
+        
+        $featureId = $data['featureId'];
+        $adjustments = $data['adjustments'];
+        
+        Log::info('Updating layer adjustments', [
+            'featureId' => $featureId,
+            'adjustments' => $adjustments
         ]);
         
-        // Find the feature with the specified layer ID
+        // Find and update the feature in our local array
         foreach ($this->selectedFeatures as $key => $feature) {
-            if ($feature['id'] == $data['layerId']) {
-                // Store the adjustments in the feature data
-                $this->selectedFeatures[$key]['adjustments'] = $data['adjustments'];
-                
-                // Dispatch canvas update with adjustment information
-                $this->dispatch('update-feature-adjustments', [
-                    'featureId' => $data['layerId'],
-                    'adjustments' => $data['adjustments']
-                ]);
-                
-                // Also update the main canvas to reflect adjustments
-                $this->dispatch('update-canvas', ['selectedFeatures' => $this->selectedFeatures]);
-                
+            if ($feature['id'] == $featureId) {
+                // Set or merge the adjustments
+                $this->selectedFeatures[$key]['adjustments'] = $adjustments;
                 break;
             }
+        }
+                
+        // Dispatch canvas update
+        $this->dispatch('update-canvas', [
+            'selectedFeatures' => $this->selectedFeatures,
+            'updateAdjustments' => true,
+            'featureId' => $featureId
+        ]);
+        
+        // Save the adjustments to the database
+        try {
+            $featuresService = app(CompositeFeaturesService::class);
+                
+            // Find the composite facial feature record
+            $compositeFacialFeatures = \App\Models\CompositeFacialFeature::where('composite_id', $this->compositeId)
+                ->where('facial_feature_id', $featureId)
+                ->get();
+                
+            foreach ($compositeFacialFeatures as $feature) {
+                $featuresService->updateFeature($feature->id, [
+                    'visual_adjustments' => $adjustments
+                ]);
+            }
+            
+            Log::info('Feature adjustments saved to database', [
+                'featureId' => $featureId,
+                'compositeId' => $this->compositeId
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error saving feature adjustments to database: ' . $e->getMessage(), [
+                'featureId' => $featureId,
+                'compositeId' => $this->compositeId,
+                'error' => $e->getMessage()
+            ]);
         }
     }
     
@@ -635,6 +750,176 @@ class MainCanvas extends Component
         }
     }
     
+    /**
+     * Save all current features to the database
+     */
+    public function saveCompositeFeaturesHandler()
+    {
+        $this->saveCompositeFeatures();
+
+        $this->dispatch('notify', [
+            'message' => 'Facial features saved successfully!',
+            'type' => 'success'
+        ]);
+    }
+
+    /**
+     * Save all current features to the database
+     */
+    public function saveCompositeFeatures()
+    {
+        try {
+            $featuresService = app(CompositeFeaturesService::class);
+            
+            // First, clear existing features to avoid duplicates
+            $featuresService->clearFeatures($this->compositeId);
+            
+            // Then add each feature from the in-memory array
+            foreach ($this->selectedFeatures as $feature) {
+                // Convert opacity from UI scale (0-100) to database scale (0-1)
+                $opacityValue = isset($feature['opacity']) ? ($feature['opacity'] / 100) : 1.0;
+                
+                // Extract the position data
+                $attributes = [
+                    'position_x' => $feature['position']['x'] ?? 0,
+                    'position_y' => $feature['position']['y'] ?? 0,
+                    'scale_x' => $feature['position']['scale'] ?? 1.0,
+                    'scale_y' => $feature['position']['scale'] ?? 1.0,
+                    'rotation' => $feature['position']['rotation'] ?? 0,
+                    'opacity' => $opacityValue, // Now properly scaled for database storage
+                    'visible' => $feature['visible'] ?? true,
+                    'locked' => $feature['locked'] ?? false,
+                ];
+                
+                Log::info('Saving feature with opacity', [
+                    'featureId' => $feature['id'],
+                    'uiOpacity' => $feature['opacity'] ?? 100, // 0-100 scale
+                    'dbOpacity' => $opacityValue // 0-1 scale
+                ]);
+                
+                // Extract visual adjustments if available
+                if (isset($feature['adjustments']) && is_array($feature['adjustments'])) {
+                    $attributes['visual_adjustments'] = $feature['adjustments'];
+                }
+                
+                // Add the feature to the database
+                $featuresService->addFeature(
+                    $this->compositeId,
+                    $feature['id'],
+                    $attributes
+                );
+            }
+            
+            Log::info('Composite features saved', [
+                'compositeId' => $this->compositeId,
+                'featureCount' => count($this->selectedFeatures)
+            ]);
+            
+            return true;
+        } catch (\Exception $e) {
+            Log::error('Error saving composite features: ' . $e->getMessage(), [
+                'compositeId' => $this->compositeId,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return false;
+        }
+    }
+
+    /**
+     * Load saved features from the database when the component mounts or composite is updated
+     */
+    public function loadSavedFeatures()
+    {
+        try {
+            $featuresService = app(CompositeFeaturesService::class);
+            $savedFeatures = $featuresService->getCompositeFeatures($this->compositeId);
+            
+            if ($savedFeatures->isEmpty()) {
+                Log::info('No saved features found for composite', [
+                    'compositeId' => $this->compositeId
+                ]);
+                
+                // Still reset the canvas and notify panels
+                $this->selectedFeatures = [];
+                $this->dispatch('canvas-reset');
+                $this->dispatch('update-canvas', [
+                    'selectedFeatures' => [],
+                    'forceUpdate' => true
+                ]);
+                $this->dispatch('layers-updated', []);
+                
+                return;
+            }
+            
+            // Convert the database models to the format expected by the canvas
+            $this->selectedFeatures = [];
+            
+            foreach ($savedFeatures as $feature) {
+                // Get the facial feature details
+                $facialFeature = $feature->facialFeature;
+                
+                if ($facialFeature) {
+                    // Fix opacity scale: Convert database 0-1 scale to UI 0-100 scale
+                    $opacity = $feature->opacity * 100;
+                    
+                    $this->selectedFeatures[] = [
+                        'id' => $facialFeature->id,
+                        'image_path' => $facialFeature->image_path,
+                        'name' => $facialFeature->name,
+                        'feature_type' => $facialFeature->feature_type_id,
+                        'position' => [
+                            'x' => $feature->position_x,
+                            'y' => $feature->position_y,
+                            'scale' => $feature->scale_x, // For simplicity, using scale_x
+                            'rotation' => $feature->rotation
+                        ],
+                        'opacity' => $opacity, // Now using the converted value (0-100)
+                        'visible' => $feature->visible,
+                        'locked' => $feature->locked,
+                        'adjustments' => $feature->visual_adjustments ?? []
+                    ];
+                    
+                    Log::info('Converted feature opacity for display', [
+                        'featureId' => $facialFeature->id,
+                        'dbOpacity' => $feature->opacity, // 0-1 scale
+                        'uiOpacity' => $opacity // 0-100 scale
+                    ]);
+                }
+            }
+
+            Log::info('Converted saved features for canvas display', [
+                'compositeId' => $this->compositeId,
+                'featureCount' => count($this->selectedFeatures),
+                'features' => $this->selectedFeatures
+            ]);
+            
+            // Ensure canvas is reset before updating
+            $this->dispatch('canvas-reset');
+            
+            // Slight delay to ensure reset completes before update
+            // This is handled by queueing in the browser event loop
+            $this->dispatch('update-canvas', [
+                'selectedFeatures' => $this->selectedFeatures,
+                'forceUpdate' => true
+            ]);
+            
+            // Update layer panel
+            $this->dispatch('layers-updated', $this->selectedFeatures);
+            
+            Log::info('Loaded saved features for composite', [
+                'compositeId' => $this->compositeId,
+                'featureCount' => count($this->selectedFeatures)
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error loading saved features: ' . $e->getMessage(), [
+                'compositeId' => $this->compositeId,
+                'error' => $e->getMessage()
+            ]);
+        }
+    }
+    
     public function render()
     {
         // Re-enable dispatch in render to ensure panels update if their state is stale
@@ -642,5 +927,59 @@ class MainCanvas extends Component
         // $this->dispatch('layers-updated', $this->selectedFeatures); // Commented out - potentially causing order issues
         
         return view('livewire.editor.main-canvas');
+    }
+
+    /**
+     * Get the current selected features for JavaScript
+     * 
+     * @return array
+     */
+    public function getSelectedFeatures()
+    {
+        Log::info('getSelectedFeatures requested by JS', [
+            'compositeId' => $this->compositeId,
+            'featureCount' => count($this->selectedFeatures)
+        ]);
+        
+        return $this->selectedFeatures;
+    }
+
+    /**
+     * Handle request for features from the layer panel
+     */
+    public function sendFeaturesToLayerPanel()
+    {
+        Log::info('Sending features to layer panel on request', [
+            'featureCount' => count($this->selectedFeatures)
+        ]);
+        
+        // Send current features to the layer panel
+        $this->dispatch('layers-updated', $this->selectedFeatures);
+    }
+
+    /**
+     * Force a reload of features to the canvas
+     * This can be called when there might be issues with canvas display
+     */
+    public function forceReloadFeatures()
+    {
+        Log::info('Force reload features requested', [
+            'compositeId' => $this->compositeId,
+            'featureCount' => count($this->selectedFeatures)
+        ]);
+        
+        // Reset the canvas first
+        $this->dispatch('canvas-reset');
+        
+        // Then force update with current features
+        $this->dispatch('update-canvas', [
+            'selectedFeatures' => $this->selectedFeatures,
+            'forceUpdate' => true
+        ]);
+        
+        // Update layer panel with current features
+        $this->dispatch('layers-updated', $this->selectedFeatures);
+        
+        return true;
     }
 }

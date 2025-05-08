@@ -29,7 +29,22 @@ class LayerPanel extends Component
     public function mount($compositeId)
     {
         $this->compositeId = $compositeId;
-        Log::info('Layer panel mounted', ['compositeId' => $compositeId]);
+        
+        // Request features from MainCanvas on mount
+        $this->requestFeaturesFromCanvas();
+        
+        Log::info('LayerPanel component mounted', [
+            'compositeId' => $this->compositeId
+        ]);
+    }
+    
+    /**
+     * Request features from MainCanvas to initialize the layer panel
+     */
+    public function requestFeaturesFromCanvas()
+    {
+        $this->dispatch('request-features-for-layer-panel');
+        Log::info('Requested features from MainCanvas');
     }
     
     /**
@@ -38,52 +53,52 @@ class LayerPanel extends Component
     public function updateLayers($features)
     {
         Log::info('LAYER DEBUG: Received features in LayerPanel', ['features' => $features]); // Log raw features
-        Log::info('Updating layers in panel', ['features_count' => count($features)]);
         
-        // Convert features to layers format with additional properties
-        $updatedLayers = [];
+        // Create the layer representation for each feature
+        $layers = [];
         
-        // Process features in their original order
-        // In FabricJS and our canvas, the last item in the array is rendered on top
-        // In the layer panel, we want to display the topmost visual layer at the top of the panel
-        // This means we need to reverse the order of layers just for display
-        $displayFeatures = array_reverse($features);
-        
-        foreach ($displayFeatures as $index => $feature) {
+        foreach ($features as $index => $feature) {
+            // Get the feature ID, skipping if not available
+            if (!isset($feature['id'])) {
+                Log::warning('Feature missing ID, skipping', ['feature' => $feature]);
+                continue;
+            }
+            
             $featureId = $feature['id'];
-            Log::info('LAYER DEBUG: Processing feature', ['index' => $index, 'id' => $featureId, 'name' => $feature['name'] ?? 'N/A']); // Log each feature
             
-            // Check if this layer already exists to preserve its settings
-            $existingLayer = $this->findLayer($featureId);
+            // Ensure opacity is always in the 0-100 range for UI display
+            $opacity = isset($feature['opacity']) ? $feature['opacity'] : 100;
+            // If opacity is in 0-1 range, convert to 0-100 range
+            if ($opacity <= 1 && $opacity > 0) {
+                $opacity = $opacity * 100;
+                Log::info('Converted opacity from 0-1 to 0-100 scale', [
+                    'featureId' => $featureId,
+                    'original' => $feature['opacity'],
+                    'converted' => $opacity
+                ]);
+            }
             
-            $updatedLayers[] = [
+            $layers[] = [
                 'id' => $featureId,
-                'name' => $feature['name'] ?? ('Feature ' . $featureId),
-                'feature_type' => $feature['feature_type'] ?? null,
-                'visible' => $existingLayer ? $existingLayer['visible'] : true,
-                'locked' => $existingLayer ? $existingLayer['locked'] : false,
-                'opacity' => $existingLayer ? $existingLayer['opacity'] : 100,
-                'position' => $feature['position'] ?? null,
-                'image_path' => $feature['image_path'] ?? null
+                'name' => $feature['name'] ?? ('Feature ' . ($index + 1)),
+                'visible' => $feature['visible'] ?? true,
+                'locked' => $feature['locked'] ?? false,
+                // Add other properties that might be needed in the layer panel
+                'position' => $feature['position'] ?? ['x' => 0, 'y' => 0],
+                'opacity' => $opacity,
+                'width' => $feature['width'] ?? null,
+                'height' => $feature['height'] ?? null,
             ];
         }
         
-        $this->layers = $updatedLayers;
+        // Store the layers in our component state
+        $this->layers = $layers;
+        
         Log::info('LAYER DEBUG: Final layers array set in LayerPanel', ['layers' => $this->layers]); // Log final array
         
-        // If no layer is selected and we have layers, select the first one
-        if ($this->selectedLayerId === null && !empty($this->layers)) {
+        // If we have layers, select the first one by default if none is selected
+        if (!empty($this->layers) && empty($this->selectedLayerId)) {
             $this->selectLayer($this->layers[0]['id']);
-        } 
-        // If the selected layer doesn't exist anymore, select the first layer
-        elseif (!empty($this->layers) && !$this->findLayer($this->selectedLayerId)) {
-            $this->selectLayer($this->layers[0]['id']);
-        }
-        // If no layers exist, clear selection
-        elseif (empty($this->layers)) {
-            $this->selectedLayerId = null;
-            $this->opacity = 100;
-            $this->isLayerLocked = false;
         }
     }
     
@@ -130,6 +145,12 @@ class LayerPanel extends Component
      */
     public function selectLayer($layerId)
     {
+        // Skip if already selected to prevent infinite loops
+        if ($this->selectedLayerId == $layerId) {
+            Log::info('Layer already selected, skipping', ['layerId' => $layerId]);
+            return;
+        }
+        
         $this->selectedLayerId = $layerId;
         
         $layer = $this->findLayer($layerId);
@@ -148,6 +169,8 @@ class LayerPanel extends Component
             $this->dispatch('layer-selected', $layer);
             
             Log::info('Layer selected', ['layerId' => $layerId]);
+        } else {
+            Log::warning('Attempted to select non-existent layer', ['layerId' => $layerId]);
         }
     }
     
@@ -441,36 +464,45 @@ class LayerPanel extends Component
     }
     
     /**
-     * Handle sortable (drag-and-drop) layer reordering
+     * Handle layer ordering when sorting in the UI
      */
-    public function updateLayerOrder($items)
+    public function updateLayerOrder($orderedIds)
     {
-        Log::info('Handling layer reordering via drag-and-drop', ['item_order' => $items]);
+        Log::info('Layer order update received from UI', ['orderedIds' => $orderedIds]);
         
-        // Create a new array to hold the reordered layers
+        // Need to convert the layer sorting to the correct order for the canvas
+        // The sorted order from UI is in reverse of what we need for canvas
+        // (top layer in UI = last drawn on canvas)
+        $newOrder = array_values($orderedIds);
+        
+        // Rearrange the layers array to match the new order
         $reorderedLayers = [];
         
-        // Rebuild the layers array in the new order
-        // Note: The items array already represents the visual order from top to bottom in the panel
-        foreach ($items as $layerId) {
-            foreach ($this->layers as $layer) {
-                if ($layer['id'] == $layerId) {
-                    $reorderedLayers[] = $layer;
-                    break;
-                }
+        // Create a map of layer ID to layer data
+        $layerMap = [];
+        foreach ($this->layers as $layer) {
+            $layerMap[$layer['id']] = $layer;
+        }
+        
+        // Build the reordered layers array
+        foreach ($newOrder as $layerId) {
+            if (isset($layerMap[$layerId])) {
+                $reorderedLayers[] = $layerMap[$layerId];
             }
         }
         
-        // Update the layers array
+        // Update the layers array with the new order
         $this->layers = $reorderedLayers;
         
-        // Dispatch event to update canvas with the reordered layers
+        // Dispatch the event to the MainCanvas component with both newOrder and full layers data
         $this->dispatch('layers-reordered', [
+            'newOrder' => $newOrder,
             'layers' => $this->layers
         ]);
         
-        Log::info('Layers reordered via drag-and-drop', [
-            'new_order' => array_column($this->layers, 'id')
+        Log::info('Layer order dispatch sent', [
+            'newOrder' => $newOrder,
+            'layerCount' => count($this->layers)
         ]);
     }
     

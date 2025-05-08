@@ -3,18 +3,30 @@
  * Implements print and download for the Fabric.js canvas
  */
 
+// Add a global flag to control console logging
+const DEBUG_LOGS = false;
+
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('Canvas export module loaded');
+    if (DEBUG_LOGS) {
+        console.log('Canvas export module loaded');
+    } else {
+        // Keep a minimal console log for important events
+        console.log('Canvas export module loaded');
+    }
     
     // Wait until the canvas is ready
     window.addEventListener('canvas:initialized', function(event) {
         const canvas = event.detail.canvas;
-        console.log('Canvas export module detected initialized canvas:', canvas);
+        if (DEBUG_LOGS) {
+            console.log('Canvas export module detected initialized canvas:', canvas);
+        }
         
         // Set up print button
         const printButton = document.getElementById('print-canvas-btn');
         if (printButton) {
-            console.log('Print button found, attaching event listener');
+            if (DEBUG_LOGS) {
+                console.log('Print button found, attaching event listener');
+            }
             printButton.addEventListener('click', function() {
                 printCanvas(canvas);
             });

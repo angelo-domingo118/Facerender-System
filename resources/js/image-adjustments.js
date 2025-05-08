@@ -4,25 +4,34 @@
  */
 import * as fabric from 'fabric';
 
+// Add a global flag to control console logging
+const DEBUG_LOGS = false;
+
 class ImageAdjustments {
     constructor(canvas) {
         this.canvas = canvas;
         this.fabric = fabric; // Store fabric reference for later use
         this.originalImages = new Map(); // Track original images for reset
         this.initListeners();
-        console.log('Image adjustments initialized with canvas:', canvas);
+        if (DEBUG_LOGS) {
+            console.log('Image adjustments initialized with canvas:', canvas);
+        }
     }
 
     initListeners() {
         // Listen for both the regular and Livewire specific event formats
         window.addEventListener('livewire:layer-adjustments-updated', (event) => {
-            console.log('Received livewire:layer-adjustments-updated event:', event.detail);
+            if (DEBUG_LOGS) {
+                console.log('Received livewire:layer-adjustments-updated event:', event.detail);
+            }
             this.handleAdjustmentUpdate(event.detail);
         });
 
         // Also listen for regular DOM events (non-Livewire)
         window.addEventListener('layer-adjustments-updated', (event) => {
-            console.log('Received layer-adjustments-updated event:', event.detail);
+            if (DEBUG_LOGS) {
+                console.log('Received layer-adjustments-updated event:', event.detail);
+            }
             this.handleAdjustmentUpdate(event.detail);
         });
 
@@ -31,12 +40,16 @@ class ImageAdjustments {
             // Listen directly to Livewire events
             if (typeof window.Livewire !== 'undefined') {
                 window.Livewire.on('layer-adjustments-updated', (data) => {
-                    console.log('Received direct Livewire.on event:', data);
+                    if (DEBUG_LOGS) {
+                        console.log('Received direct Livewire.on event:', data);
+                    }
                     this.handleAdjustmentUpdate(data);
                 });
                 
                 window.Livewire.on('reset-layer-adjustments', (data) => {
-                    console.log('Received reset layer adjustments event:', data);
+                    if (DEBUG_LOGS) {
+                        console.log('Received reset layer adjustments event:', data);
+                    }
                     this.handleResetAdjustments(data);
                 });
             }
@@ -44,19 +57,25 @@ class ImageAdjustments {
         
         // Listen for update-feature-adjustments from Livewire
         window.addEventListener('update-feature-adjustments', (event) => {
-            console.log('Received update-feature-adjustments event:', event.detail);
+            if (DEBUG_LOGS) {
+                console.log('Received update-feature-adjustments event:', event.detail);
+            }
             this.handleAdjustmentUpdate(event.detail);
         });
         
         // Listen for reset-layer-adjustments from Livewire
         window.addEventListener('reset-layer-adjustments', (event) => {
-            console.log('Received reset-layer-adjustments event:', event.detail);
+            if (DEBUG_LOGS) {
+                console.log('Received reset-layer-adjustments event:', event.detail);
+            }
             this.handleResetAdjustments(event.detail);
         });
     }
 
     handleAdjustmentUpdate(data) {
-        console.log('Processing adjustment update:', data);
+        if (DEBUG_LOGS) {
+            console.log('Processing adjustment update:', data);
+        }
         
         // Handle both direct data and array-wrapped data (common in Livewire events)
         if (Array.isArray(data) && data.length > 0) {
@@ -77,8 +96,10 @@ class ImageAdjustments {
             return;
         }
         
-        console.log(`Applying adjustments to layer ${layerId}:`, adjustments);
-        console.log('Advanced adjustments - Feathering:', adjustments.feathering, 'Skin Tone:', adjustments.skinTone, adjustments.skinToneLabel);
+        if (DEBUG_LOGS) {
+            console.log(`Applying adjustments to layer ${layerId}:`, adjustments);
+            console.log('Advanced adjustments - Feathering:', adjustments.feathering, 'Skin Tone:', adjustments.skinTone, adjustments.skinToneLabel);
+        }
         
         // Find the object on canvas with matching ID
         const targetObject = this.findObjectById(layerId);
@@ -110,13 +131,17 @@ class ImageAdjustments {
             return;
         }
         
-        console.log(`Resetting adjustments for layer ${layerId}`);
+        if (DEBUG_LOGS) {
+            console.log(`Resetting adjustments for layer ${layerId}`);
+        }
         this.resetImageAdjustments(layerId);
     }
     
     findObjectById(id) {
         const objects = this.canvas.getObjects();
-        console.log(`Searching for object with ID ${id} among ${objects.length} objects`);
+        if (DEBUG_LOGS) {
+            console.log(`Searching for object with ID ${id} among ${objects.length} objects`);
+        }
         
         // First try to find object with data.featureId
         let foundObject = objects.find(obj => obj.data && obj.data.featureId === id);
@@ -129,14 +154,18 @@ class ImageAdjustments {
             );
         }
         
-        console.log('Found object:', foundObject);
+        if (DEBUG_LOGS) {
+            console.log('Found object:', foundObject);
+        }
         return foundObject;
     }
     
     // Apply direct pixel manipulation instead of Fabric.js filters
     applyDirectPixelManipulation(imgObject, adjustments) {
-        console.log("Direct pixel manipulation with:", adjustments);
-        console.time("image-processing");
+        if (DEBUG_LOGS) {
+            console.log("Direct pixel manipulation with:", adjustments);
+            console.time("image-processing");
+        }
         
         if (!imgObject || imgObject.type !== 'image') {
             console.error("Object is not an image that can be manipulated");
@@ -151,17 +180,21 @@ class ImageAdjustments {
                 throw new Error("No image element found in the fabric object");
             }
             
-            console.log("Image element properties:", {
-                width: imgElement.width, 
-                height: imgElement.height,
-                complete: imgElement.complete,
-                naturalWidth: imgElement.naturalWidth,
-                naturalHeight: imgElement.naturalHeight
-            });
+            if (DEBUG_LOGS) {
+                console.log("Image element properties:", {
+                    width: imgElement.width, 
+                    height: imgElement.height,
+                    complete: imgElement.complete,
+                    naturalWidth: imgElement.naturalWidth,
+                    naturalHeight: imgElement.naturalHeight
+                });
+            }
             
             // Store the original image when first processing
             if (!this.originalImages.has(imgObject.data?.featureId)) {
-                console.log("Capturing original image for the first time");
+                if (DEBUG_LOGS) {
+                    console.log("Capturing original image for the first time");
+                }
                 
                 // Save original source
                 if (imgElement.src) {
@@ -175,11 +208,15 @@ class ImageAdjustments {
                     // Store the original image for this object
                     this.originalImages.set(imgObject.data?.featureId, originalImg);
                     imgElement._originalSrc = imgElement.src;
-                    console.log("Original image captured and stored");
+                    if (DEBUG_LOGS) {
+                        console.log("Original image captured and stored");
+                    }
                 } else if (imgElement._originalElement && imgElement._originalElement.src) {
                     this.originalImages.set(imgObject.data?.featureId, imgElement._originalElement);
                     imgElement._originalSrc = imgElement._originalElement.src;
-                    console.log("Original element source saved");
+                    if (DEBUG_LOGS) {
+                        console.log("Original element source saved");
+                    }
                 } else {
                     console.warn("Could not find original source to save");
                 }
@@ -201,21 +238,29 @@ class ImageAdjustments {
                 throw new Error("Invalid canvas dimensions");
             }
             
-            console.log("Created temp canvas with dimensions:", tempCanvas.width, "x", tempCanvas.height);
+            if (DEBUG_LOGS) {
+                console.log("Created temp canvas with dimensions:", tempCanvas.width, "x", tempCanvas.height);
+            }
             
             const tempCtx = tempCanvas.getContext('2d', { willReadFrequently: true });
             
             // Draw the ORIGINAL image (not the filtered one)
             const sourceImage = originalImage || imgElement;
-            console.log("Drawing from source:", sourceImage === originalImage ? "original stored image" : "current image");
+            if (DEBUG_LOGS) {
+                console.log("Drawing from source:", sourceImage === originalImage ? "original stored image" : "current image");
+            }
             tempCtx.drawImage(sourceImage, 0, 0);
-            console.log("Drew image to temp canvas");
+            if (DEBUG_LOGS) {
+                console.log("Drew image to temp canvas");
+            }
             
             // Get the image data
             let imageData;
             try {
                 imageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
-                console.log("Got image data:", imageData.width, "x", imageData.height);
+                if (DEBUG_LOGS) {
+                    console.log("Got image data:", imageData.width, "x", imageData.height);
+                }
             } catch (e) {
                 console.error("Error getting image data:", e);
                 throw new Error("Cannot get image data: " + e.message);
@@ -231,14 +276,16 @@ class ImageAdjustments {
             const featherCurve = parseInt(adjustments.featheringCurve || 3);
             const skinToneValue = parseInt(adjustments.skinTone || 50);
             
-            console.log("Processing adjustments:", {
-                contrast: contrastValue,
-                saturation: saturationValue,
-                sharpness: sharpnessValue,
-                feathering: featheringValue, 
-                featheringCurve: featherCurve,
-                skinTone: skinToneValue
-            });
+            if (DEBUG_LOGS) {
+                console.log("Processing adjustments:", {
+                    contrast: contrastValue,
+                    saturation: saturationValue,
+                    sharpness: sharpnessValue,
+                    feathering: featheringValue, 
+                    featheringCurve: featherCurve,
+                    skinTone: skinToneValue
+                });
+            }
             
             // Calculate adjustment factors - for 0 values, these should have no effect
             
@@ -259,14 +306,18 @@ class ImageAdjustments {
             let featherRadius = 0;
             
             if (featheringValue > 0) {
-                console.log(`Preparing feathering with value: ${featheringValue}, curve: ${featherCurve}`);
+                if (DEBUG_LOGS) {
+                    console.log(`Preparing feathering with value: ${featheringValue}, curve: ${featherCurve}`);
+                }
                 
                 // PERFORMANCE: Precalculate width, height and edge constants once
                 const imgWidth = tempCanvas.width;
                 const imgHeight = tempCanvas.height;
                 
                 // Create an alpha map to track transparent areas if we haven't already
-                console.log("Creating alpha map for feathering");
+                if (DEBUG_LOGS) {
+                    console.log("Creating alpha map for feathering");
+                }
                 
                 // Create the alpha map - 1 for visible pixels, 0 for transparent
                 const alphaMap = new Uint8Array(imgWidth * imgHeight);
@@ -275,13 +326,17 @@ class ImageAdjustments {
                 }
                 
                 // Calculate the actual distance map - distance from each pixel to the nearest transparent pixel
-                console.log("Calculating distance map for feathering");
+                if (DEBUG_LOGS) {
+                    console.log("Calculating distance map for feathering");
+                }
                 distanceMap = this._calculateDistanceMap(alphaMap, imgWidth, imgHeight);
                 
                 // Calculate feathering radius based on image dimensions and feathering value
                 const minDimension = Math.min(imgWidth, imgHeight);
                 featherRadius = minDimension * (featheringValue / 100) * 0.8;
-                console.log(`Feathering radius: ${featherRadius}px based on min dimension: ${minDimension}px`);
+                if (DEBUG_LOGS) {
+                    console.log(`Feathering radius: ${featherRadius}px based on min dimension: ${minDimension}px`);
+                }
             }
             
             // Create a copy of the image data for sharpness processing (if needed)
@@ -292,7 +347,9 @@ class ImageAdjustments {
             }
             
             // Process each pixel
-            console.time("pixel-processing");
+            if (DEBUG_LOGS) {
+                console.time("pixel-processing");
+            }
             for (let i = 0; i < data.length; i += 4) {
                 let r = data[i];
                 let g = data[i + 1];
@@ -393,20 +450,28 @@ class ImageAdjustments {
                 data[i + 2] = b;
                 // Alpha is already modified if needed for feathering
             }
-            console.timeEnd("pixel-processing");
+            if (DEBUG_LOGS) {
+                console.timeEnd("pixel-processing");
+            }
             
             // Put the modified image data back
             tempCtx.putImageData(imageData, 0, 0);
-            console.log("Put modified image data back to canvas");
+            if (DEBUG_LOGS) {
+                console.log("Put modified image data back to canvas");
+            }
             
             // Create a new image from our canvas
             const newImgURL = tempCanvas.toDataURL();
-            console.log("Created new image URL from canvas");
+            if (DEBUG_LOGS) {
+                console.log("Created new image URL from canvas");
+            }
             
             // DIRECT APPROACH: Create a new image element and update the fabric object directly
             const newImg = new Image();
             newImg.onload = () => {
-                console.log("New image loaded, updating fabric object directly");
+                if (DEBUG_LOGS) {
+                    console.log("New image loaded, updating fabric object directly");
+                }
                 
                 // Store the old image's properties before replacing it
                 const oldLeft = imgObject.left;
@@ -433,7 +498,9 @@ class ImageAdjustments {
                 // Force the canvas to re-render
                 this.canvas.renderAll();
                 
-                console.log("Image updated directly with filtered version");
+                if (DEBUG_LOGS) {
+                    console.log("Image updated directly with filtered version");
+                }
             };
             
             // Set the source of the new image to our filtered canvas
@@ -441,7 +508,9 @@ class ImageAdjustments {
             
             // If the image is already loaded, manually trigger the onload handler
             if (newImg.complete) {
-                console.log("New image already loaded, triggering handler manually");
+                if (DEBUG_LOGS) {
+                    console.log("New image already loaded, triggering handler manually");
+                }
                 newImg.onload();
             }
             
@@ -454,6 +523,10 @@ class ImageAdjustments {
         } catch (error) {
             console.error("Error in direct pixel manipulation:", error);
             console.error(error.stack);
+        } finally {
+            if (DEBUG_LOGS) {
+                console.timeEnd("image-processing");
+            }
         }
     }
     

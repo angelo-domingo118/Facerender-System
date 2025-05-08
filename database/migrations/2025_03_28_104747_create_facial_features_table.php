@@ -34,13 +34,13 @@ return new class extends Migration
             $table->float('rotation')->default(0);
             $table->float('opacity')->default(1.0);
             $table->boolean('visible')->default(true);
-            $table->float('brightness')->default(0); // Typically 0 means no change, adjust range as needed
-            $table->float('contrast')->default(1.0);   // Typically 1.0 means no change
-            $table->float('saturation')->default(1.0); // Typically 1.0 means no change
-            $table->float('sharpness')->default(0);   // Typically 0 means no change
-            $table->float('feathering')->default(0);  // Typically 0 means no feathering
-            $table->float('skinTone')->default(0);    // Placeholder, adjust range/meaning as needed
-            $table->timestamps(); // Add timestamps if needed according to your class diagram/requirements
+            $table->boolean('locked')->default(false);
+            $table->json('visual_adjustments')->nullable()->comment('Stores brightness, contrast, saturation, etc.');
+            $table->timestamps();
+            
+            // Add indexes for frequently queried fields
+            $table->index(['composite_id', 'z_index']);
+            $table->index('facial_feature_id');
         });
     }
 
@@ -49,7 +49,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('composite_facial_features'); // Add drop table for reverse migration
+        Schema::dropIfExists('composite_facial_features');
         Schema::dropIfExists('facial_features');
     }
 };
