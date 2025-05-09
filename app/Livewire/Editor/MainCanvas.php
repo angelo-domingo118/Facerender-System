@@ -422,7 +422,7 @@ class MainCanvas extends Component
         
         // Map featureIds to the current feature objects
         $featureMap = [];
-        foreach ($this->selectedFeatures as $feature) {
+            foreach ($this->selectedFeatures as $feature) {
             $featureMap[$feature['id']] = $feature;
         }
         
@@ -432,8 +432,8 @@ class MainCanvas extends Component
                 $reorderedFeatures[] = $featureMap[$featureId];
             } else {
                 Log::warning('Feature not found during reordering', ['featureId' => $featureId]);
+                }
             }
-        }
         
         // Update the selectedFeatures array
         $this->selectedFeatures = $reorderedFeatures;
@@ -587,12 +587,12 @@ class MainCanvas extends Component
      */
     public function handleLayerAdjustmentsUpdated($data)
     {
-        if (!isset($data['featureId']) || !isset($data['adjustments'])) {
+        if (!isset($data['layerId']) || !isset($data['adjustments'])) {
             Log::warning('Invalid layer adjustment data', ['data' => $data]);
             return;
         }
         
-        $featureId = $data['featureId'];
+        $featureId = $data['layerId'];
         $adjustments = $data['adjustments'];
         
         Log::info('Updating layer adjustments', [
@@ -745,6 +745,33 @@ class MainCanvas extends Component
                 // Update the layer panel
                 $this->dispatch('layers-updated', $this->selectedFeatures);
                 
+                // Also save the reset to the database
+                try {
+                    $featuresService = app(CompositeFeaturesService::class);
+                    
+                    // Find the composite facial feature record
+                    $compositeFacialFeatures = \App\Models\CompositeFacialFeature::where('composite_id', $this->compositeId)
+                        ->where('facial_feature_id', $data['layerId'])
+                        ->get();
+                    
+                    foreach ($compositeFacialFeatures as $feature) {
+                        $featuresService->updateFeature($feature->id, [
+                            'visual_adjustments' => $data['adjustments'] ?? null
+                        ]);
+                    }
+                    
+                    Log::info('Feature adjustments reset saved to database', [
+                        'featureId' => $data['layerId'],
+                        'compositeId' => $this->compositeId
+                    ]);
+                } catch (\Exception $e) {
+                    Log::error('Error saving reset adjustments to database: ' . $e->getMessage(), [
+                        'featureId' => $data['layerId'],
+                        'compositeId' => $this->compositeId,
+                        'error' => $e->getMessage()
+                    ]);
+                }
+                
                 break;
             }
         }
@@ -755,12 +782,25 @@ class MainCanvas extends Component
      */
     public function saveCompositeFeaturesHandler()
     {
-        $this->saveCompositeFeatures();
+        $result = $this->saveCompositeFeatures();
 
-        $this->dispatch('notify', [
-            'message' => 'Facial features saved successfully!',
-            'type' => 'success'
-        ]);
+        if ($result) {
+            // Show success notification using WireUI
+            $this->js('$wireui.notify({
+                title: "Success!",
+                description: "Facial features saved successfully",
+                icon: "success",
+                timeout: 3000
+            })');
+        } else {
+            // Show error notification using WireUI
+            $this->js('$wireui.notify({
+                title: "Error!",
+                description: "Error saving facial features. Please try again.",
+                icon: "error",
+                timeout: 3000
+            })');
+        }
     }
 
     /**
@@ -836,6 +876,25 @@ class MainCanvas extends Component
             $featuresService = app(CompositeFeaturesService::class);
             $savedFeatures = $featuresService->getCompositeFeatures($this->compositeId);
             
+            // DEBUG: Directly check the visual_adjustments column in the database
+            foreach ($savedFeatures as $dbFeature) {
+                Log::info('DEBUG - Raw feature data from database', [
+                    'featureId' => $dbFeature->facial_feature_id,
+                    'visual_adjustments' => $dbFeature->visual_adjustments,
+                    'visual_adjustments_type' => gettype($dbFeature->visual_adjustments)
+                ]);
+                
+                // Verify specific adjustment values
+                if (is_array($dbFeature->visual_adjustments)) {
+                    Log::info('ADJUSTMENT CHECK: Feature ' . $dbFeature->facial_feature_id, [
+                        'has_contrast' => isset($dbFeature->visual_adjustments['contrast']),
+                        'contrast_value' => $dbFeature->visual_adjustments['contrast'] ?? 'not set',
+                        'contrast_type' => isset($dbFeature->visual_adjustments['contrast']) ? 
+                            gettype($dbFeature->visual_adjustments['contrast']) : 'N/A'
+                    ]);
+                }
+            }
+            
             if ($savedFeatures->isEmpty()) {
                 Log::info('No saved features found for composite', [
                     'compositeId' => $this->compositeId
@@ -864,7 +923,16 @@ class MainCanvas extends Component
                     // Fix opacity scale: Convert database 0-1 scale to UI 0-100 scale
                     $opacity = $feature->opacity * 100;
                     
-                    $this->selectedFeatures[] = [
+                    // Ensure adjustments are properly formatted for the UI
+                    $adjustments = $feature->visual_adjustments ?? [];
+                    Log::info('Processing feature for UI', [
+                        'featureId' => $facialFeature->id,
+                        'adjustments' => $adjustments,
+                        'adjustments_type' => gettype($adjustments)
+                    ]);
+                    
+                    // Build the feature data
+                    $featureData = [
                         'id' => $facialFeature->id,
                         'image_path' => $facialFeature->image_path,
                         'name' => $facialFeature->name,
@@ -878,21 +946,40 @@ class MainCanvas extends Component
                         'opacity' => $opacity, // Now using the converted value (0-100)
                         'visible' => $feature->visible,
                         'locked' => $feature->locked,
-                        'adjustments' => $feature->visual_adjustments ?? []
+                        'adjustments' => $adjustments,
+                        'z_index' => $feature->z_index // Add z_index for consistent ordering
                     ];
                     
-                    Log::info('Converted feature opacity for display', [
+                    // Add to the features array
+                    $this->selectedFeatures[] = $featureData;
+                    
+                    Log::info('Added feature to UI with adjustments', [
                         'featureId' => $facialFeature->id,
-                        'dbOpacity' => $feature->opacity, // 0-1 scale
-                        'uiOpacity' => $opacity // 0-100 scale
+                        'has_adjustments' => isset($featureData['adjustments']),
+                        'adjustments' => $featureData['adjustments']
                     ]);
                 }
             }
+            
+            // Sort features by z_index for consistent layer ordering
+            // IMPORTANT: For consistency with canvas display, sort ascending (lower z_index first)
+            // This means the face (higher z_index) will be drawn last, appearing on top
+            usort($this->selectedFeatures, function($a, $b) {
+                $aIndex = $a['z_index'] ?? 0;
+                $bIndex = $b['z_index'] ?? 0;
+                return $aIndex - $bIndex; // Ascending order (lower z_index first)
+            });
 
-            Log::info('Converted saved features for canvas display', [
+            Log::info('Sorted features by z_index (ascending) for canvas display consistency', [
                 'compositeId' => $this->compositeId,
-                'featureCount' => count($this->selectedFeatures),
-                'features' => $this->selectedFeatures
+                'featureOrder' => array_map(function($feature) {
+                    return sprintf('%s (ID: %d, Type: %d, z_index: %d)', 
+                        $feature['name'], 
+                        $feature['id'], 
+                        $feature['feature_type'],
+                        $feature['z_index'] ?? 0
+                    );
+                }, $this->selectedFeatures)
             ]);
             
             // Ensure canvas is reset before updating
@@ -905,8 +992,25 @@ class MainCanvas extends Component
                 'forceUpdate' => true
             ]);
             
-            // Update layer panel
-            $this->dispatch('layers-updated', $this->selectedFeatures);
+            // For the layer panel, we need to reverse the order
+            // Lower z-index shown at bottom of panel, higher z-index at top
+            $layerPanelFeatures = array_reverse($this->selectedFeatures);
+            
+            // Debug: Check the adjustment values before sending to panel
+            foreach ($layerPanelFeatures as $index => $feature) {
+                Log::info("PANEL FEATURE {$index}", [
+                    'id' => $feature['id'],
+                    'has_adjustments' => isset($feature['adjustments']),
+                    'adjustments' => $feature['adjustments'] ?? 'not set'
+                ]);
+                
+                if (isset($feature['adjustments']['contrast'])) {
+                    Log::info("Feature {$feature['id']} has contrast: {$feature['adjustments']['contrast']}");
+                }
+            }
+            
+            // Update layer panel with reversed order
+            $this->dispatch('layers-updated', $layerPanelFeatures);
             
             Log::info('Loaded saved features for composite', [
                 'compositeId' => $this->compositeId,

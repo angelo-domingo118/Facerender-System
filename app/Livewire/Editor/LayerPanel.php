@@ -78,6 +78,9 @@ class LayerPanel extends Component
                 ]);
             }
             
+            // Store z_index value to ensure consistent layer ordering
+            $zIndex = $feature['z_index'] ?? $index;
+            
             $layers[] = [
                 'id' => $featureId,
                 'name' => $feature['name'] ?? ('Feature ' . ($index + 1)),
@@ -88,13 +91,27 @@ class LayerPanel extends Component
                 'opacity' => $opacity,
                 'width' => $feature['width'] ?? null,
                 'height' => $feature['height'] ?? null,
+                'z_index' => $zIndex,
+                'feature_type' => $feature['feature_type'] ?? null
             ];
         }
         
         // Store the layers in our component state
         $this->layers = $layers;
         
-        Log::info('LAYER DEBUG: Final layers array set in LayerPanel', ['layers' => $this->layers]); // Log final array
+        // Log layer ordering for debugging
+        $layerOrder = array_map(function($layer) {
+            return sprintf('%s (ID: %d, Type: %d, z_index: %d)', 
+                $layer['name'], 
+                $layer['id'], 
+                $layer['feature_type'] ?? 0,
+                $layer['z_index'] ?? 0
+            );
+        }, $this->layers);
+        
+        Log::info('LAYER DEBUG: Final layers array set in LayerPanel', [
+            'layerOrder' => $layerOrder
+        ]);
         
         // If we have layers, select the first one by default if none is selected
         if (!empty($this->layers) && empty($this->selectedLayerId)) {
@@ -480,9 +497,9 @@ class LayerPanel extends Component
         
         // Create a map of layer ID to layer data
         $layerMap = [];
-        foreach ($this->layers as $layer) {
+            foreach ($this->layers as $layer) {
             $layerMap[$layer['id']] = $layer;
-        }
+                }
         
         // Build the reordered layers array
         foreach ($newOrder as $layerId) {

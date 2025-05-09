@@ -82,5 +82,13 @@ class MainToolbar extends Component
     public function saveCompositeFeatures()
     {
         $this->dispatch('save-composite-features');
+        
+        // Show a loading notification using WireUI notation
+        $this->js('$wireui.notify({
+            title: "Saving...",
+            description: "Saving composite features",
+            icon: "info",
+            timeout: 1500
+        })');
     }
 }

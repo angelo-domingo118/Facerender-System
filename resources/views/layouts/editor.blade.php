@@ -33,6 +33,7 @@
             </main>
         </div>
 
+        <x-notifications z-index="z-50" />
         @stack('modals')
         @livewireScripts
     </body>

@@ -5,7 +5,7 @@
 import * as fabric from 'fabric';
 
 // Add a global flag to control console logging
-const DEBUG_LOGS = false;
+const DEBUG_LOGS = true; // Set to true for debugging
 
 class ImageAdjustments {
     constructor(canvas) {
@@ -16,6 +16,9 @@ class ImageAdjustments {
         if (DEBUG_LOGS) {
             console.log('Image adjustments initialized with canvas:', canvas);
         }
+        
+        // Make this instance globally available
+        window.imageAdjustments = this;
     }
 
     initListeners() {

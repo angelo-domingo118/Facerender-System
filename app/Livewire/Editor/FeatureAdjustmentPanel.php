@@ -28,11 +28,53 @@ class FeatureAdjustmentPanel extends Component
     ];
     
     /**
+     * When component is initialized
+     */
+    public function mount()
+    {
+        Log::info('FeatureAdjustmentPanel mounted');
+        // The component will wait for layers-updated event from MainCanvas
+    }
+    
+    /**
      * Update the layers list when received from MainCanvas
      */
     public function updateLayers($layers)
     {
         $this->layers = $layers;
+        Log::info('Layers updated in adjustment panel', [
+            'layerCount' => count($layers),
+            'layerIds' => collect($layers)->pluck('id')->toArray()
+        ]);
+        
+        // DEBUG: Log complete layer data structure to see exactly what we're receiving
+        Log::info('DEBUG - Complete layers data received:', [
+            'layers' => json_encode($layers)
+        ]);
+        
+        // Debug: Log the first layer's adjustments to see if they're coming through
+        if (!empty($layers) && isset($layers[0]['adjustments'])) {
+            Log::info('First layer adjustments', [
+                'layerId' => $layers[0]['id'],
+                'adjustments' => $layers[0]['adjustments']
+            ]);
+            
+            // Auto-select the first layer if none is currently selected
+            if (!$this->selectedLayerId && !empty($layers)) {
+                $this->selectedLayerId = $layers[0]['id'];
+                $this->selectedLayer = $layers[0];
+                $this->loadAdjustmentsFromLayer($layers[0]);
+                
+                Log::info('Auto-selected first layer', [
+                    'layerId' => $this->selectedLayerId
+                ]);
+            }
+        } else {
+            Log::warning('First layer has no adjustments data', [
+                'firstLayer' => !empty($layers) ? $layers[0] : 'No layers',
+                'hasAdjustments' => !empty($layers) && isset($layers[0]['adjustments'])
+            ]);
+        }
         
         // If we have a selected layer ID, verify it still exists in the layers
         if ($this->selectedLayerId) {
@@ -40,6 +82,8 @@ class FeatureAdjustmentPanel extends Component
             foreach ($this->layers as $layer) {
                 if ($layer['id'] == $this->selectedLayerId) {
                     $found = true;
+                    $this->selectedLayer = $layer;
+                    $this->loadAdjustmentsFromLayer($layer);
                     break;
                 }
             }
@@ -122,18 +166,104 @@ class FeatureAdjustmentPanel extends Component
         $this->selectedLayerId = $layerId;
         Log::info('Layer selected in adjustment panel', ['layerId' => $layerId]);
         
+        // Load adjustment values from the selected layer
+        $this->loadAdjustmentsFromLayer($this->selectedLayer);
+    }
+    
+    /**
+     * Load adjustments from layer data
+     */
+    private function loadAdjustmentsFromLayer($layer)
+    {
+        // Default values in case they're not set in the adjustments
+        $defaultValues = [
+            'contrast' => 0,
+            'saturation' => 0,
+            'sharpness' => 0,
+            'feathering' => 0,
+            'featheringCurve' => 3,
+            'skinTone' => 50
+        ];
+        
         // Load adjustment values if they exist, otherwise use defaults
-        if ($this->selectedLayer && isset($this->selectedLayer['adjustments'])) {
-            $adjustments = $this->selectedLayer['adjustments'];
-            $this->contrast = $adjustments['contrast'] ?? 0;
-            $this->saturation = $adjustments['saturation'] ?? 0;
-            $this->sharpness = $adjustments['sharpness'] ?? 0;
-            $this->feathering = $adjustments['feathering'] ?? 0;
-            $this->featheringCurve = $adjustments['featheringCurve'] ?? 3;
-            $this->skinTone = $adjustments['skinTone'] ?? 50;
+        if ($layer && isset($layer['adjustments'])) {
+            $adjustments = $layer['adjustments'];
+            
+            // Log the adjustments we're loading for debugging
+            Log::info('Loading adjustments from layer', [
+                'layerId' => $layer['id'],
+                'adjustments' => $adjustments,
+                'adjustments_type' => gettype($adjustments)
+            ]);
+            
+            // Handle the case where adjustments might be a JSON string
+            if (is_string($adjustments)) {
+                try {
+                    $adjustments = json_decode($adjustments, true);
+                    Log::info('Decoded adjustments from JSON string', [
+                        'decoded' => $adjustments
+                    ]);
+                } catch (\Exception $e) {
+                    Log::error('Failed to decode adjustments JSON', [
+                        'error' => $e->getMessage(),
+                        'raw' => $adjustments
+                    ]);
+                    $adjustments = [];
+                }
+            }
+            
+            // Force debug output of the adjustments to make sure we're seeing what we expect
+            $debugOutput = '';
+            if (is_array($adjustments)) {
+                foreach ($adjustments as $key => $value) {
+                    $debugOutput .= "{$key}: {$value}, ";
+                }
+            } else {
+                $debugOutput = "Not an array: " . gettype($adjustments);
+            }
+            Log::info('ADJUSTMENT DEBUG: ' . $debugOutput);
+            
+            // Log specific adjustments we're looking for
+            Log::info('Looking for specific adjustment values', [
+                'has_contrast' => isset($adjustments['contrast']),
+                'contrast_value' => $adjustments['contrast'] ?? 'not set',
+                'contrast_type' => isset($adjustments['contrast']) ? gettype($adjustments['contrast']) : 'N/A'
+            ]);
+            
+            // Handle each adjustment value, checking for presence and correct type
+            foreach ($defaultValues as $key => $defaultValue) {
+                if (isset($adjustments[$key])) {
+                    // Force convert to integer to avoid type issues
+                    $value = is_numeric($adjustments[$key]) ? (int)$adjustments[$key] : $defaultValue;
+                    $this->{$key} = $value;
+                    
+                    Log::info("Set {$key} to {$value}");
+                } else {
+                    $this->{$key} = $defaultValue;
+                    Log::info("Using default for {$key}: {$defaultValue}");
+                }
+            }
+            
+            // Update the skinTone label based on the loaded value
             $this->updateSkinToneLabel();
+            
+            // Add client-side debugging
+            $this->js("console.log('Loaded adjustments from layer:', {
+                layerId: " . $layer['id'] . ", 
+                contrast: " . $this->contrast . ", 
+                saturation: " . $this->saturation . ",
+                skinTone: " . $this->skinTone . "
+            })");
         } else {
+            Log::info('No adjustments found for layer', [
+                'layerId' => $layer['id'] ?? 'unknown'
+            ]);
             $this->resetAdjustments();
+            
+            // Add client-side debugging
+            $this->js("console.log('No adjustments found, using defaults for layer:', {
+                layerId: '" . ($layer['id'] ?? 'unknown') . "'
+            })");
         }
     }
     
@@ -234,31 +364,45 @@ class FeatureAdjustmentPanel extends Component
             ]
         ];
         
+        // Log the adjustments we're sending for debugging
+        Log::info('Sending layer adjustments update', $adjustmentData);
+        
         // Dispatch event to update canvas - using named parameters for Livewire 3
         $this->dispatch('layer-adjustments-updated', $adjustmentData);
         
-        Log::info('Layer adjustments updated', [
-            'layerId' => $this->selectedLayerId,
-            'contrast' => $contrast,
-            'saturation' => $saturation,
-            'sharpness' => $sharpness,
-            'feathering' => $feathering,
-            'featheringCurve' => $featheringCurve,
-            'skinTone' => $skinTone,
-            'skinToneLabel' => $this->skinToneLabel,
-            'data' => $adjustmentData
-        ]);
+        // Add client-side debugging
+        $this->js("console.log('Dispatched layer-adjustments-updated:', " . json_encode($adjustmentData) . ")");
+        
+        // Also update our local layer data to keep it in sync
+        if (isset($this->selectedLayer['adjustments'])) {
+            $this->selectedLayer['adjustments'] = $adjustmentData['adjustments'];
+        } else {
+            $this->selectedLayer['adjustments'] = $adjustmentData['adjustments'];
+        }
+        
+        // Show a small toast notification that adjustments are being applied
+        $this->js('$wireui.notify({
+            title: "Adjustments Applied",
+            description: "Changes will be saved when you click Save",
+            icon: "info",
+            timeout: 1500,
+            position: "bottom-right"
+        })');
     }
     
     /**
-     * Reset all adjustment values to defaults
+     * Reset all adjustments to default values
      */
     public function resetAllAdjustments()
     {
+        if (!$this->selectedLayer) {
+            return;
+        }
+        
         $this->resetAdjustments();
         
-        // Create reset event data
-        $resetData = [
+        // Dispatch reset event
+        $this->dispatch('reset-layer-adjustments', [
             'layerId' => $this->selectedLayerId,
             'action' => 'reset',
             'adjustments' => [
@@ -270,15 +414,16 @@ class FeatureAdjustmentPanel extends Component
                 'skinTone' => 50,
                 'skinToneLabel' => 'Natural'
             ]
-        ];
+        ]);
         
-        // First dispatch a reset event to tell the canvas to reset this layer
-        $this->dispatch('reset-layer-adjustments', $resetData);
-        
-        // Then update with default values
-        $this->updateAdjustments();
-        
-        Log::info('Reset all adjustments', ['layerId' => $this->selectedLayerId]);
+        // Show notification
+        $this->js('$wireui.notify({
+            title: "Adjustments Reset",
+            description: "All adjustments have been reset to default values",
+            icon: "information",
+            timeout: 1500,
+            position: "bottom-right"
+        })');
     }
     
     /**
@@ -290,13 +435,23 @@ class FeatureAdjustmentPanel extends Component
         $this->saturation = 0;
         $this->sharpness = 0;
         $this->feathering = 0;
-        $this->featheringCurve = 3;
-        $this->skinTone = 50;
+        $this->featheringCurve = 3; // Mid-range value
+        $this->skinTone = 50; // Neutral skin tone
         $this->skinToneLabel = 'Natural';
     }
     
     public function render()
     {
+        // Add debugging to track render and current adjustments
+        $this->js("console.log('FeatureAdjustmentPanel rendering:', {
+            selectedLayerId: '" . ($this->selectedLayerId ?? 'none') . "',
+            contrast: " . $this->contrast . ",
+            saturation: " . $this->saturation . ",
+            sharpness: " . $this->sharpness . ",
+            feathering: " . $this->feathering . ",
+            skinTone: " . $this->skinTone . "
+        })");
+        
         return view('livewire.editor.feature-adjustment-panel');
     }
 }

@@ -1,4 +1,33 @@
 <div class="h-full flex flex-col bg-gray-50">
+    <script>
+        // Debug code to monitor Livewire events
+        document.addEventListener('livewire:initialized', () => {
+            console.log('Feature adjustment panel initialized');
+            
+            // Listen for layers-updated event
+            Livewire.on('layers-updated', (layers) => {
+                console.log('Layers updated received in panel:', layers);
+                
+                // Check first layer for adjustments
+                if (layers && layers.length > 0) {
+                    console.log('First layer:', layers[0]);
+                    console.log('Has adjustments?', !!layers[0].adjustments);
+                    if (layers[0].adjustments) {
+                        console.log('Adjustments:', layers[0].adjustments);
+                        console.log('Contrast value:', layers[0].adjustments.contrast);
+                    }
+                }
+            });
+            
+            // Also monitor when layer is selected
+            Livewire.on('layer-selected', (layer) => {
+                console.log('Layer selected:', layer);
+                if (layer && layer.adjustments) {
+                    console.log('Selected layer adjustments:', layer.adjustments);
+                }
+            });
+        });
+    </script>
     <div class="flex-1 overflow-y-auto">
         <!-- Layer Selector Dropdown -->
         <div class="sticky top-0 z-10 p-3 border-b border-gray-200 bg-white shadow-sm">

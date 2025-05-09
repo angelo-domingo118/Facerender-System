@@ -4,7 +4,7 @@ import * as fabric from 'fabric';
 console.log('Editor canvas script loaded');
 
 // Add a global flag to control console logging
-const DEBUG_LOGS = false;
+const DEBUG_LOGS = true;
 
 // Custom logger function to reduce console noise
 function log(message, ...args) {
@@ -991,9 +991,9 @@ function setupLivewireHandlers() {
             
             if (!newOrder) {
                 console.error('Missing layers data or newOrder in layers-reordered event');
-                return;
-            }
-            
+            return;
+        }
+        
             // Get all feature objects on the canvas
             const featureObjects = canvas.getObjects().filter(obj => 
                 obj.data && obj.data.featureId
@@ -1406,6 +1406,11 @@ function addFeatureToCanvas(feature) {
 
     log('Attempting to add feature to canvas:', feature);
 
+    // Check for adjustments
+    if (feature.adjustments && Object.keys(feature.adjustments).length > 0) {
+        console.log('Feature has adjustments that will be applied after loading:', feature.adjustments);
+    }
+
     // --- Pre-checks ---
     if (!feature.image_path) {
         console.error('Feature image_path is missing or invalid:', feature);
@@ -1427,6 +1432,18 @@ function addFeatureToCanvas(feature) {
         log('Feature with ID', feature.id, 'already exists on canvas. Selecting it...');
         canvas.setActiveObject(existingObjects[0]);
         canvas.renderAll();
+        
+        // Even if the feature exists, apply any adjustments it may have
+        if (feature.adjustments && Object.keys(feature.adjustments).length > 0) {
+            console.log('Applying adjustments to existing feature:', feature.adjustments);
+            if (window.imageAdjustments) {
+                window.imageAdjustments.handleAdjustmentUpdate({
+                    layerId: feature.id,
+                    adjustments: feature.adjustments
+                });
+            }
+        }
+        
         processedEvents.delete(operationId); // Clean up since we didn't add
         return;
     }
@@ -1510,6 +1527,12 @@ function addFeatureToCanvas(feature) {
         imagePath = feature.image_path;
     } else if (feature.image_path.startsWith('storage/')) {
         imagePath = `/${feature.image_path}`;
+    }
+
+    // Store the adjustments in the feature.data property so they're available after loading
+    if (!feature.data) feature.data = {};
+    if (feature.adjustments) {
+        feature.data.pendingAdjustments = feature.adjustments;
     }
 
     // Call the async loading function
@@ -1739,6 +1762,30 @@ function setupFabricImageFromElement(imgElement, feature, moveEnabled) {
         // Manually dispatch dimension info to update the panel immediately
         dispatchDimensionInfo(fabricImage);
         
+        // Apply adjustments immediately after adding to canvas if they exist
+        if ((feature.adjustments && Object.keys(feature.adjustments).length > 0) ||
+            (feature.data && feature.data.pendingAdjustments)) {
+            
+            // Use the adjustments directly from feature or from pendingAdjustments
+            const adjustmentsToApply = feature.adjustments || 
+                (feature.data ? feature.data.pendingAdjustments : null);
+            
+            if (adjustmentsToApply) {
+                console.log(`Applying stored adjustments to newly added feature ${feature.id}:`, adjustmentsToApply);
+                
+                // Apply adjustments via the ImageAdjustments class if available
+                if (window.imageAdjustments) {
+                    // Short timeout to ensure the feature is fully initialized
+                    setTimeout(() => {
+                        window.imageAdjustments.handleAdjustmentUpdate({
+                            layerId: feature.id,
+                            adjustments: adjustmentsToApply
+                        });
+                    }, 100);
+                }
+            }
+        }
+        
         canvas.renderAll();
 
         log(`✅ Feature ${feature.id} added and canvas rendered successfully.`);
@@ -1796,21 +1843,21 @@ function loadImageAndSetupFabricImage(feature, moveEnabled, imagePath, operation
         loadingFeatures.delete(feature.id);
         processedEvents.delete(operationId);
     }, 10000); // 10 second timeout
-    
+
     const imgElement = new Image();
     imgElement.crossOrigin = 'Anonymous'; // Important for canvas tainting
-    
+
     // Define error handling
     imgElement.onerror = function(error) {
         clearTimeout(loadingTimeout);
         console.error(`❌ Error loading image for feature ${feature.id}:`, error);
         console.error('Image path that failed:', imagePath);
-        
+
         // Simple error handling: just log and remove from loading
         loadingFeatures.delete(feature.id);
         processedEvents.delete(operationId); // Clean up the processed event tracker
     };
-    
+
     // Define success handling
     imgElement.onload = function() {
         clearTimeout(loadingTimeout);
@@ -1820,7 +1867,7 @@ function loadImageAndSetupFabricImage(feature, moveEnabled, imagePath, operation
         // Clean up the processed event tracker after successful async load and setup
         processedEvents.delete(operationId);
     };
-    
+
     // Set the src to start loading
     imgElement.src = imagePath;
 }
@@ -1964,13 +2011,29 @@ function loadExistingFeatures() {
         livewireComponent.call('getSelectedFeatures').then(features => {
             if (features && features.length > 0) {
                 console.log('Loading initial features from Livewire component:', features);
-                updateCanvasFeatures({ 
-                    selectedFeatures: features, 
-                    forceUpdate: true 
+                
+                // The features are already in correct canvas order from the server
+                // Canvas draws first items at the bottom, matching the z_index ascending order
+                // No need to reverse the order
+                
+                // Log the feature order for debugging
+                log('Feature order for canvas loading:', 
+                    features.map(f => `${f.name} (ID: ${f.id}, Type: ${f.feature_type}, z-index: ${f.z_index || 0})`)
+                );
+                
+                // Clear canvas before adding features
+                canvas.clear();
+                setupGrid();
+                
+                // Force update with current features
+                updateCanvasFeatures({
+                    selectedFeatures: features,
+                    forceUpdate: true
                 });
+                
+                // Run diagnostic after loading
+                diagnosticCheckCanvasState();
             }
-        }).catch(error => {
-            console.error('Error getting initial features:', error);
         });
     }
 }
@@ -2039,6 +2102,10 @@ function updateCanvasFeatures(data) {
         canvas.clear();
         
         console.log('Force updating canvas with features:', data.selectedFeatures);
+        if (data.selectedFeatures && data.selectedFeatures.length > 0) {
+            console.log('Feature order for canvas (first drawn = bottom-most):',
+                data.selectedFeatures.map(f => `${f.name} (ID: ${f.id}, Type: ${f.feature_type}, z-index: ${f.z_index || 'unset'})`));
+        }
         
         // Create all objects fresh
         if (data.selectedFeatures && data.selectedFeatures.length > 0) {
@@ -2050,6 +2117,10 @@ function updateCanvasFeatures(data) {
         // Fix for handleCanvasUpdate not defined error
         // Process features directly instead of calling a non-existent function
         console.log('Standard update with features:', data.selectedFeatures);
+        if (data.selectedFeatures && data.selectedFeatures.length > 0) {
+            console.log('Feature order for canvas (first = bottom-most):',
+                data.selectedFeatures.map(f => `${f.name} (ID: ${f.id}, Type: ${f.feature_type}, z-index: ${f.z_index || 'unset'})`));
+        }
         
         // Get existing objects on canvas
         const existingObjectsMap = {};
@@ -2109,6 +2180,19 @@ function updateCanvasFeatures(data) {
     gridLines.forEach(line => {
         canvas.sendObjectToBack(line);
     });
+    
+    // Log the current canvas order for debugging
+    const featureObjects = canvas.getObjects().filter(obj => obj.data && obj.data.featureId);
+    if (featureObjects.length > 0) {
+        console.log('Current canvas layer order (bottom to top):',
+            featureObjects.map(obj => {
+                const featureId = obj.data.featureId;
+                const featureType = obj.data.featureType;
+                const name = obj.data.name || `Feature ${featureId}`;
+                return `${name} (ID: ${featureId}, Type: ${featureType})`;
+            })
+        );
+    }
     
     // Ensure canvas is rendered
     canvas.renderAll();

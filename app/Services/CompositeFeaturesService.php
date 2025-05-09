@@ -21,12 +21,65 @@ class CompositeFeaturesService
      */
     public function getCompositeFeatures(int $compositeId): Collection
     {
-        return Cache::remember("composite.{$compositeId}.features", self::CACHE_DURATION, function () use ($compositeId) {
-            return CompositeFacialFeature::with('facialFeature')
+        // Temporarily disable caching for debugging
+        // return Cache::remember("composite.{$compositeId}.features", self::CACHE_DURATION, function () use ($compositeId) {
+            $features = CompositeFacialFeature::with('facialFeature')
                 ->where('composite_id', $compositeId)
                 ->orderBy('z_index')
                 ->get();
-        });
+            
+            Log::info('Getting composite features from database directly (cache disabled)', [
+                'compositeId' => $compositeId,
+                'featureCount' => $features->count()
+            ]);
+            
+            // Ensure each feature has standardized adjustments format
+            foreach ($features as $feature) {
+                // Ensure visual_adjustments is always an array with default values if missing
+                if (empty($feature->visual_adjustments) || !is_array($feature->visual_adjustments)) {
+                    $feature->visual_adjustments = $this->getDefaultAdjustments();
+                    Log::info('Using default adjustments for feature', [
+                        'featureId' => $feature->id,
+                        'facialFeatureId' => $feature->facial_feature_id
+                    ]);
+                } else {
+                    // Ensure all expected keys exist with proper types
+                    $feature->visual_adjustments = array_merge(
+                        $this->getDefaultAdjustments(),
+                        $feature->visual_adjustments
+                    );
+                    Log::info('Merged adjustments for feature', [
+                        'featureId' => $feature->id,
+                        'facialFeatureId' => $feature->facial_feature_id,
+                        'final_adjustments' => $feature->visual_adjustments
+                    ]);
+                }
+            }
+            
+            return $features;
+        // });
+    }
+    
+    /**
+     * Get default adjustment values
+     */
+    private function getDefaultAdjustments(): array
+    {
+        $defaults = [
+            'contrast' => 0,
+            'saturation' => 0,
+            'sharpness' => 0,
+            'feathering' => 0,
+            'featheringCurve' => 3,
+            'skinTone' => 50,
+            'skinToneLabel' => 'Natural'
+        ];
+        
+        Log::info('Generated default adjustments', [
+            'defaults' => $defaults
+        ]);
+        
+        return $defaults;
     }
     
     /**
@@ -39,14 +92,7 @@ class CompositeFeaturesService
             ->max('z_index') ?? 0;
         
         // Default visual adjustments if not provided
-        $visualAdjustments = $attributes['visual_adjustments'] ?? [
-            'brightness' => 0,
-            'contrast' => 1.0,
-            'saturation' => 1.0,
-            'sharpness' => 0,
-            'feathering' => 0,
-            'skinTone' => 0
-        ];
+        $visualAdjustments = $attributes['visual_adjustments'] ?? $this->getDefaultAdjustments();
         
         // Create the feature
         $feature = CompositeFacialFeature::create([
