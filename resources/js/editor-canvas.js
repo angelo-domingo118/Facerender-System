@@ -1625,10 +1625,24 @@ function setupFabricImageFromElement(imgElement, feature, moveEnabled) {
             }
         }
 
+        // Get position and scale from feature data
+        const positionX = feature.position?.x || getDefaultPositionForFeature(feature.feature_type).x;
+        const positionY = feature.position?.y || getDefaultPositionForFeature(feature.feature_type).y;
+        const rotation = feature.position?.rotation || 0;
+        const scale = feature.position?.scale || 1.0;
+
+        // Log position and scale data for debugging
+        console.log(`Feature ${feature.id} position data:`, {
+            x: positionX,
+            y: positionY,
+            rotation: rotation,
+            scale: scale
+        });
+
         const fabricImage = new fabric.Image(imgElement, {
-            left: feature.position?.x || getDefaultPositionForFeature(feature.feature_type).x,
-            top: feature.position?.y || getDefaultPositionForFeature(feature.feature_type).y,
-            angle: feature.position?.rotation || 0,
+            left: positionX,
+            top: positionY,
+            angle: rotation,
             originX: 'center', // Center origin for easier positioning/rotation
             originY: 'center',
             hasControls: feature.locked ? false : moveEnabled,
@@ -1656,99 +1670,104 @@ function setupFabricImageFromElement(imgElement, feature, moveEnabled) {
             }
         });
 
-        // Scale the image initially based on feature type
-        let maxWidth = 250;  // Default max width
-        let maxHeight = 250; // Default max height
-        
-        // Get feature type ID and adjust sizing based on type
-        const featureTypeId = feature.feature_type;
-        if (featureTypeId) {
-            // Adjust sizing based on feature type ID
-            // These values control the initial size of different feature types
-            switch (parseInt(featureTypeId)) {
-                case 1: // eyes
-                    maxWidth = 180;
-                    maxHeight = 70;
-                    break;
-                case 2: // eyebrows
-                    maxWidth = 180;
-                    maxHeight = 50;
-                    break;
-                case 3: // nose
-                    maxWidth = 100;
-                    maxHeight = 120;
-                    break;
-                case 4: // mouth
-                    maxWidth = 120;
-                    maxHeight = 70;
-                    break;
-                case 5: // ears - Set specific width
-                    const targetWidth = 370;
-                    if (fabricImage.width && fabricImage.width > 0) { // Check if width is valid
-                        const scaleFactor = targetWidth / fabricImage.width;
-                        fabricImage.scale(scaleFactor);
-                        log(`Applied specific width scaling (${scaleFactor.toFixed(2)}) for ears (feature ${feature.id}) to target width ${targetWidth}px`);
-                        // Store this scale factor in the feature data if needed
-                        if (feature.position) {
-                            feature.position.scale = scaleFactor;
-                        }
-                    } else {
-                        log(`Skipping scaling for ears (feature ${feature.id}) due to invalid initial width: ${fabricImage.width}`);
-                    }
-                    // Skip the general scaling logic below for ears
-                    // We set a flag or modify maxWidth/maxHeight to prevent double scaling
-                    maxWidth = 0; // Set to 0 to ensure the general scaling below doesn't apply
-                    break;
-                case 6: // hair
-                    maxWidth = 350;
-                    maxHeight = 350;
-                    break;
-                case 7: // face
-                    maxWidth = 400;
-                    maxHeight = 450;
-                    break;
-                case 8: // neck
-                    maxWidth = 150;
-                    maxHeight = 200;
-                    break;
-                case 9: // accessories
-                    maxWidth = 200;
-                    maxHeight = 200;
-                    break;
-                default:
-                    // Use defaults for any other feature types
-                    break;
-            }
-        }
-        
-        // Apply general scaling ONLY if not handled by a specific case (like ears)
-        if (maxWidth > 0 && (fabricImage.width * fabricImage.scaleX > maxWidth || fabricImage.height * fabricImage.scaleY > maxHeight)) {
-            // Use current scaled width/height for calculation if already scaled by a specific case (but ears case prevents this)
-            const currentWidth = fabricImage.width * fabricImage.scaleX;
-            const currentHeight = fabricImage.height * fabricImage.scaleY;
+        // Apply the position scale explicitly
+        if (scale && scale !== 1) {
+            log(`Applying explicit scale from position data: ${scale}`);
+            fabricImage.scaleX = scale;
+            fabricImage.scaleY = scale;
             
-            const scaleFactor = Math.min(
-                maxWidth / currentWidth, 
-                maxHeight / currentHeight
-            );
-            
-            // Apply scaling relative to current scale
-            fabricImage.scaleX *= scaleFactor;
-            fabricImage.scaleY *= scaleFactor;
-            
-            log(`Applied general scaling of ${scaleFactor.toFixed(2)} to feature ${feature.id} (type: ${featureTypeId})`);
-            
-            // Store this as the feature's initial scale in the position object if it exists
+            // Store this scale in the feature's position object
             if (feature.position) {
-                feature.position.scale = fabricImage.scaleX; // Assuming uniform scaling
+                feature.position.scale = scale;
             }
-        }
-
-        // Apply specific scale from feature data if available, but only if it's not the default value of 1
-        // This prevents overriding our type-specific scaling with the default scale
-        if (feature.position?.scale && feature.position.scale !== 1) {
-            log(`Applying custom scale from position data: ${feature.position.scale}`);
-            fabricImage.scale(feature.position.scale);
+        } else {
+            // Scale the image initially based on feature type if no explicit scale is provided
+            let maxWidth = 250;  // Default max width
+            let maxHeight = 250; // Default max height
+            
+            // Get feature type ID and adjust sizing based on type
+            const featureTypeId = feature.feature_type;
+            if (featureTypeId) {
+                // Adjust sizing based on feature type ID
+                // These values control the initial size of different feature types
+                switch (parseInt(featureTypeId)) {
+                    case 1: // eyes
+                        maxWidth = 180;
+                        maxHeight = 70;
+                        break;
+                    case 2: // eyebrows
+                        maxWidth = 180;
+                        maxHeight = 50;
+                        break;
+                    case 3: // nose
+                        maxWidth = 100;
+                        maxHeight = 120;
+                        break;
+                    case 4: // mouth
+                        maxWidth = 120;
+                        maxHeight = 70;
+                        break;
+                    case 5: // ears - Set specific width
+                        const targetWidth = 370;
+                        if (fabricImage.width && fabricImage.width > 0) { // Check if width is valid
+                            const scaleFactor = targetWidth / fabricImage.width;
+                            fabricImage.scale(scaleFactor);
+                            log(`Applied specific width scaling (${scaleFactor.toFixed(2)}) for ears (feature ${feature.id}) to target width ${targetWidth}px`);
+                            // Store this scale factor in the feature data if needed
+                            if (feature.position) {
+                                feature.position.scale = scaleFactor;
+                            }
+                        } else {
+                            log(`Skipping scaling for ears (feature ${feature.id}) due to invalid initial width: ${fabricImage.width}`);
+                        }
+                        // Skip the general scaling logic below for ears
+                        // We set a flag or modify maxWidth/maxHeight to prevent double scaling
+                        maxWidth = 0; // Set to 0 to ensure the general scaling below doesn't apply
+                        break;
+                    case 6: // hair
+                        maxWidth = 350;
+                        maxHeight = 350;
+                        break;
+                    case 7: // face
+                        maxWidth = 400;
+                        maxHeight = 450;
+                        break;
+                    case 8: // neck
+                        maxWidth = 150;
+                        maxHeight = 200;
+                        break;
+                    case 9: // accessories
+                        maxWidth = 200;
+                        maxHeight = 200;
+                        break;
+                    default:
+                        // Use defaults for any other feature types
+                        break;
+                }
+            }
+            
+            // Apply general scaling ONLY if not handled by a specific case (like ears)
+            if (maxWidth > 0 && (fabricImage.width * fabricImage.scaleX > maxWidth || fabricImage.height * fabricImage.scaleY > maxHeight)) {
+                // Use current scaled width/height for calculation if already scaled by a specific case (but ears case prevents this)
+                const currentWidth = fabricImage.width * fabricImage.scaleX;
+                const currentHeight = fabricImage.height * fabricImage.scaleY;
+                
+                const scaleFactor = Math.min(
+                    maxWidth / currentWidth, 
+                    maxHeight / currentHeight
+                );
+                
+                // Apply scaling relative to current scale
+                fabricImage.scaleX *= scaleFactor;
+                fabricImage.scaleY *= scaleFactor;
+                
+                log(`Applied general scaling of ${scaleFactor.toFixed(2)} to feature ${feature.id} (type: ${featureTypeId})`);
+                
+                // Store this as the feature's initial scale in the position object if it exists
+                if (feature.position) {
+                    feature.position.scale = fabricImage.scaleX; // Assuming uniform scaling
+                }
+            }
         }
 
         canvas.add(fabricImage);
@@ -1758,6 +1777,14 @@ function setupFabricImageFromElement(imgElement, feature, moveEnabled) {
 
         // Select the newly added feature
         canvas.setActiveObject(fabricImage);
+        
+        // Log dimensions after scaling for debugging
+        console.log(`Feature ${feature.id} final dimensions:`, {
+            width: Math.round(fabricImage.width * fabricImage.scaleX),
+            height: Math.round(fabricImage.height * fabricImage.scaleY), 
+            scaleX: fabricImage.scaleX,
+            scaleY: fabricImage.scaleY
+        });
         
         // Manually dispatch dimension info to update the panel immediately
         dispatchDimensionInfo(fabricImage);

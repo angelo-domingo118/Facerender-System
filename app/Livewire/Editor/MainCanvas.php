@@ -819,22 +819,25 @@ class MainCanvas extends Component
                 // Convert opacity from UI scale (0-100) to database scale (0-1)
                 $opacityValue = isset($feature['opacity']) ? ($feature['opacity'] / 100) : 1.0;
                 
-                // Extract the position data
+                // Extract the position data and ensure both scale_x and scale_y are set correctly
+                $scale = $feature['position']['scale'] ?? 1.0;
+                
                 $attributes = [
                     'position_x' => $feature['position']['x'] ?? 0,
                     'position_y' => $feature['position']['y'] ?? 0,
-                    'scale_x' => $feature['position']['scale'] ?? 1.0,
-                    'scale_y' => $feature['position']['scale'] ?? 1.0,
+                    'scale_x' => $scale, // Both scale_x and scale_y use the same value from JavaScript
+                    'scale_y' => $scale, // Fabric.js uses uniform scaling in our implementation
                     'rotation' => $feature['position']['rotation'] ?? 0,
                     'opacity' => $opacityValue, // Now properly scaled for database storage
                     'visible' => $feature['visible'] ?? true,
                     'locked' => $feature['locked'] ?? false,
                 ];
                 
-                Log::info('Saving feature with opacity', [
+                Log::info('Saving feature with position and scale', [
                     'featureId' => $feature['id'],
-                    'uiOpacity' => $feature['opacity'] ?? 100, // 0-100 scale
-                    'dbOpacity' => $opacityValue // 0-1 scale
+                    'scale' => $scale,
+                    'x' => $attributes['position_x'],
+                    'y' => $attributes['position_y']
                 ]);
                 
                 // Extract visual adjustments if available
@@ -880,19 +883,11 @@ class MainCanvas extends Component
             foreach ($savedFeatures as $dbFeature) {
                 Log::info('DEBUG - Raw feature data from database', [
                     'featureId' => $dbFeature->facial_feature_id,
+                    'scale_x' => $dbFeature->scale_x,
+                    'scale_y' => $dbFeature->scale_y,
                     'visual_adjustments' => $dbFeature->visual_adjustments,
                     'visual_adjustments_type' => gettype($dbFeature->visual_adjustments)
                 ]);
-                
-                // Verify specific adjustment values
-                if (is_array($dbFeature->visual_adjustments)) {
-                    Log::info('ADJUSTMENT CHECK: Feature ' . $dbFeature->facial_feature_id, [
-                        'has_contrast' => isset($dbFeature->visual_adjustments['contrast']),
-                        'contrast_value' => $dbFeature->visual_adjustments['contrast'] ?? 'not set',
-                        'contrast_type' => isset($dbFeature->visual_adjustments['contrast']) ? 
-                            gettype($dbFeature->visual_adjustments['contrast']) : 'N/A'
-                    ]);
-                }
             }
             
             if ($savedFeatures->isEmpty()) {
@@ -925,10 +920,16 @@ class MainCanvas extends Component
                     
                     // Ensure adjustments are properly formatted for the UI
                     $adjustments = $feature->visual_adjustments ?? [];
-                    Log::info('Processing feature for UI', [
+                    
+                    // Use scale_x as the single scale value for JavaScript
+                    // This ensures consistent scaling between PHP and JavaScript
+                    $scale = $feature->scale_x;
+                    
+                    Log::info('Processing feature scale for UI', [
                         'featureId' => $facialFeature->id,
-                        'adjustments' => $adjustments,
-                        'adjustments_type' => gettype($adjustments)
+                        'scale_x' => $feature->scale_x,
+                        'scale_y' => $feature->scale_y,
+                        'using_scale' => $scale
                     ]);
                     
                     // Build the feature data
@@ -940,7 +941,7 @@ class MainCanvas extends Component
                         'position' => [
                             'x' => $feature->position_x,
                             'y' => $feature->position_y,
-                            'scale' => $feature->scale_x, // For simplicity, using scale_x
+                            'scale' => $scale, // Use scale_x for uniform scaling
                             'rotation' => $feature->rotation
                         ],
                         'opacity' => $opacity, // Now using the converted value (0-100)
@@ -953,10 +954,10 @@ class MainCanvas extends Component
                     // Add to the features array
                     $this->selectedFeatures[] = $featureData;
                     
-                    Log::info('Added feature to UI with adjustments', [
+                    Log::info('Added feature to UI with scale and adjustments', [
                         'featureId' => $facialFeature->id,
-                        'has_adjustments' => isset($featureData['adjustments']),
-                        'adjustments' => $featureData['adjustments']
+                        'scale' => $scale,
+                        'has_adjustments' => isset($featureData['adjustments'])
                     ]);
                 }
             }
@@ -973,11 +974,12 @@ class MainCanvas extends Component
             Log::info('Sorted features by z_index (ascending) for canvas display consistency', [
                 'compositeId' => $this->compositeId,
                 'featureOrder' => array_map(function($feature) {
-                    return sprintf('%s (ID: %d, Type: %d, z_index: %d)', 
+                    return sprintf('%s (ID: %d, Type: %d, z_index: %d, scale: %s)', 
                         $feature['name'], 
                         $feature['id'], 
                         $feature['feature_type'],
-                        $feature['z_index'] ?? 0
+                        $feature['z_index'] ?? 0,
+                        $feature['position']['scale']
                     );
                 }, $this->selectedFeatures)
             ]);
@@ -995,19 +997,6 @@ class MainCanvas extends Component
             // For the layer panel, we need to reverse the order
             // Lower z-index shown at bottom of panel, higher z-index at top
             $layerPanelFeatures = array_reverse($this->selectedFeatures);
-            
-            // Debug: Check the adjustment values before sending to panel
-            foreach ($layerPanelFeatures as $index => $feature) {
-                Log::info("PANEL FEATURE {$index}", [
-                    'id' => $feature['id'],
-                    'has_adjustments' => isset($feature['adjustments']),
-                    'adjustments' => $feature['adjustments'] ?? 'not set'
-                ]);
-                
-                if (isset($feature['adjustments']['contrast'])) {
-                    Log::info("Feature {$feature['id']} has contrast: {$feature['adjustments']['contrast']}");
-                }
-            }
             
             // Update layer panel with reversed order
             $this->dispatch('layers-updated', $layerPanelFeatures);

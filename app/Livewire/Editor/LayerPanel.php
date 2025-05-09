@@ -36,6 +36,21 @@ class LayerPanel extends Component
         Log::info('LayerPanel component mounted', [
             'compositeId' => $this->compositeId
         ]);
+        
+        // Add a delayed action to select the first layer if none is selected
+        // This helps ensure layers are properly loaded before attempting selection
+        $this->js("
+            setTimeout(() => {
+                if (!Livewire.find('" . $this->getId() . "').get('selectedLayerId')) {
+                    console.log('Auto-selecting first layer after delay');
+                    const layers = Livewire.find('" . $this->getId() . "').get('layers');
+                    if (layers && layers.length > 0) {
+                        Livewire.find('" . $this->getId() . "').set('selectedLayerId', layers[0].id);
+                        Livewire.find('" . $this->getId() . "').call('selectLayer', layers[0].id);
+                    }
+                }
+            }, 1000);
+        ");
     }
     
     /**
