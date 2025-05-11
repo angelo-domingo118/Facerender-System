@@ -401,7 +401,7 @@ function initializeCanvas(callback) {
     
     // Initialize Fabric.js canvas
     canvas = new fabric.Canvas('editor-canvas', {
-        backgroundColor: '#ffffff',
+        backgroundColor: '#334155', // Reverted to slate-700 for a medium-dark background
         selection: true,
         preserveObjectStacking: true,
         width: 600,
@@ -426,7 +426,7 @@ function setupGrid() {
         return;
     }
     
-    log('Setting up grid');
+    log('Setting up grid with medium-dark background and lighter lines');
     
     // Clear existing grid lines
     gridLines.forEach(line => {
@@ -434,10 +434,21 @@ function setupGrid() {
     });
     gridLines.length = 0;
     
+    // Grid line properties for dark background
+    const lineOptions = {
+        stroke: '#64748b', // Changed to slate-500 for lighter, distinct lines
+        selectable: false,
+        evented: false,
+        hoverCursor: 'default',
+        excludeFromExport: true // Grid lines should not be part of exported image
+    };
+    
     // Create grid lines efficiently - create and add them in batches
-    const batchSize = 5; // Process 5 lines at a time
+    const batchSize = 10; // Process lines in batches
     let verticalLinesDone = 0;
     let horizontalLinesDone = 0;
+    // Ensure canvasWidth and canvasHeight are up-to-date if canvas can resize
+    // For now, assuming they are set correctly during initializeCanvas
     const totalVerticalLines = Math.floor(canvasWidth / gridSize);
     const totalHorizontalLines = Math.floor(canvasHeight / gridSize);
     
@@ -456,12 +467,10 @@ function setupGrid() {
         // Create vertical grid lines batch
         for (let i = 0; i < batchSize && verticalLinesDone < totalVerticalLines; i++) {
             verticalLinesDone++;
-            const line = new fabric.Line([verticalLinesDone * gridSize, 0, verticalLinesDone * gridSize, canvasHeight], {
-                stroke: '#e5e7eb',
-                selectable: false,
-                evented: false,
-                hoverCursor: 'default'
-            });
+            const line = new fabric.Line(
+                [verticalLinesDone * gridSize, 0, verticalLinesDone * gridSize, canvasHeight], 
+                lineOptions
+            );
             gridLines.push(line);
             canvas.add(line);
         }
@@ -469,12 +478,10 @@ function setupGrid() {
         // Create horizontal grid lines batch
         for (let i = 0; i < batchSize && horizontalLinesDone < totalHorizontalLines; i++) {
             horizontalLinesDone++;
-            const line = new fabric.Line([0, horizontalLinesDone * gridSize, canvasWidth, horizontalLinesDone * gridSize], {
-                stroke: '#e5e7eb',
-                selectable: false,
-                evented: false,
-                hoverCursor: 'default'
-            });
+            const line = new fabric.Line(
+                [0, horizontalLinesDone * gridSize, canvasWidth, horizontalLinesDone * gridSize], 
+                lineOptions
+            );
             gridLines.push(line);
             canvas.add(line);
         }

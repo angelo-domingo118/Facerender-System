@@ -59,9 +59,9 @@
     </div>
     
     <!-- Canvas Area -->
-    <div class="flex-1 overflow-auto relative p-6 flex items-center justify-center bg-transparent" id="canvas-viewport">
+    <div class="flex-1 overflow-auto relative p-6 flex items-center justify-center bg-slate-700" id="canvas-viewport">
         <!-- Canvas container - this will be transformed for zooming -->
-        <div class="relative bg-transparent shadow-none" style="width: 600px; height: 600px; transform-origin: center center;" data-scale="1" wire:ignore>
+        <div class="relative bg-transparent shadow-none border border-slate-600" style="width: 600px; height: 600px; transform-origin: center center;" data-scale="1" wire:ignore>
             <canvas id="editor-canvas" width="600" height="600"></canvas>
         </div>
     </div>

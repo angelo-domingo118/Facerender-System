@@ -27,7 +27,7 @@
     </head>
     <body class="font-roboto bg-[#2C3E50] text-gray-200 overflow-hidden m-0 p-0 h-full min-h-full max-h-full">
         <!-- Grid pattern overlay for the entire page -->
-        <div class="fixed inset-0 w-full h-full bg-grid-pattern opacity-20 pointer-events-none z-0"></div>
+        <!-- <div class="fixed inset-0 w-full h-full bg-grid-pattern opacity-20 pointer-events-none z-0"></div> -->
 
         <div class="h-screen flex flex-col relative z-10">
             <!-- Page Content - Full Screen Editor -->
