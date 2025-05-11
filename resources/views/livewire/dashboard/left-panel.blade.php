@@ -1,11 +1,11 @@
-<div class="bg-[#2C3E50] p-4 h-full text-gray-200 flex flex-col">
+<div class="bg-transparent p-4 h-full text-gray-200 flex flex-col">
     <!-- Search Bar with Clear Button -->
     <div class="mb-3">
         <x-input 
             placeholder="{{ $contentTypeFilter === 'witnesses' ? 'Search witnesses...' : ($contentTypeFilter === 'composites' ? 'Search composites...' : 'Search cases...') }}" 
             wire:model.live.debounce.300ms="search"
             icon="magnifying-glass"
-            class="w-full bg-[#2C3E50] text-gray-200 border-[#3498DB]/20 focus:border-[#3498DB] focus:ring-[#3498DB]/50 placeholder-gray-400"
+            class="w-full bg-transparent text-gray-200 border-[#3498DB]/20 focus:border-[#3498DB] focus:ring-[#3498DB]/50 placeholder-gray-400"
         >
             <x-slot name="append">
                 <div class="absolute inset-y-0 right-0 flex items-center p-0.5">
@@ -41,7 +41,7 @@
             <div class="w-full border-t border-[#3498DB]/20"></div>
         </div>
         <div class="relative flex justify-center text-sm">
-            <span class="px-2 bg-[#2C3E50] text-[#3498DB] uppercase tracking-wider font-medium">Filters</span>
+            <span class="px-2 bg-transparent text-[#3498DB] uppercase tracking-wider font-medium">Filters</span>
         </div>
     </div>
     
@@ -53,7 +53,7 @@
             <x-select
                 placeholder="Select view mode"
                 wire:model.live="contentTypeFilter"
-                class="w-full bg-[#2C3E50] text-gray-200 border-[#3498DB]/20"
+                class="w-full bg-transparent text-gray-200 border-[#3498DB]/20"
                 :clearable="false"
             >
                 <x-select.option value="all">
@@ -83,7 +83,7 @@
             <x-select
                 placeholder="Filter by status"
                 wire:model.live="statusFilter"
-                class="w-full bg-[#2C3E50] text-gray-200 border-[#3498DB]/20"
+                class="w-full bg-transparent text-gray-200 border-[#3498DB]/20"
                 :clearable="false"
             >
                 <x-select.option value="all" label="All Statuses" />
@@ -119,7 +119,7 @@
             <label class="text-sm font-medium text-gray-300">Sort By</label>
             <x-select
                 wire:model.live="sortBy"
-                class="w-full bg-[#2C3E50] text-gray-200 border-[#3498DB]/20"
+                class="w-full bg-transparent text-gray-200 border-[#3498DB]/20"
                 :clearable="false"
             >
                 <x-select.option value="recent">

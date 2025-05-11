@@ -25,8 +25,11 @@
         <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
         <link rel="alternate icon" href="{{ asset('favicon.ico') }}" type="image/x-icon">
     </head>
-    <body class="font-roboto bg-[#F5F7FA] text-[#34495E] overflow-hidden">
-        <div class="h-screen flex flex-col">
+    <body class="font-roboto bg-[#2C3E50] text-gray-200 overflow-hidden m-0 p-0 h-full min-h-full max-h-full">
+        <!-- Grid pattern overlay for the entire page -->
+        <div class="fixed inset-0 w-full h-full bg-grid-pattern opacity-20 pointer-events-none z-0"></div>
+
+        <div class="h-screen flex flex-col relative z-10">
             <!-- Page Content - Full Screen Editor -->
             <main class="flex-1 overflow-hidden">
                 {{ $slot }}
@@ -36,5 +39,22 @@
         <x-notifications z-index="z-50" />
         @stack('modals')
         @livewireScripts
+
+        <style>
+            .bg-grid-pattern {
+                background-color: transparent;
+                background-image:
+                    linear-gradient(to right, rgba(52, 152, 219, 0.6) 1px, transparent 1px),
+                    linear-gradient(to bottom, rgba(52, 152, 219, 0.6) 1px, transparent 1px);
+                background-size: 40px 40px;
+                box-sizing: border-box;
+                /* animation: moveGrid 15s linear infinite; */ /* Animation removed */
+            }
+
+            /* @keyframes moveGrid {
+                0% { background-position: 0 0; }
+                100% { background-position: 40px 40px; }
+            } */ /* Animation keyframes removed */
+        </style>
     </body>
 </html> 

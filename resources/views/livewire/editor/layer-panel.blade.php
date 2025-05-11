@@ -1,6 +1,6 @@
-<div class="h-full flex flex-col bg-gray-50">
+<div class="h-full flex flex-col bg-slate-800/60">
     <!-- Layer List - Adding flex-1 and min-height to ensure it takes available space -->
-    <div class="flex-1 overflow-y-auto min-h-0">
+    <div class="flex-1 overflow-y-auto min-h-0 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-slate-800/50">
         <div class="p-2" wire:sortable="updateLayerOrder" wire:poll.10s>
             @forelse($layers as $index => $layer)
                 <script>
@@ -10,13 +10,13 @@
                     wire:key="layer-{{ $layer['id'] }}"
                     wire:sortable.item="{{ $layer['id'] }}"
                     wire:click="selectLayer({{ $layer['id'] }})" 
-                    class="mb-2 {{ $selectedLayerId == $layer['id'] ? 'bg-[#2C3E50]/5 border-[#2C3E50]/20' : 'bg-white border-gray-200' }} border p-2 rounded-md transition-colors duration-150 hover:border-[#2C3E50]/20 cursor-move"
+                    class="mb-2 {{ $selectedLayerId == $layer['id'] ? 'bg-[#3498DB]/20 border-[#3498DB]/40' : 'bg-slate-700/70 border-slate-600' }} border p-2 rounded-md transition-colors duration-150 hover:border-[#3498DB]/50 cursor-move"
                 >
                     <div class="flex items-center justify-between">
                         <div class="flex items-center space-x-2" wire:sortable.handle>
                             <button 
                                 wire:click.stop="toggleVisibility({{ $layer['id'] }})"
-                                class="{{ $layer['visible'] ? 'text-[#2C3E50]' : 'text-gray-400' }} hover:text-indigo-500 transition-colors duration-150 p-1"
+                                class="{{ $layer['visible'] ? 'text-sky-400' : 'text-gray-400' }} hover:text-sky-300 transition-colors duration-150 p-1"
                                 title="{{ $layer['visible'] ? 'Hide layer' : 'Show layer' }}"
                             >
                                 @if($layer['visible'])
@@ -35,7 +35,7 @@
                             <!-- Lock Button -->
                             <button 
                                 wire:click.stop="toggleLock({{ $layer['id'] }})"
-                                class="{{ $layer['locked'] ? 'text-red-500' : 'text-gray-400' }} hover:text-red-600 transition-colors duration-150 p-1"
+                                class="{{ $layer['locked'] ? 'text-red-500' : 'text-gray-400' }} hover:text-red-400 transition-colors duration-150 p-1"
                                 title="{{ $layer['locked'] ? 'Unlock layer' : 'Lock layer' }}"
                             >
                                 @if($layer['locked'])
@@ -54,13 +54,13 @@
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-5 w-5 text-gray-400">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 9h16.5m-16.5 6.75h16.5" />
                             </svg>
-                            <span class="{{ $selectedLayerId == $layer['id'] ? 'text-[#2C3E50] font-medium' : 'text-gray-600' }} text-sm truncate">{{ $layer['name'] }}</span>
+                            <span class="{{ $selectedLayerId == $layer['id'] ? 'text-sky-300 font-medium' : 'text-gray-300' }} text-sm truncate">{{ $layer['name'] }}</span>
                         </div>
                         <div>
                             <!-- Delete Layer Button -->
                             <button 
                                 wire:click.stop="requestDeletion({{ $layer['id'] }})"
-                                class="text-gray-500 hover:text-red-600 transition-colors duration-150 p-1 bg-gray-100 rounded-md"
+                                class="text-gray-400 hover:text-red-400 transition-colors duration-150 p-1 bg-slate-600 hover:bg-slate-500 rounded-md"
                                 title="Delete layer"
                             >
                                 <!-- Trash Icon (Heroicon: trash outline) -->
@@ -78,16 +78,16 @@
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-400 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
                     </svg>
-                    <p class="text-sm text-gray-500">Add features to see them appear as layers</p>
+                    <p class="text-sm text-gray-400">Add features to see them appear as layers</p>
                 </div>
             @endforelse
         </div>
     </div>
     
     <!-- Layer Properties - Explicitly set as a fixed height section with flex-shrink-0 -->
-    <div class="flex-shrink-0 p-3 border-t border-gray-200 bg-white {{ empty($layers) ? 'opacity-50 pointer-events-none' : '' }}">
+    <div class="flex-shrink-0 p-3 border-t border-slate-600 bg-slate-700/50 {{ empty($layers) ? 'opacity-50 pointer-events-none' : '' }}">
         <div class="space-y-3">
-            <h4 class="text-xs font-medium text-gray-500 uppercase flex justify-between items-center">
+            <h4 class="text-xs font-medium text-gray-400 uppercase flex justify-between items-center">
                 Layer Properties
                 <!-- Add actual dimensions display -->
                 @if($selectedLayerId)
@@ -98,25 +98,25 @@
             <!-- Position Controls -->
             <div class="grid grid-cols-2 gap-3">
                 <div>
-                    <label class="text-xs text-gray-600 mb-1 block">X Position</label>
+                    <label class="text-xs text-gray-300 mb-1 block">X Position</label>
                     <div class="flex">
                         <input 
                             type="number" 
                             wire:model.defer="positionX" 
                             wire:change="updatePosition"
-                            class="w-full text-sm border border-gray-300 rounded-md px-2 py-1"
+                            class="w-full text-sm bg-slate-600 border border-slate-500 text-gray-200 placeholder-gray-400 focus:ring-[#3498DB] focus:border-[#3498DB] rounded-md px-2 py-1"
                             step="1"
                         >
                     </div>
                 </div>
                 <div>
-                    <label class="text-xs text-gray-600 mb-1 block">Y Position</label>
+                    <label class="text-xs text-gray-300 mb-1 block">Y Position</label>
                     <div class="flex">
                         <input 
                             type="number" 
                             wire:model.defer="positionY" 
                             wire:change="updatePosition"
-                            class="w-full text-sm border border-gray-300 rounded-md px-2 py-1"
+                            class="w-full text-sm bg-slate-600 border border-slate-500 text-gray-200 placeholder-gray-400 focus:ring-[#3498DB] focus:border-[#3498DB] rounded-md px-2 py-1"
                             step="1"
                         >
                     </div>
@@ -126,40 +126,40 @@
             <!-- Add Size Display Section -->
             <div class="grid grid-cols-2 gap-3">
                 <div>
-                    <label class="text-xs text-gray-600 mb-1 block">Width</label>
+                    <label class="text-xs text-gray-300 mb-1 block">Width</label>
                     <div class="flex">
                         <input 
                             type="text" 
                             value="{{ $width }} px"
                             readonly
-                            class="w-full text-sm border border-gray-100 bg-gray-50 text-gray-500 rounded-md px-2 py-1"
+                            class="w-full text-sm border border-slate-500 bg-slate-600 text-gray-400 rounded-md px-2 py-1"
                         >
                     </div>
                 </div>
                 <div>
-                    <label class="text-xs text-gray-600 mb-1 block">Height</label>
+                    <label class="text-xs text-gray-300 mb-1 block">Height</label>
                     <div class="flex">
                         <input 
                             type="text" 
                             value="{{ $height }} px"
                             readonly
-                            class="w-full text-sm border border-gray-100 bg-gray-50 text-gray-500 rounded-md px-2 py-1"
+                            class="w-full text-sm border border-slate-500 bg-slate-600 text-gray-400 rounded-md px-2 py-1"
                         >
                     </div>
                 </div>
             </div>
             
             <div>
-                <label class="text-xs text-gray-600 mb-1 block">Opacity</label>
+                <label class="text-xs text-gray-300 mb-1 block">Opacity</label>
                 <input 
                     type="range" 
                     min="0" 
                     max="100" 
                     wire:model="opacity" 
                     wire:change="updateOpacity"
-                    class="w-full accent-[#2C3E50]"
+                    class="w-full accent-[#3498DB]"
                 >
-                <div class="flex justify-between text-xs text-gray-500 mt-1">
+                <div class="flex justify-between text-xs text-gray-400 mt-1">
                     <span>0%</span>
                     <span>{{ $opacity }}%</span>
                 </div>

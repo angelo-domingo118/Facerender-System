@@ -1,6 +1,6 @@
 <div class="h-full flex flex-col">
     <!-- Main Toolbar -->
-    <div class="border-b border-gray-200">
+    <div class="border-b border-slate-700">
         @livewire('editor.main-toolbar', ['compositeId' => $compositeId])
     </div>
     
@@ -10,7 +10,7 @@
         <div 
             x-data="{ expanded: @entangle('leftSidebarExpanded') }"
             :class="expanded ? 'w-80' : 'w-0'"
-            class="transition-all duration-300 flex-none border-r border-gray-200 overflow-hidden"
+            class="transition-all duration-300 flex-none border-r border-slate-700 overflow-hidden bg-slate-800/30 backdrop-blur-sm"
         >
             <div class="h-full" x-show="expanded" x-transition>
                 @livewire('editor.feature-library')
@@ -26,32 +26,32 @@
         <div 
             x-data="{ expanded: @entangle('rightSidebarExpanded') }"
             :class="expanded ? 'w-96' : 'w-0'"
-            class="transition-all duration-300 flex-none border-l border-gray-200 overflow-hidden"
+            class="transition-all duration-300 flex-none border-l border-slate-700 overflow-hidden bg-slate-800/30 backdrop-blur-sm"
         >
             <div class="h-full flex flex-col" x-show="expanded" x-transition:enter="transition ease-out duration-100" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-75" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
                     <!-- Tabs -->
-                    <div class="flex border-b border-gray-200">
+                    <div class="flex border-b border-slate-600">
                         <button 
                             wire:click="setActiveRightTab('layers')" 
-                            class="flex-1 px-4 py-2 font-medium text-sm text-center {{ $activeRightTab === 'layers' ? 'text-[#2C3E50] border-b-2 border-[#2C3E50]' : 'text-gray-500 hover:text-gray-700' }}"
+                            class="flex-1 px-4 py-2 font-medium text-sm text-center {{ $activeRightTab === 'layers' ? 'text-[#3498DB] border-b-2 border-[#3498DB]' : 'text-gray-400 hover:text-white' }}"
                         >
                             Layers
                         </button>
                         <button 
                             wire:click="setActiveRightTab('transforms')" 
-                            class="flex-1 px-4 py-2 font-medium text-sm text-center {{ $activeRightTab === 'transforms' ? 'text-[#2C3E50] border-b-2 border-[#2C3E50]' : 'text-gray-500 hover:text-gray-700' }}"
+                            class="flex-1 px-4 py-2 font-medium text-sm text-center {{ $activeRightTab === 'transforms' ? 'text-[#3498DB] border-b-2 border-[#3498DB]' : 'text-gray-400 hover:text-white' }}"
                         >
                             Transforms
                         </button>
                         <button 
                             wire:click="setActiveRightTab('adjustments')" 
-                            class="flex-1 px-4 py-2 font-medium text-sm text-center {{ $activeRightTab === 'adjustments' ? 'text-[#2C3E50] border-b-2 border-[#2C3E50]' : 'text-gray-500 hover:text-gray-700' }}"
+                            class="flex-1 px-4 py-2 font-medium text-sm text-center {{ $activeRightTab === 'adjustments' ? 'text-[#3498DB] border-b-2 border-[#3498DB]' : 'text-gray-400 hover:text-white' }}"
                         >
                             Adjustments
                         </button>
                         <button 
                             wire:click="setActiveRightTab('details')" 
-                            class="flex-1 px-4 py-2 font-medium text-sm text-center {{ $activeRightTab === 'details' ? 'text-[#2C3E50] border-b-2 border-[#2C3E50]' : 'text-gray-500 hover:text-gray-700' }}"
+                            class="flex-1 px-4 py-2 font-medium text-sm text-center {{ $activeRightTab === 'details' ? 'text-[#3498DB] border-b-2 border-[#3498DB]' : 'text-gray-400 hover:text-white' }}"
                         >
                             Details
                         </button>

@@ -1,5 +1,5 @@
 <x-app-layout>
-    <div class="py-8 bg-[#2C3E50]">
+    <div class="py-8 bg-transparent">
         <div class="max-w-7xl mx-auto sm:px-4 lg:px-6">
             <div class="grid md:grid-cols-4 gap-6">
                 <!-- Sidebar - made narrower -->
@@ -32,20 +32,20 @@
                                     </svg>
                                     {{ __('Update Password') }}
                                 </a>
-                                @if (Laravel\Fortify\Features::canManageTwoFactorAuthentication())
+                                {{-- @if (Laravel\Fortify\Features::canManageTwoFactorAuthentication())
                                 <a href="#two-factor" class="profile-nav-link group flex items-center px-2 py-1.5 text-sm font-medium rounded-md text-gray-600 hover:bg-[#EBF0F5] hover:border-l-4 hover:border-[#95A5A6] hover:pl-1 hover:text-[#34495E]" data-section="two-factor">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="mr-2 h-4 w-4 text-gray-500 group-hover:text-[#34495E]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                                     </svg>
                                     {{ __('Two Factor Authentication') }}
                                 </a>
-                                @endif
-                                <a href="#browser-sessions" class="profile-nav-link group flex items-center px-2 py-1.5 text-sm font-medium rounded-md text-gray-600 hover:bg-[#EBF0F5] hover:border-l-4 hover:border-[#95A5A6] hover:pl-1 hover:text-[#34495E]" data-section="browser-sessions">
+                                @endif --}}
+                                {{-- <a href="#browser-sessions" class="profile-nav-link group flex items-center px-2 py-1.5 text-sm font-medium rounded-md text-gray-600 hover:bg-[#EBF0F5] hover:border-l-4 hover:border-[#95A5A6] hover:pl-1 hover:text-[#34495E]" data-section="browser-sessions">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="mr-2 h-4 w-4 text-gray-500 group-hover:text-[#34495E]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                                     </svg>
                                     {{ __('Browser Sessions') }}
-                                </a>
+                                </a> --}}
                                 @if (Laravel\Jetstream\Jetstream::hasAccountDeletionFeatures())
                                 <a href="#delete-account" class="profile-nav-link group flex items-center px-2 py-1.5 text-sm font-medium rounded-md text-red-600 hover:bg-red-50 hover:border-l-4 hover:border-red-500 hover:pl-1" data-section="delete-account">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="mr-2 h-4 w-4 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -89,7 +89,7 @@
                         </div>
                     @endif
 
-                    @if (Laravel\Fortify\Features::canManageTwoFactorAuthentication())
+                    {{-- @if (Laravel\Fortify\Features::canManageTwoFactorAuthentication())
                         <div id="two-factor" class="profile-section">
                             <div class="bg-white rounded-lg shadow-sm overflow-hidden border border-[#95A5A6]">
                                 <div class="px-4 py-3 bg-[#34495E] text-white">
@@ -101,9 +101,9 @@
                                 </div>
                             </div>
                         </div>
-                    @endif
+                    @endif --}}
 
-                    <div id="browser-sessions" class="profile-section">
+                    {{-- <div id="browser-sessions" class="profile-section">
                         <div class="bg-white rounded-lg shadow-sm overflow-hidden border border-[#95A5A6]">
                             <div class="px-4 py-3 bg-[#34495E] text-white">
                                 <h3 class="text-base font-bold">{{ __('Browser Sessions') }}</h3>
@@ -113,7 +113,7 @@
                                 @livewire('profile.logout-other-browser-sessions-form')
                             </div>
                         </div>
-                    </div>
+                    </div> --}}
 
                     @if (Laravel\Jetstream\Jetstream::hasAccountDeletionFeatures())
                         <div id="delete-account" class="profile-section">
