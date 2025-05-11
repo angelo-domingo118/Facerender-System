@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="overflow-hidden m-0 p-0 h-full min-h-full max-h-full">
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -35,11 +35,32 @@
         <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
         <link rel="alternate icon" href="{{ asset('favicon.ico') }}" type="image/x-icon">
     </head>
-    <body class="font-roboto bg-[#F5F7FA] text-[#34495E]">
+    <body class="font-roboto bg-[#2C3E50] text-[#34495E] overflow-hidden m-0 p-0 h-full min-h-full max-h-full">
+        <!-- Grid pattern overlay for the entire page -->
+        <div class="fixed inset-0 w-full h-full bg-grid-pattern opacity-20 pointer-events-none"></div>
+        
         <div class="antialiased">
             {{ $slot }}
         </div>
 
         @livewireScripts
+        
+        <style>
+            .bg-grid-pattern {
+                background-color: transparent;
+                background-image:
+                    linear-gradient(to right, rgba(52, 152, 219, 0.6) 1px, transparent 1px),
+                    linear-gradient(to bottom, rgba(52, 152, 219, 0.6) 1px, transparent 1px);
+                background-size: 40px 40px;
+                box-sizing: border-box;
+                animation: moveGrid 15s linear infinite;
+                z-index: 1;
+            }
+
+            @keyframes moveGrid {
+                0% { background-position: 0 0; }
+                100% { background-position: 40px 40px; }
+            }
+        </style>
     </body>
 </html>

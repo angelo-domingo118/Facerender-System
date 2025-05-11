@@ -36,26 +36,14 @@
                          name="password" 
                          required 
                          autocomplete="current-password"
-                         class="mb-4" />
+                         class="mb-6" />
             </div>
 
-            <div class="block mb-4">
-                <x-checkbox id="remember_me" 
-                            name="remember" 
-                            label="{{ __('Remember me') }}" />
-            </div>
-
-            <div class="flex items-center justify-between mb-4">
-                @if (Route::has('password.request'))
-                    <a class="text-sm text-[#3498DB] hover:text-[#2980B9] transition-colors duration-300 hover:underline" 
-                       href="{{ route('password.request') }}">
-                        {{ __('Forgot your password?') }}
-                    </a>
-                @endif
-
+            <div class="flex items-center justify-center mb-4">
                 <x-button primary
                           type="submit" 
-                          spinner="submit">
+                          spinner="submit"
+                          class="w-full justify-center py-2.5">
                     {{ __('Log in') }}
                 </x-button>
             </div>

@@ -1,4 +1,4 @@
-<nav x-data="{ open: false }" class="bg-[#2C3E50] py-4">
+<nav x-data="{ open: false }" class="bg-transparent py-4">
     <!-- Primary Navigation Menu -->
     <div class="container mx-auto px-4 flex justify-between items-center">
         <div class="flex items-center">
