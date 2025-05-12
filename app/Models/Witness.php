@@ -24,7 +24,6 @@ class Witness extends Model
         'contact_number',
         'address',
         'relationship_to_case',
-        'reliability_rating',
         'interview_date',
         'interview_notes',
     ];
@@ -36,7 +35,6 @@ class Witness extends Model
      */
     protected $casts = [
         'age' => 'integer',
-        'reliability_rating' => 'integer',
         'interview_date' => 'date',
     ];
 

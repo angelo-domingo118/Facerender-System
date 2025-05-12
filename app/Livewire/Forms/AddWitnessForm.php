@@ -20,7 +20,6 @@ class AddWitnessForm extends Component
     public $address = '';
     public $relationship_to_case = '';
     public $notes = '';
-    public $reliability_rating = null;
     public $interview_date = null;
 
     protected $rules = [
@@ -31,7 +30,6 @@ class AddWitnessForm extends Component
         'address' => 'nullable|max:255',
         'relationship_to_case' => 'nullable|max:100',
         'notes' => 'nullable|max:1000',
-        'reliability_rating' => 'nullable|numeric|min:1|max:10',
         'interview_date' => 'nullable|date',
     ];
 
@@ -54,7 +52,7 @@ class AddWitnessForm extends Component
         $this->reset([
             'name', 'age', 'gender', 'contact_number',
             'address', 'relationship_to_case', 'notes',
-            'reliability_rating', 'interview_date'
+            'interview_date'
         ]);
         $this->gender = 'Male'; // Default value
         $this->resetValidation();
@@ -73,7 +71,6 @@ class AddWitnessForm extends Component
             'address' => $this->address,
             'relationship_to_case' => $this->relationship_to_case,
             'interview_notes' => $this->notes,
-            'reliability_rating' => $this->reliability_rating,
             'interview_date' => $this->interview_date,
         ]);
 

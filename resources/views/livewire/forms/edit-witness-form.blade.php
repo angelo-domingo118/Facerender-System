@@ -64,16 +64,6 @@
             />
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <x-input
-                    wire:model="reliability_rating"
-                    label="Reliability Rating (1-10)"
-                    placeholder="Enter rating from 1-10"
-                    min="1"
-                    max="10"
-                    type="number"
-                    id="edit-witness-reliability-rating"
-                />
-                
                 <x-datetime-picker
                     wire:model="interview_date"
                     label="Interview Date"

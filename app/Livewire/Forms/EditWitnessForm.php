@@ -19,7 +19,6 @@ class EditWitnessForm extends Component
     public $address = '';
     public $relationship_to_case = '';
     public $notes = '';
-    public $reliability_rating = null;
     public $interview_date = null;
     
     protected $rules = [
@@ -30,7 +29,6 @@ class EditWitnessForm extends Component
         'address' => 'nullable|max:255',
         'relationship_to_case' => 'nullable|max:100',
         'notes' => 'nullable|max:1000',
-        'reliability_rating' => 'nullable|numeric|min:1|max:10',
         'interview_date' => 'nullable|date',
     ];
     
@@ -54,7 +52,6 @@ class EditWitnessForm extends Component
         $this->address = $this->witness->address;
         $this->relationship_to_case = $this->witness->relationship_to_case;
         $this->notes = $this->witness->interview_notes;
-        $this->reliability_rating = $this->witness->reliability_rating;
         $this->interview_date = $this->witness->interview_date;
     }
     
@@ -63,7 +60,7 @@ class EditWitnessForm extends Component
         $this->reset([
             'name', 'age', 'gender', 'contact_number',
             'address', 'relationship_to_case', 'notes',
-            'reliability_rating', 'interview_date'
+            'interview_date'
         ]);
         $this->resetValidation();
     }
@@ -80,7 +77,6 @@ class EditWitnessForm extends Component
             'address' => $this->address,
             'relationship_to_case' => $this->relationship_to_case,
             'interview_notes' => $this->notes,
-            'reliability_rating' => $this->reliability_rating,
             'interview_date' => $this->interview_date,
         ]);
         
