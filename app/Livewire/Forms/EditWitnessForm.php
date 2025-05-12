@@ -5,6 +5,7 @@ namespace App\Livewire\Forms;
 use App\Models\Witness;
 use Livewire\Component;
 use Livewire\Attributes\On;
+use Carbon\Carbon;
 
 class EditWitnessForm extends Component
 {
@@ -29,7 +30,14 @@ class EditWitnessForm extends Component
         'address' => 'nullable|max:255',
         'relationship_to_case' => 'nullable|max:100',
         'notes' => 'nullable|max:1000',
-        'interview_date' => 'nullable|date',
+        'interview_date' => 'required|date',
+    ];
+    
+    protected $messages = [
+        'name.required' => 'Witness name is required',
+        'name.min' => 'Witness name must be at least 3 characters',
+        'gender.required' => 'Please select a gender',
+        'interview_date.required' => 'Interview date is required',
     ];
     
     #[On('edit-witness')]
@@ -69,7 +77,8 @@ class EditWitnessForm extends Component
     {
         $this->validate();
         
-        $this->witness->update([
+        $witness = Witness::findOrFail($this->witnessId);
+        $witness->update([
             'name' => $this->name,
             'age' => $this->age,
             'gender' => $this->gender,
@@ -80,7 +89,7 @@ class EditWitnessForm extends Component
             'interview_date' => $this->interview_date,
         ]);
         
-        $this->dispatch('witness-updated', caseId: $this->witness->case_id);
+        $this->dispatch('witness-updated', witnessId: $witness->id);
         $this->show = false;
         $this->resetForm();
     }

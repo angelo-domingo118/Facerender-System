@@ -7,6 +7,7 @@ use App\Models\CaseRecord;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Livewire\Attributes\On;
+use Carbon\Carbon;
 
 class AddWitnessForm extends Component
 {
@@ -30,7 +31,14 @@ class AddWitnessForm extends Component
         'address' => 'nullable|max:255',
         'relationship_to_case' => 'nullable|max:100',
         'notes' => 'nullable|max:1000',
-        'interview_date' => 'nullable|date',
+        'interview_date' => 'required|date',
+    ];
+
+    protected $messages = [
+        'name.required' => 'Witness name is required',
+        'name.min' => 'Witness name must be at least 3 characters',
+        'gender.required' => 'Please select a gender',
+        'interview_date.required' => 'Interview date is required',
     ];
 
     #[On('add-witness')]
@@ -50,11 +58,11 @@ class AddWitnessForm extends Component
     public function resetForm()
     {
         $this->reset([
-            'name', 'age', 'gender', 'contact_number',
+            'name', 'age', 'contact_number',
             'address', 'relationship_to_case', 'notes',
-            'interview_date'
         ]);
         $this->gender = 'Male'; // Default value
+        $this->interview_date = Carbon::now()->format('Y-m-d'); // Set current date as default
         $this->resetValidation();
     }
 

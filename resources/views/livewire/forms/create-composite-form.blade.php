@@ -10,10 +10,11 @@
         <div class="space-y-4">
             <x-input
                 wire:model="title"
-                label="Composite Title"
+                label="Composite Title *"
                 placeholder="Enter a title for this composite"
                 required
                 id="create-composite-title"
+                error="{{ $errors->first('title') }}"
             />
             
             <x-textarea
@@ -21,6 +22,17 @@
                 label="Description (Optional)"
                 placeholder="Add details about this composite"
                 rows="2"
+                error="{{ $errors->first('description') }}"
+            />
+            
+            <x-datetime-picker
+                wire:model="created_at"
+                label="Creation Date *"
+                placeholder="Creation date"
+                without-time
+                readonly
+                hint="Automatically set to today's date"
+                error="{{ $errors->first('created_at') }}"
             />
             
             @if(empty($available_witnesses))
@@ -39,7 +51,7 @@
                 </div>
             @else
                 <div class="form-group">
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Select Witness</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Select Witness *</label>
                     <select 
                         wire:model="witness_id"
                         class="w-full rounded-md shadow-sm border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
@@ -50,6 +62,7 @@
                             <option value="{{ $witness['value'] }}">{{ $witness['label'] }}</option>
                         @endforeach
                     </select>
+                    @error('witness_id') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
                 </div>
             @endif
             
@@ -68,6 +81,7 @@
                         ]"
                         option-label="name"
                         option-value="value"
+                        error="{{ $errors->first('suspect_gender') }}"
                     />
                     
                     <x-select
@@ -95,6 +109,7 @@
                         ]"
                         option-label="name"
                         option-value="value"
+                        error="{{ $errors->first('suspect_ethnicity') }}"
                     />
                 </div>
                 
@@ -113,6 +128,7 @@
                         ]"
                         option-label="name"
                         option-value="value"
+                        error="{{ $errors->first('suspect_age_range') }}"
                     />
                     
                     <x-select
@@ -122,6 +138,7 @@
                         :options="$heightOptions"
                         option-label="name"
                         option-value="value"
+                        error="{{ $errors->first('suspect_height') }}"
                     />
                 </div>
                 
@@ -140,6 +157,7 @@
                         ]"
                         option-label="name"
                         option-value="value"
+                        error="{{ $errors->first('suspect_body_build') }}"
                     />
                 </div>
                 
@@ -149,8 +167,13 @@
                         label="Additional Notes"
                         placeholder="Add any other details about the suspect's appearance"
                         rows="2"
+                        error="{{ $errors->first('suspect_additional_notes') }}"
                     />
                 </div>
+            </div>
+            
+            <div class="mt-2 text-sm text-gray-500">
+                <span class="font-medium">Note:</span> Fields marked with * are required.
             </div>
         </div>
         

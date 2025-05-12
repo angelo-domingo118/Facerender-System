@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Livewire\Component;
 use Livewire\Attributes\On;
+use Carbon\Carbon;
 
 class CreateCompositeForm extends Component
 {
@@ -25,6 +26,7 @@ class CreateCompositeForm extends Component
     public $suspect_height = '';
     public $suspect_body_build = '';
     public $suspect_additional_notes = '';
+    public $created_at = null;
     
     public $heightOptions = [
         ['name' => 'Under 5 feet', 'value' => 'Under 5 feet'],
@@ -45,6 +47,15 @@ class CreateCompositeForm extends Component
         'suspect_height' => 'nullable|max:50',
         'suspect_body_build' => 'nullable|max:50',
         'suspect_additional_notes' => 'nullable|max:1000',
+        'created_at' => 'required|date',
+    ];
+    
+    protected $messages = [
+        'title.required' => 'Composite title is required',
+        'title.min' => 'Composite title must be at least 3 characters',
+        'witness_id.required' => 'Please select a witness',
+        'witness_id.exists' => 'The selected witness is invalid',
+        'created_at.required' => 'Creation date is required',
     ];
 
     #[On('create-composite')]
@@ -54,6 +65,7 @@ class CreateCompositeForm extends Component
         $this->caseId = $caseId;
         $this->loadCase();
         $this->loadAvailableWitnesses();
+        $this->created_at = Carbon::now()->format('Y-m-d');
         $this->show = true;
     }
 
@@ -98,6 +110,7 @@ class CreateCompositeForm extends Component
             'suspect_ethnicity', 'suspect_age_range', 'suspect_height',
             'suspect_body_build', 'suspect_additional_notes'
         ]);
+        $this->created_at = Carbon::now()->format('Y-m-d');
         $this->resetValidation();
     }
 
@@ -124,6 +137,7 @@ class CreateCompositeForm extends Component
             'suspect_height' => $this->suspect_height,
             'suspect_body_build' => $this->suspect_body_build,
             'suspect_additional_notes' => $this->suspect_additional_notes,
+            'created_at' => $this->created_at,
         ]);
 
         // Dispatch composite-created event for editor navigation

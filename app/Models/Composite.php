@@ -31,6 +31,7 @@ class Composite extends Model
         'suspect_height',
         'suspect_body_build',
         'suspect_additional_notes',
+        'created_at',
     ];
 
     /**
@@ -41,6 +42,7 @@ class Composite extends Model
     protected $casts = [
         'canvas_width' => 'integer',
         'canvas_height' => 'integer',
+        'created_at' => 'datetime',
     ];
 
     /**

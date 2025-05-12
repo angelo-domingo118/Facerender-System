@@ -12,10 +12,11 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <x-input
                     wire:model="name"
-                    label="Witness Name"
+                    label="Witness Name *"
                     placeholder="Enter full name"
                     required
                     id="add-witness-name"
+                    error="{{ $errors->first('name') }}"
                 />
                 
                 <div class="grid grid-cols-2 gap-4">
@@ -25,11 +26,12 @@
                         placeholder="Enter age"
                         type="number"
                         id="add-witness-age"
+                        error="{{ $errors->first('age') }}"
                     />
                     
                     <x-select
                         wire:model="gender"
-                        label="Gender"
+                        label="Gender *"
                         placeholder="Select gender"
                         :options="[
                             ['name' => 'Male', 'value' => 'Male'],
@@ -39,6 +41,8 @@
                         option-label="name"
                         option-value="value"
                         id="add-witness-gender"
+                        required
+                        error="{{ $errors->first('gender') }}"
                     />
                 </div>
             </div>
@@ -52,6 +56,7 @@
                         label="Contact Number"
                         placeholder="Enter contact number"
                         id="add-witness-contact-number"
+                        error="{{ $errors->first('contact_number') }}"
                     />
                     
                     <x-input
@@ -59,6 +64,7 @@
                         label="Address"
                         placeholder="Enter address"
                         id="add-witness-address"
+                        error="{{ $errors->first('address') }}"
                     />
                     
                     <x-input
@@ -66,14 +72,18 @@
                         label="Relationship to Case"
                         placeholder="E.g., Victim, Bystander, Reporting Officer"
                         id="add-witness-relationship-to-case"
+                        error="{{ $errors->first('relationship_to_case') }}"
                     />
                     
                     <x-datetime-picker
                         wire:model="interview_date"
-                        label="Interview Date"
+                        label="Interview Date *"
                         placeholder="Select interview date"
                         without-time
                         id="add-witness-interview-date"
+                        readonly
+                        hint="Automatically set to today's date"
+                        error="{{ $errors->first('interview_date') }}"
                     />
                 </div>
                 
@@ -86,8 +96,13 @@
                         rows="12"
                         id="add-witness-notes"
                         class="h-full"
+                        error="{{ $errors->first('notes') }}"
                     />
                 </div>
+            </div>
+            
+            <div class="mt-2 text-sm text-gray-500">
+                <span class="font-medium">Note:</span> Fields marked with * are required.
             </div>
         </div>
         

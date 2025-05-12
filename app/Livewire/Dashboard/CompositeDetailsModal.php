@@ -6,6 +6,7 @@ use App\Models\Composite;
 use App\Models\Witness;
 use Livewire\Component;
 use Livewire\Attributes\On;
+use Carbon\Carbon;
 
 class CompositeDetailsModal extends Component
 {
@@ -23,6 +24,7 @@ class CompositeDetailsModal extends Component
     public $suspect_height;
     public $suspect_body_build;
     public $suspect_additional_notes;
+    public $created_at;
     public $available_witnesses = [];
     
     protected $rules = [
@@ -35,6 +37,15 @@ class CompositeDetailsModal extends Component
         'suspect_height' => 'nullable|max:50',
         'suspect_body_build' => 'nullable|max:50',
         'suspect_additional_notes' => 'nullable|max:1000',
+        'created_at' => 'required|date',
+    ];
+    
+    protected $messages = [
+        'title.required' => 'Composite title is required',
+        'title.min' => 'Composite title must be at least 3 characters',
+        'witness_id.required' => 'Please select a witness',
+        'witness_id.exists' => 'The selected witness is invalid',
+        'created_at.required' => 'Creation date is required',
     ];
     
     #[On('view-composite')]
@@ -72,6 +83,7 @@ class CompositeDetailsModal extends Component
             $this->suspect_height = $composite->suspect_height;
             $this->suspect_body_build = $composite->suspect_body_build;
             $this->suspect_additional_notes = $composite->suspect_additional_notes;
+            $this->created_at = $composite->created_at;
         }
     }
     
@@ -108,7 +120,6 @@ class CompositeDetailsModal extends Component
         $this->validate();
         
         $composite = Composite::findOrFail($this->compositeId);
-        
         $composite->update([
             'title' => $this->title,
             'description' => $this->description,
@@ -121,50 +132,25 @@ class CompositeDetailsModal extends Component
             'suspect_additional_notes' => $this->suspect_additional_notes,
         ]);
         
-        $this->dispatch('composite-updated', [
-            'compositeId' => $composite->id,
-            'caseId' => $composite->case_id
-        ]);
-        
-        $this->dispatch('notify', [
-            'message' => 'Composite details updated successfully!',
-            'type' => 'success'
-        ]);
-        
+        $this->dispatch('composite-updated', ['compositeId' => $composite->id, 'caseId' => $composite->case_id]);
         $this->isEditing = false;
-        $this->show = false;
-    }
-    
-    public function close()
-    {
-        $this->show = false;
-        // Defer the resetFormData to avoid showing "Composite not found" message
-        // during the closing animation
-    }
-    
-    #[On('hidden')]
-    public function onModalHidden()
-    {
-        // Only reset form data after the modal is completely hidden
-        if (!$this->show) {
-            $this->resetFormData();
-        }
     }
     
     public function resetFormData()
     {
-        $this->compositeId = null;
-        $this->isEditing = false;
-        $this->title = null;
-        $this->description = null;
-        $this->witness_id = null;
-        $this->suspect_gender = null;
-        $this->suspect_ethnicity = null;
-        $this->suspect_age_range = null;
-        $this->suspect_height = null;
-        $this->suspect_body_build = null;
-        $this->suspect_additional_notes = null;
-        $this->available_witnesses = [];
+        $this->reset([
+            'title', 'description', 'witness_id', 'suspect_gender',
+            'suspect_ethnicity', 'suspect_age_range', 'suspect_height',
+            'suspect_body_build', 'suspect_additional_notes', 'available_witnesses',
+            'created_at'
+        ]);
+        $this->resetValidation();
+    }
+    
+    public function closeModal()
+    {
+        $this->show = false;
+        $this->resetFormData();
     }
     
     public function resetForm()

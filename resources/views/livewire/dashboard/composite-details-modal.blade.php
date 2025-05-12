@@ -114,24 +114,38 @@
                                     <!-- Edit Form - Basic Info -->
                                     <div class="space-y-4">
                                         <x-input 
-                                            label="Title" 
+                                            label="Title *" 
                                             wire:model="title" 
                                             placeholder="Enter composite title"
                                             icon="pencil"
                                             class="w-full"
+                                            required
+                                            error="{{ $errors->first('title') }}"
                                         />
                                         
                                         <x-select 
-                                            label="Witness" 
+                                            label="Witness *" 
                                             wire:model="witness_id"
                                             placeholder="Select a witness"
                                             icon="user"
                                             class="w-full"
+                                            required
+                                            error="{{ $errors->first('witness_id') }}"
                                         >
                                             @foreach($available_witnesses as $witness)
                                                 <x-select.option label="{{ $witness->name }}" value="{{ $witness->id }}" />
                                             @endforeach
                                         </x-select>
+                                        
+                                        <x-datetime-picker
+                                            wire:model="created_at"
+                                            label="Creation Date *"
+                                            placeholder="Creation date"
+                                            without-time
+                                            readonly
+                                            hint="Automatically set when the composite was created"
+                                            error="{{ $errors->first('created_at') }}"
+                                        />
                                         
                                         <x-textarea 
                                             label="Description" 
@@ -139,7 +153,12 @@
                                             placeholder="Provide a general description of the composite"
                                             rows="5"
                                             class="mt-2" 
+                                            error="{{ $errors->first('description') }}"
                                         />
+                                        
+                                        <div class="mt-2 text-sm text-gray-500">
+                                            <span class="font-medium">Note:</span> Fields marked with * are required.
+                                        </div>
                                     </div>
                                 @endif
                             </div>
@@ -221,44 +240,109 @@
                                 @else
                                     <!-- Edit Form - Suspect Info -->
                                     <div class="space-y-4">
-                                        <x-input label="Gender" wire:model="suspect_gender" placeholder="e.g. Male, Female, Other" icon="user" />
+                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <x-select
+                                                label="Gender"
+                                                wire:model="suspect_gender"
+                                                placeholder="Select gender"
+                                                :options="[
+                                                    ['name' => 'Male', 'value' => 'Male'],
+                                                    ['name' => 'Female', 'value' => 'Female'],
+                                                    ['name' => 'Other', 'value' => 'Other'],
+                                                ]"
+                                                option-label="name"
+                                                option-value="value"
+                                                error="{{ $errors->first('suspect_gender') }}"
+                                            />
+                                            
+                                            <x-select
+                                                label="Ethnicity"
+                                                wire:model="suspect_ethnicity"
+                                                placeholder="Select ethnicity"
+                                                :options="[
+                                                    ['name' => 'Filipino', 'value' => 'Filipino'],
+                                                    ['name' => 'Ilocano', 'value' => 'Ilocano'],
+                                                    ['name' => 'Cebuano', 'value' => 'Cebuano'],
+                                                    ['name' => 'Tagalog', 'value' => 'Tagalog'],
+                                                    ['name' => 'Bicolano', 'value' => 'Bicolano'],
+                                                    ['name' => 'Waray', 'value' => 'Waray'],
+                                                    ['name' => 'Kapampangan', 'value' => 'Kapampangan'],
+                                                    ['name' => 'Pangasinense', 'value' => 'Pangasinense'],
+                                                    ['name' => 'Chinese-Filipino', 'value' => 'Chinese-Filipino'],
+                                                    ['name' => 'Spanish-Filipino', 'value' => 'Spanish-Filipino'],
+                                                    ['name' => 'American-Filipino', 'value' => 'American-Filipino'],
+                                                    ['name' => 'Japanese-Filipino', 'value' => 'Japanese-Filipino'],
+                                                    ['name' => 'Korean-Filipino', 'value' => 'Korean-Filipino'],
+                                                    ['name' => 'Indian-Filipino', 'value' => 'Indian-Filipino'],
+                                                    ['name' => 'Middle Eastern-Filipino', 'value' => 'Middle Eastern-Filipino'],
+                                                    ['name' => 'Foreign', 'value' => 'Foreign'],
+                                                    ['name' => 'Other', 'value' => 'Other'],
+                                                ]"
+                                                option-label="name"
+                                                option-value="value"
+                                                error="{{ $errors->first('suspect_ethnicity') }}"
+                                            />
+                                        </div>
+                                        
+                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <x-select
+                                                label="Age Range"
+                                                wire:model="suspect_age_range"
+                                                placeholder="Select age range"
+                                                :options="[
+                                                    ['name' => '18-25', 'value' => '18-25'],
+                                                    ['name' => '26-35', 'value' => '26-35'],
+                                                    ['name' => '36-45', 'value' => '36-45'],
+                                                    ['name' => '46-55', 'value' => '46-55'],
+                                                    ['name' => '56-65', 'value' => '56-65'],
+                                                    ['name' => '65+', 'value' => '65+'],
+                                                ]"
+                                                option-label="name"
+                                                option-value="value"
+                                                error="{{ $errors->first('suspect_age_range') }}"
+                                            />
+                                            
+                                            <x-select
+                                                label="Height"
+                                                wire:model="suspect_height"
+                                                placeholder="Select height"
+                                                :options="[
+                                                    ['name' => 'Under 5 feet', 'value' => 'Under 5 feet'],
+                                                    ['name' => '5\' to 5\'4\"', 'value' => '5\' to 5\'4\"'],
+                                                    ['name' => '5\'5\" to 5\'8\"', 'value' => '5\'5\" to 5\'8\"'],
+                                                    ['name' => '5\'9\" to 6\'', 'value' => '5\'9\" to 6\''],
+                                                    ['name' => '6\'1\" to 6\'4\"', 'value' => '6\'1\" to 6\'4\"'],
+                                                    ['name' => 'Over 6\'4\"', 'value' => 'Over 6\'4\"'],
+                                                ]"
+                                                option-label="name"
+                                                option-value="value"
+                                                error="{{ $errors->first('suspect_height') }}"
+                                            />
+                                        </div>
+                                        
                                         <x-select
-                                            label="Ethnicity"
-                                            wire:model="suspect_ethnicity"
-                                            placeholder="Select ethnicity"
-                                            icon="user-group"
+                                            label="Body Build"
+                                            wire:model="suspect_body_build"
+                                            placeholder="Select body build"
                                             :options="[
-                                                ['name' => 'Filipino', 'value' => 'Filipino'],
-                                                ['name' => 'Ilocano', 'value' => 'Ilocano'],
-                                                ['name' => 'Cebuano', 'value' => 'Cebuano'],
-                                                ['name' => 'Tagalog', 'value' => 'Tagalog'],
-                                                ['name' => 'Bicolano', 'value' => 'Bicolano'],
-                                                ['name' => 'Waray', 'value' => 'Waray'],
-                                                ['name' => 'Kapampangan', 'value' => 'Kapampangan'],
-                                                ['name' => 'Pangasinense', 'value' => 'Pangasinense'],
-                                                ['name' => 'Chinese-Filipino', 'value' => 'Chinese-Filipino'],
-                                                ['name' => 'Spanish-Filipino', 'value' => 'Spanish-Filipino'],
-                                                ['name' => 'American-Filipino', 'value' => 'American-Filipino'],
-                                                ['name' => 'Japanese-Filipino', 'value' => 'Japanese-Filipino'],
-                                                ['name' => 'Korean-Filipino', 'value' => 'Korean-Filipino'],
-                                                ['name' => 'Indian-Filipino', 'value' => 'Indian-Filipino'],
-                                                ['name' => 'Middle Eastern-Filipino', 'value' => 'Middle Eastern-Filipino'],
-                                                ['name' => 'Foreign', 'value' => 'Foreign'],
-                                                ['name' => 'Other', 'value' => 'Other'],
+                                                ['name' => 'Slim', 'value' => 'Slim'],
+                                                ['name' => 'Average', 'value' => 'Average'],
+                                                ['name' => 'Athletic', 'value' => 'Athletic'],
+                                                ['name' => 'Stocky', 'value' => 'Stocky'],
+                                                ['name' => 'Overweight', 'value' => 'Overweight'],
+                                                ['name' => 'Muscular', 'value' => 'Muscular'],
                                             ]"
                                             option-label="name"
                                             option-value="value"
+                                            error="{{ $errors->first('suspect_body_build') }}"
                                         />
-                                        <x-input label="Age Range" wire:model="suspect_age_range" placeholder="e.g. 25-35" icon="calendar" />
-                                        <x-input label="Height" wire:model="suspect_height" placeholder="e.g. 5'9\" to 6'" icon="identification" />
-                                        <x-input label="Body Build" wire:model="suspect_body_build" placeholder="e.g. Slim, Athletic, Muscular" icon="user" />
                                         
-                                        <x-textarea 
-                                            label="Additional Notes" 
-                                            wire:model="suspect_additional_notes" 
-                                            placeholder="Any additional details about the suspect"
-                                            rows="4" 
-                                            class="mt-2"
+                                        <x-textarea
+                                            label="Additional Notes"
+                                            wire:model="suspect_additional_notes"
+                                            placeholder="Add any other details about the suspect's appearance"
+                                            rows="4"
+                                            error="{{ $errors->first('suspect_additional_notes') }}"
                                         />
                                     </div>
                                 @endif
