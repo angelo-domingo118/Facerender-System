@@ -25,7 +25,7 @@
         <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
         <link rel="alternate icon" href="{{ asset('favicon.ico') }}" type="image/x-icon">
     </head>
-    <body class="font-roboto bg-[#2C3E50] text-gray-200 overflow-hidden m-0 p-0 h-full min-h-full max-h-full">
+    <body class="font-roboto bg-slate-700 text-gray-200 overflow-hidden m-0 p-0 h-full min-h-full max-h-full">
         <!-- Grid pattern overlay for the entire page -->
         <!-- <div class="fixed inset-0 w-full h-full bg-grid-pattern opacity-20 pointer-events-none z-0"></div> -->
 
