@@ -8,78 +8,87 @@
         </x-slot>
         
         <div class="space-y-4">
-            <x-input
-                wire:model="name"
-                label="Witness Name"
-                placeholder="Enter full name"
-                required
-                id="add-witness-name"
-            />
-            
+            <!-- Basic Information Section -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <x-input
-                    wire:model="age"
-                    label="Age"
-                    placeholder="Enter age"
-                    type="number"
-                    id="add-witness-age"
+                    wire:model="name"
+                    label="Witness Name"
+                    placeholder="Enter full name"
+                    required
+                    id="add-witness-name"
                 />
                 
-                <x-select
-                    wire:model="gender"
-                    label="Gender"
-                    placeholder="Select gender"
-                    :options="[
-                        ['name' => 'Male', 'value' => 'Male'],
-                        ['name' => 'Female', 'value' => 'Female'],
-                        ['name' => 'Other', 'value' => 'Other'],
-                    ]"
-                    option-label="name"
-                    option-value="value"
-                    id="add-witness-gender"
-                />
+                <div class="grid grid-cols-2 gap-4">
+                    <x-input
+                        wire:model="age"
+                        label="Age"
+                        placeholder="Enter age"
+                        type="number"
+                        id="add-witness-age"
+                    />
+                    
+                    <x-select
+                        wire:model="gender"
+                        label="Gender"
+                        placeholder="Select gender"
+                        :options="[
+                            ['name' => 'Male', 'value' => 'Male'],
+                            ['name' => 'Female', 'value' => 'Female'],
+                            ['name' => 'Other', 'value' => 'Other'],
+                        ]"
+                        option-label="name"
+                        option-value="value"
+                        id="add-witness-gender"
+                    />
+                </div>
             </div>
-            
+
+            <!-- Contact and Notes Section -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <x-input
-                    wire:model="contact_number"
-                    label="Contact Number"
-                    placeholder="Enter contact number"
-                    id="add-witness-contact-number"
-                />
+                <!-- Left Column - Contact Info -->
+                <div class="space-y-4">
+                    <x-input
+                        wire:model="contact_number"
+                        label="Contact Number"
+                        placeholder="Enter contact number"
+                        id="add-witness-contact-number"
+                    />
+                    
+                    <x-input
+                        wire:model="address"
+                        label="Address"
+                        placeholder="Enter address"
+                        id="add-witness-address"
+                    />
+                    
+                    <x-input
+                        wire:model="relationship_to_case"
+                        label="Relationship to Case"
+                        placeholder="E.g., Victim, Bystander, Reporting Officer"
+                        id="add-witness-relationship-to-case"
+                    />
+                    
+                    <x-datetime-picker
+                        wire:model="interview_date"
+                        label="Interview Date"
+                        placeholder="Select interview date"
+                        without-time
+                        id="add-witness-interview-date"
+                    />
+                </div>
+                
+                <!-- Right Column - Interview Notes -->
+                <div>
+                    <x-textarea
+                        wire:model="notes"
+                        label="Interview Notes"
+                        placeholder="Add any additional information about this witness"
+                        rows="12"
+                        id="add-witness-notes"
+                        class="h-full"
+                    />
+                </div>
             </div>
-            
-            <x-input
-                wire:model="address"
-                label="Address"
-                placeholder="Enter address"
-                id="add-witness-address"
-            />
-            
-            <x-input
-                wire:model="relationship_to_case"
-                label="Relationship to Case"
-                placeholder="E.g., Victim, Bystander, Reporting Officer"
-                id="add-witness-relationship-to-case"
-            />
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <x-datetime-picker
-                    wire:model="interview_date"
-                    label="Interview Date"
-                    placeholder="Select interview date"
-                    without-time
-                    id="add-witness-interview-date"
-                />
-            </div>
-            
-            <x-textarea
-                wire:model="notes"
-                label="Interview Notes"
-                placeholder="Add any additional information about this witness"
-                rows="3"
-                id="add-witness-notes"
-            />
         </div>
         
         <x-slot name="footer">
