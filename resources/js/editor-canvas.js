@@ -97,6 +97,7 @@ const pendingSelectionRequests = new Set();
 let gridSize = 20;
 let canvasWidth = 600;
 let canvasHeight = 600;
+let initialLoadingComplete = false; // Track if initial loading is complete
 
 // Track processed events to prevent duplicates
 const processedEvents = new Set();
@@ -1826,6 +1827,12 @@ function setupFabricImageFromElement(imgElement, feature, moveEnabled) {
 
         // Remove from loading set *after* successful addition
         loadingFeatures.delete(feature.id);
+        
+        // If all features are loaded and this is initial load, update loading state
+        if (initialLoadingComplete === false && loadingFeatures.size === 0) {
+            log(`All initial features loaded, showing canvas`);
+            updateCanvasLoadingState(false);
+        }
 
         // --- Add Event Listener for modifications ---
         if (typeof Livewire !== 'undefined') {
@@ -2038,6 +2045,9 @@ window.forceReloadCanvasFeatures = function() {
 
 // Function to load existing features from Livewire component
 function loadExistingFeatures() {
+    // Show loading state before attempting to load features
+    updateCanvasLoadingState(true);
+    
     // Get the Livewire component
     const livewireComponent = getLivewireComponent();
     if (livewireComponent) {
@@ -2059,16 +2069,61 @@ function loadExistingFeatures() {
                 canvas.clear();
                 setupGrid();
                 
+                // Keep track of loading features
+                const featuresToLoad = features.length;
+                let featuresLoaded = 0;
+                
+                // Create a promise that resolves when all features are loaded
+                const allFeaturesPromise = new Promise((resolve) => {
+                    // Monitor the loadingFeatures set for changes
+                    const checkInterval = setInterval(() => {
+                        if (loadingFeatures.size === 0 && featuresLoaded === featuresToLoad) {
+                            clearInterval(checkInterval);
+                            resolve();
+                        }
+                    }, 100);
+                    
+                    // Safety timeout in case some features fail to load
+                    setTimeout(() => {
+                        clearInterval(checkInterval);
+                        resolve();
+                    }, 5000); // 5 second max wait
+                });
+                
                 // Force update with current features
                 updateCanvasFeatures({
                     selectedFeatures: features,
                     forceUpdate: true
                 });
                 
-                // Run diagnostic after loading
-                diagnosticCheckCanvasState();
+                // When all features are loaded, hide loading overlay
+                allFeaturesPromise.then(() => {
+                    initialLoadingComplete = true; // Mark that structural loading is done
+
+                    const adjustmentGracePeriod = 750; // Milliseconds. Increased slightly for safety.
+                    log(`All features structurally loaded. Waiting ${adjustmentGracePeriod}ms for adjustments to complete...`);
+
+                    setTimeout(() => {
+                        log('Adjustment grace period ended. Finalizing canvas display.');
+                        updateCanvasLoadingState(false); // Now hide the loading overlay
+                        diagnosticCheckCanvasState();    // Run diagnostics
+                    }, adjustmentGracePeriod);
+                });
+            } else {
+                // No features to load, just hide loading state
+                initialLoadingComplete = true;
+                updateCanvasLoadingState(false);
             }
+        }).catch(err => {
+            console.error('Error loading features:', err);
+            // Even on error, hide loading state
+            initialLoadingComplete = true;
+            updateCanvasLoadingState(false);
         });
+    } else {
+        // No Livewire component, hide loading state
+        initialLoadingComplete = true;
+        updateCanvasLoadingState(false);
     }
 }
 
@@ -2281,4 +2336,43 @@ function diagnosticCheckCanvasState() {
     if (loadingFeatures.size > 0) {
         console.log(`WARNING: ${loadingFeatures.size} features still loading:`, Array.from(loadingFeatures));
     }
+} 
+
+// Add this new function to show/hide loading overlay
+function updateCanvasLoadingState(isLoading) {
+    const canvasViewport = document.getElementById('canvas-viewport');
+    const canvasContainer = canvasViewport?.querySelector('[data-scale]');
+    
+    if (!canvasViewport || !canvasContainer) return;
+    
+    // Find or create the loading overlay
+    let loadingOverlay = document.getElementById('canvas-loading-overlay');
+    if (!loadingOverlay && isLoading) {
+        loadingOverlay = document.createElement('div');
+        loadingOverlay.id = 'canvas-loading-overlay';
+        loadingOverlay.className = 'absolute inset-0 flex flex-col items-center justify-center bg-slate-700 z-10'; // Use flex-col
+        
+        // Improved Spinner
+        const spinner = document.createElement('div');
+        spinner.className = 'animate-spin rounded-full h-16 w-16 border-4 border-slate-600 border-t-[#3498DB]'; // Larger, themed colors
+        
+        // Loading Text
+        const loadingText = document.createElement('p');
+        loadingText.className = 'text-slate-300 text-md mt-4';
+        loadingText.textContent = 'Loading Editor...';
+        
+        loadingOverlay.appendChild(spinner);
+        loadingOverlay.appendChild(loadingText); // Add text to overlay
+        canvasViewport.appendChild(loadingOverlay);
+    } else if (loadingOverlay && !isLoading) {
+        // Remove the loading overlay with a slight delay for smooth transition
+        setTimeout(() => {
+            if (loadingOverlay.parentNode) {
+                loadingOverlay.parentNode.removeChild(loadingOverlay);
+            }
+        }, 100); // Keep a small delay, or adjust as needed
+    }
+    
+    // Show/hide canvas based on loading state
+    canvasContainer.style.visibility = isLoading ? 'hidden' : 'visible';
 } 
