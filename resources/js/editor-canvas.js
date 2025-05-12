@@ -1677,10 +1677,10 @@ function setupFabricImageFromElement(imgElement, feature, moveEnabled) {
             lockSkewingY: true,
             visible: feature.visible !== undefined ? feature.visible : true,
             opacity: featureOpacity, // Use our sanitized opacity value
-            cornerColor: '#2C3E50',
+            cornerColor: '#3498DB',
             cornerSize: 10,
             transparentCorners: false,
-            borderColor: '#2C3E50',
+            borderColor: '#3498DB',
             borderScaleFactor: 1.5, // Slightly thicker border
             data: {
                 featureId: feature.id,

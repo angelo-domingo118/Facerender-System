@@ -18,20 +18,23 @@ class CompositeEditor extends Component
     public function mount($compositeId)
     {
         $this->compositeId = $compositeId;
-        
-        // In a real app, you would load the composite data from the database
-        // For now, we're just setting up the UI structure
         $this->composite = Composite::find($compositeId);
+        
+        // Dispatch initial states
+        $this->dispatch('left-sidebar-toggled', expanded: $this->leftSidebarExpanded);
+        $this->dispatch('right-sidebar-toggled', expanded: $this->rightSidebarExpanded);
     }
     
     public function toggleLeftSidebar()
     {
         $this->leftSidebarExpanded = !$this->leftSidebarExpanded;
+        $this->dispatch('left-sidebar-toggled', expanded: $this->leftSidebarExpanded);
     }
     
     public function toggleRightSidebar()
     {
         $this->rightSidebarExpanded = !$this->rightSidebarExpanded;
+        $this->dispatch('right-sidebar-toggled', expanded: $this->rightSidebarExpanded);
     }
     
     public function setActiveRightTab($tab)

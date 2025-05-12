@@ -9,7 +9,7 @@
         <!-- Left Sidebar - Feature Library -->
         <div 
             x-data="{ expanded: @entangle('leftSidebarExpanded') }"
-            :class="expanded ? 'w-80' : 'w-0'"
+            :class="expanded ? 'w-96' : 'w-0'"
             class="transition-all duration-300 flex-none border-r border-slate-700 overflow-hidden bg-slate-800/30 backdrop-blur-sm"
         >
             <div class="h-full" x-show="expanded" x-transition>

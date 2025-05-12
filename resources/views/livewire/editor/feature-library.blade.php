@@ -445,7 +445,7 @@
         x-show="open" 
         x-cloak
         @keydown.escape.window="open = false"
-        class="fixed inset-0 z-50 overflow-y-auto" 
+        class="fixed inset-0 z-50" 
         aria-modal="true"
     >
         <div class="fixed inset-0 bg-black/60 transition-opacity" x-show="open" @click="open = false"></div>
@@ -465,11 +465,34 @@
                 <!-- Modal header -->
                 <div class="px-4 py-3 bg-slate-800 border-b border-slate-600 flex items-center justify-between">
                     <h3 class="text-sm font-medium text-slate-200" x-text="featureName"></h3>
-                    <button @click="open = false" class="text-slate-400 hover:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 rounded-full p-1">
-                        <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                    </button>
+                    <div class="flex items-center">
+                        <!-- Fullscreen button -->
+                        <button 
+                            @click="
+                                const imgElem = document.querySelector('.modal-image');
+                                if (imgElem) {
+                                    if (imgElem.requestFullscreen) {
+                                        imgElem.requestFullscreen();
+                                    } else if (imgElem.webkitRequestFullscreen) { /* Safari */
+                                        imgElem.webkitRequestFullscreen();
+                                    } else if (imgElem.msRequestFullscreen) { /* IE11 */
+                                        imgElem.msRequestFullscreen();
+                                    }
+                                }
+                            " 
+                            class="text-slate-400 hover:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 rounded-full p-1 mr-2"
+                            title="View fullscreen"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5" />
+                            </svg>
+                        </button>
+                        <button @click="open = false" class="text-slate-400 hover:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 rounded-full p-1">
+                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
                 </div>
                 
                 <!-- Modal body -->
