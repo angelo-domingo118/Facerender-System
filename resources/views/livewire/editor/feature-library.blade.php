@@ -93,22 +93,20 @@
                 <button 
                     @click="$wire.nextCategory()" 
                     type="button" 
-                    class="px-2.5 py-2 bg-slate-600 hover:bg-slate-500 border border-slate-500 hover:border-[#3498DB] rounded-lg text-xs text-gray-200 flex items-center transition-colors duration-150 shadow-sm relative group"
+                    class="px-2.5 py-2 bg-slate-600 hover:bg-slate-500 border border-slate-500 hover:border-[#3498DB] rounded-lg text-xs text-gray-200 flex items-center transition-colors duration-150 shadow-sm"
                     x-show="selected"
                     x-data="{
                         getNextCategory() {
-                            const categories = ['face', 'hair', 'eyes', 'eyebrows', 'nose', 'mouth', 'ears', 'accessories'];
-                            const currentIndex = categories.indexOf(selected);
-                            if (currentIndex !== -1 && currentIndex < categories.length - 1) {
-                                return categories[currentIndex + 1];
-                            } else {
-                                return categories[0];
-                            }
+                            const sequence = ['face', 'hair', 'eyes', 'eyebrows', 'nose', 'mouth', 'ears', 'accessories'];
+                            const currentIndex = sequence.indexOf(selected);
+                            return currentIndex >= 0 && currentIndex < sequence.length - 1 
+                                ? sequence[currentIndex + 1] 
+                                : sequence[0];
                         },
-                        getNextCategoryLabel() {
-                            const category = this.getNextCategory();
-                            const labels = {
-                                'face': 'Face Shape',
+                        getNextCategoryName() {
+                            const nextCat = this.getNextCategory();
+                            const names = {
+                                'face': 'Face',
                                 'hair': 'Hair',
                                 'eyes': 'Eyes',
                                 'eyebrows': 'Eyebrows',
@@ -117,23 +115,14 @@
                                 'ears': 'Ears',
                                 'accessories': 'Accessories'
                             };
-                            return labels[category] || category;
+                            return names[nextCat] || 'Next';
                         }
                     }"
                 >
-                    <span class="sr-only">Next Category</span>
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-[#3498DB]">
+                    <span class="whitespace-nowrap mr-1">Next: <span class="text-[#3498DB]" x-text="getNextCategoryName()"></span></span>
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 text-[#3498DB]">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
                     </svg>
-                    
-                    <!-- Tooltip -->
-                    <div class="absolute bottom-full mb-2 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
-                        <div class="bg-slate-800 text-white text-xs py-1 px-2 rounded shadow-lg whitespace-nowrap border border-slate-600">
-                            Next: <span class="font-semibold text-[#3498DB]" x-text="getNextCategoryLabel()"></span>
-                            <!-- Arrow -->
-                            <div class="absolute left-1/2 top-full transform -translate-x-1/2 w-2 h-2 rotate-45 bg-slate-800 border-r border-b border-slate-600"></div>
-                        </div>
-                    </div>
                 </button>
             </div>
             
