@@ -261,6 +261,44 @@ class FeatureLibrary extends Component
     }
     
     /**
+     * Navigate to the next category in sequence
+     */
+    public function nextCategory()
+    {
+        // Define the category sequence for facial composite construction
+        $categorySequence = [
+            'face',
+            'hair',
+            'eyes',
+            'eyebrows',
+            'nose',
+            'mouth',
+            'ears',
+            'accessories'
+        ];
+        
+        if (empty($this->selectedCategory)) {
+            // If no category selected, start with the first one
+            $this->selectedCategory = $categorySequence[0];
+            return;
+        }
+        
+        // Find current position in sequence
+        $currentIndex = array_search($this->selectedCategory, $categorySequence);
+        
+        if ($currentIndex !== false && $currentIndex < count($categorySequence) - 1) {
+            // Move to next category
+            $this->selectedCategory = $categorySequence[$currentIndex + 1];
+        } else {
+            // Wrap around to the first category
+            $this->selectedCategory = $categorySequence[0];
+        }
+        
+        // Trigger scroll to top for new category
+        $this->dispatch('scrollToTop');
+    }
+    
+    /**
      * Prefetch features for a category to improve performance
      */
     protected function prefetchFeaturesForCategory($category)
