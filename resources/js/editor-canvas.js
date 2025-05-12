@@ -1143,7 +1143,11 @@ function setupLivewireHandlers() {
         }
         
         zoomDebounceTimeout = setTimeout(() => {
-            const canvasContainer = document.querySelector('.relative.bg-white.shadow-md');
+            const canvasContainer = document.querySelector('#canvas-viewport > div[data-scale]'); // Updated selector
+            if (!canvasContainer) {
+                console.error('Zoom-in: Canvas container not found with selector #canvas-viewport > div[data-scale]');
+                return;
+            }
             const currentScale = parseFloat(canvasContainer.getAttribute('data-scale') || '1');
             const newScale = Math.min(currentScale * 1.1, 3); // Limit max zoom to 3x
             
@@ -1160,7 +1164,11 @@ function setupLivewireHandlers() {
         }
         
         zoomDebounceTimeout = setTimeout(() => {
-            const canvasContainer = document.querySelector('.relative.bg-white.shadow-md');
+            const canvasContainer = document.querySelector('#canvas-viewport > div[data-scale]'); // Updated selector
+            if (!canvasContainer) {
+                console.error('Zoom-out: Canvas container not found with selector #canvas-viewport > div[data-scale]');
+                return;
+            }
             const currentScale = parseFloat(canvasContainer.getAttribute('data-scale') || '1');
             const newScale = Math.max(currentScale * 0.9, 0.5); // Limit min zoom to 0.5x
             
@@ -1186,8 +1194,11 @@ function setupLivewireHandlers() {
     
     // Function to apply zoom to the canvas container
     function applyCanvasZoom(scale) {
-        const canvasContainer = document.querySelector('.relative.bg-white.shadow-md');
-        if (!canvasContainer) return;
+        const canvasContainer = document.querySelector('#canvas-viewport > div[data-scale]'); // Updated selector
+        if (!canvasContainer) {
+            console.error('applyCanvasZoom: Canvas container not found with selector #canvas-viewport > div[data-scale]');
+            return;
+        }
         
         // Store the scale for future reference
         canvasContainer.setAttribute('data-scale', scale);
