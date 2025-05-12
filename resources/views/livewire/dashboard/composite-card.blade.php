@@ -2,27 +2,7 @@
     <div x-data="{ hovered: false }" @mouseenter="hovered = true" @mouseleave="hovered = false" class="transition-all duration-300">
         <div class="flex items-start">
             <x-card class="w-full border-l-4 border-l-[#2C3E50] transition-all duration-200 border border-gray-300 shadow-md overflow-hidden">
-                <div class="flex space-x-4">
-                    <!-- Image with hover effect -->
-                    <div class="relative h-24 w-24 flex-shrink-0 rounded-md bg-gray-100 overflow-hidden border border-gray-300 group">
-                        @if($composite->image_path)
-                            <img
-                                src="{{ Storage::url($composite->image_path) }}"
-                                alt="{{ $composite->title }}"
-                                class="h-full w-full object-cover transition-transform duration-500"
-                                :class="hovered ? 'scale-110' : ''"
-                            />
-                            <div 
-                                class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 transition-opacity duration-300"
-                                :class="hovered ? 'opacity-100' : ''"
-                            ></div>
-                        @else
-                            <div class="flex h-full items-center justify-center bg-gray-100 transition-colors duration-300" :class="hovered ? 'bg-gray-200' : ''">
-                                <x-icon name="photo" class="h-8 w-8 text-gray-400" />
-                            </div>
-                        @endif
-                    </div>
-                    
+                <div class="flex">
                     <!-- Info -->
                     <div class="flex-1 flex flex-col justify-between">
                         <div>

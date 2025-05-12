@@ -1,7 +1,7 @@
 <div>
     <x-modal 
         wire:model.live="show" 
-        max-width="16xl" 
+        max-width="4xl" 
         blur="md"
         align="center"
         x-transition:enter="ease-out duration-300"
@@ -22,25 +22,14 @@
                 </div>
                 
                 <!-- Tabs Navigation -->
-                <div x-data="{ activeTab: 'composite-image' }" class="mb-5">
-                    <div class="flex border-b border-gray-200">
-                        <button 
-                            @click="activeTab = 'composite-image'" 
-                            :class="{'text-[#2C3E50] border-[#2C3E50] border-b-2 -mb-px py-3': activeTab === 'composite-image', 'text-gray-500 hover:text-gray-700 py-3': activeTab !== 'composite-image'}"
-                            class="flex items-center px-4 font-medium text-sm focus:outline-none transition"
-                        >
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                            </svg>
-                            Composite Image
-                        </button>
-                        
+                <div x-data="{ activeTab: 'basic-info' }" class="mb-5">
+                    <div class="flex border-b border-gray-200 bg-white rounded-t-lg overflow-hidden">
                         <button 
                             @click="activeTab = 'basic-info'" 
-                            :class="{'text-[#2C3E50] border-[#2C3E50] border-b-2 -mb-px py-3': activeTab === 'basic-info', 'text-gray-500 hover:text-gray-700 py-3': activeTab !== 'basic-info'}"
-                            class="flex items-center px-4 font-medium text-sm focus:outline-none transition"
+                            :class="{'text-[#2C3E50] border-[#2C3E50] border-b-2 -mb-px py-3 bg-gray-50': activeTab === 'basic-info', 'text-gray-500 hover:text-gray-700 py-3 hover:bg-gray-50': activeTab !== 'basic-info'}"
+                            class="flex items-center px-6 font-medium text-sm focus:outline-none transition flex-1 justify-center"
                         >
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
                             Basic Information
@@ -48,10 +37,10 @@
                         
                         <button 
                             @click="activeTab = 'suspect-desc'" 
-                            :class="{'text-[#2C3E50] border-[#2C3E50] border-b-2 -mb-px py-3': activeTab === 'suspect-desc', 'text-gray-500 hover:text-gray-700 py-3': activeTab !== 'suspect-desc'}"
-                            class="flex items-center px-4 font-medium text-sm focus:outline-none transition"
+                            :class="{'text-[#2C3E50] border-[#2C3E50] border-b-2 -mb-px py-3 bg-gray-50': activeTab === 'suspect-desc', 'text-gray-500 hover:text-gray-700 py-3 hover:bg-gray-50': activeTab !== 'suspect-desc'}"
+                            class="flex items-center px-6 font-medium text-sm focus:outline-none transition flex-1 justify-center"
                         >
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                             </svg>
                             Suspect Description
@@ -60,74 +49,63 @@
                 
                     <!-- Tab Content -->
                     <div class="mt-4">
-                        <!-- Panel 1: Image Tab -->
-                        <div x-show="activeTab === 'composite-image'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 transform scale-95" x-transition:enter-end="opacity-100 transform scale-100">
-                            <div class="bg-white p-3 rounded-md shadow-sm border border-gray-100">
-                                <div class="bg-gray-100 rounded-lg overflow-hidden border h-64 md:h-96 w-full flex items-center justify-center transition duration-300 group relative">
-                                    @if($composite->final_image_path)
-                                        <img src="{{ Storage::url($composite->final_image_path) }}" alt="{{ $composite->title }}" class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
-                                        <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100"></div>
-                                    @else
-                                        <div class="flex flex-col items-center justify-center p-6 text-center">
-                                            <x-icon name="photo" class="h-14 w-14 text-gray-400 mx-auto mb-2" />
-                                            <p class="text-gray-500 text-sm">No image available</p>
-                                        </div>
-                                    @endif
-                                </div>
-                                
-                                @if(!$isEditing)
-                                    <div class="mt-4 flex justify-center">
-                                        <x-button 
-                                            icon="arrow-down-tray" 
-                                            label="Download" 
-                                            wire:click="downloadComposite" 
-                                            class="bg-[#2C3E50] hover:bg-[#34495E] text-white transition-colors duration-150"
-                                        />
-                                    </div>
-                                @endif
-                            </div>
-                        </div>
-                    
-                        <!-- Panel 2: Basic Information Tab -->
+                        <!-- Panel: Basic Information Tab -->
                         <div x-show="activeTab === 'basic-info'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 transform scale-95" x-transition:enter-end="opacity-100 transform scale-100">
-                            <div class="bg-white p-3 rounded-md shadow-sm border border-gray-100">
+                            <div class="bg-white p-5 rounded-lg shadow-sm border border-gray-200">
                                 @if(!$isEditing)
-                                    <div class="space-y-4">
-                                        <div class="bg-gray-50 p-3 rounded-lg border">
-                                            <p class="text-xs font-medium text-gray-500 mb-1">Title</p>
-                                            <p class="text-sm text-gray-800 font-medium">{{ $composite->title }}</p>
+                                    <div class="space-y-3">
+                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                            <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm hover:border-[#2C3E50]/30 transition-all duration-200">
+                                                <div class="flex items-center mb-2">
+                                                    <div class="bg-[#2C3E50]/10 p-2 rounded-full">
+                                                        <x-icon name="document-text" class="h-4 w-4 text-[#2C3E50]" />
+                                                    </div>
+                                                    <p class="text-xs font-semibold text-gray-500 ml-2 uppercase tracking-wider">Title</p>
+                                                </div>
+                                                <p class="text-sm font-medium text-gray-800">{{ $composite->title }}</p>
+                                            </div>
+
+                                            <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm hover:border-[#2C3E50]/30 transition-all duration-200">
+                                                <div class="flex items-center mb-2">
+                                                    <div class="bg-[#2C3E50]/10 p-2 rounded-full">
+                                                        <x-icon name="user" class="h-4 w-4 text-[#2C3E50]" />
+                                                    </div>
+                                                    <p class="text-xs font-semibold text-gray-500 ml-2 uppercase tracking-wider">Witness</p>
+                                                </div>
+                                                <p class="text-sm font-medium text-gray-800">{{ $composite->witness ? $composite->witness->name : 'N/A' }}</p>
+                                            </div>
                                         </div>
 
-                                        <div class="bg-gray-50 p-3 rounded-lg border">
-                                            <p class="text-xs font-medium text-gray-500 mb-1">Witness</p>
-                                            <p class="text-sm text-gray-800 flex items-center">
-                                                <x-icon name="user" class="h-4 w-4 mr-1 text-[#2C3E50]/70" />
-                                                {{ $composite->witness ? $composite->witness->name : 'N/A' }}
-                                            </p>
-                                        </div>
+                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                            <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm hover:border-[#2C3E50]/30 transition-all duration-200">
+                                                <div class="flex items-center mb-2">
+                                                    <div class="bg-[#2C3E50]/10 p-2 rounded-full">
+                                                        <x-icon name="folder" class="h-4 w-4 text-[#2C3E50]" />
+                                                    </div>
+                                                    <p class="text-xs font-semibold text-gray-500 ml-2 uppercase tracking-wider">Case</p>
+                                                </div>
+                                                <p class="text-sm font-medium text-gray-800">{{ $composite->caseRecord->title }}</p>
+                                            </div>
 
-                                        <div class="bg-gray-50 p-3 rounded-lg border">
-                                            <p class="text-xs font-medium text-gray-500 mb-1">Case</p>
-                                            <p class="text-sm text-gray-800 flex items-center">
-                                                <x-icon name="folder" class="h-4 w-4 mr-1 text-[#2C3E50]/70" />
-                                                {{ $composite->caseRecord->title }}
-                                            </p>
-                                        </div>
-
-                                        <div class="bg-gray-50 p-3 rounded-lg border">
-                                            <p class="text-xs font-medium text-gray-500 mb-1">Created</p>
-                                            <p class="text-sm text-gray-800 flex items-center">
-                                                <x-icon name="calendar" class="h-4 w-4 mr-1 text-[#2C3E50]/70" />
-                                                {{ $composite->created_at->format('M d, Y') }}
-                                            </p>
+                                            <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm hover:border-[#2C3E50]/30 transition-all duration-200">
+                                                <div class="flex items-center mb-2">
+                                                    <div class="bg-[#2C3E50]/10 p-2 rounded-full">
+                                                        <x-icon name="calendar" class="h-4 w-4 text-[#2C3E50]" />
+                                                    </div>
+                                                    <p class="text-xs font-semibold text-gray-500 ml-2 uppercase tracking-wider">Created</p>
+                                                </div>
+                                                <p class="text-sm font-medium text-gray-800">{{ $composite->created_at->format('M d, Y') }}</p>
+                                            </div>
                                         </div>
                                         
-                                        <div class="bg-gray-50 p-3 rounded-lg border">
-                                            <p class="text-xs font-medium text-gray-500 mb-2 flex items-center">
-                                                <x-icon name="document-text" class="h-4 w-4 mr-1 text-[#2C3E50]/70" />
-                                                Description
-                                            </p>
-                                            <p class="text-sm text-gray-800 leading-relaxed">
+                                        <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm hover:border-[#2C3E50]/30 transition-all duration-200">
+                                            <div class="flex items-center mb-2">
+                                                <div class="bg-[#2C3E50]/10 p-2 rounded-full">
+                                                    <x-icon name="document-text" class="h-4 w-4 text-[#2C3E50]" />
+                                                </div>
+                                                <p class="text-xs font-semibold text-gray-500 ml-2 uppercase tracking-wider">Description</p>
+                                            </div>
+                                            <p class="text-sm text-gray-700 leading-relaxed">
                                                 {{ $composite->description ?: 'No description provided' }}
                                             </p>
                                         </div>
@@ -167,42 +145,75 @@
                             </div>
                         </div>
 
-                        <!-- Panel 3: Suspect Description Tab -->
+                        <!-- Panel: Suspect Description Tab -->
                         <div x-show="activeTab === 'suspect-desc'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 transform scale-95" x-transition:enter-end="opacity-100 transform scale-100">
-                            <div class="bg-white p-3 rounded-md shadow-sm border border-gray-100">
+                            <div class="bg-white p-5 rounded-lg shadow-sm border border-gray-200">
                                 @if(!$isEditing)
-                                    <div class="space-y-4">
-                                        <div class="bg-gray-50 p-3 rounded-lg border">
-                                            <p class="text-xs font-medium text-gray-500 mb-1">Gender</p>
-                                            <p class="text-sm text-gray-800 font-medium">{{ $composite->suspect_gender ?: 'Not specified' }}</p>
+                                    <div class="space-y-3">
+                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                            <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm hover:border-[#2C3E50]/30 transition-all duration-200">
+                                                <div class="flex items-center mb-2">
+                                                    <div class="bg-[#2C3E50]/10 p-2 rounded-full">
+                                                        <x-icon name="user" class="h-4 w-4 text-[#2C3E50]" />
+                                                    </div>
+                                                    <p class="text-xs font-semibold text-gray-500 ml-2 uppercase tracking-wider">Gender</p>
+                                                </div>
+                                                <p class="text-sm font-medium text-gray-800">{{ $composite->suspect_gender ?: 'Not specified' }}</p>
+                                            </div>
+                                            
+                                            <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm hover:border-[#2C3E50]/30 transition-all duration-200">
+                                                <div class="flex items-center mb-2">
+                                                    <div class="bg-[#2C3E50]/10 p-2 rounded-full">
+                                                        <x-icon name="user-group" class="h-4 w-4 text-[#2C3E50]" />
+                                                    </div>
+                                                    <p class="text-xs font-semibold text-gray-500 ml-2 uppercase tracking-wider">Ethnicity</p>
+                                                </div>
+                                                <p class="text-sm font-medium text-gray-800">{{ $composite->suspect_ethnicity ?: 'Not specified' }}</p>
+                                            </div>
                                         </div>
                                         
-                                        <div class="bg-gray-50 p-3 rounded-lg border">
-                                            <p class="text-xs font-medium text-gray-500 mb-1">Ethnicity</p>
-                                            <p class="text-sm text-gray-800 font-medium">{{ $composite->suspect_ethnicity ?: 'Not specified' }}</p>
+                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                            <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm hover:border-[#2C3E50]/30 transition-all duration-200">
+                                                <div class="flex items-center mb-2">
+                                                    <div class="bg-[#2C3E50]/10 p-2 rounded-full">
+                                                        <x-icon name="calendar" class="h-4 w-4 text-[#2C3E50]" />
+                                                    </div>
+                                                    <p class="text-xs font-semibold text-gray-500 ml-2 uppercase tracking-wider">Age Range</p>
+                                                </div>
+                                                <p class="text-sm font-medium text-gray-800">{{ $composite->suspect_age_range ?: 'Not specified' }}</p>
+                                            </div>
+                                            
+                                            <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm hover:border-[#2C3E50]/30 transition-all duration-200">
+                                                <div class="flex items-center mb-2">
+                                                    <div class="bg-[#2C3E50]/10 p-2 rounded-full">
+                                                        <x-icon name="identification" class="h-4 w-4 text-[#2C3E50]" />
+                                                    </div>
+                                                    <p class="text-xs font-semibold text-gray-500 ml-2 uppercase tracking-wider">Height</p>
+                                                </div>
+                                                <p class="text-sm font-medium text-gray-800">{{ $composite->suspect_height ?: 'Not specified' }}</p>
+                                            </div>
                                         </div>
                                         
-                                        <div class="bg-gray-50 p-3 rounded-lg border">
-                                            <p class="text-xs font-medium text-gray-500 mb-1">Age Range</p>
-                                            <p class="text-sm text-gray-800 font-medium">{{ $composite->suspect_age_range ?: 'Not specified' }}</p>
+                                        <div class="grid grid-cols-1 md:grid-cols-1 gap-4 mb-4">
+                                            <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm hover:border-[#2C3E50]/30 transition-all duration-200">
+                                                <div class="flex items-center mb-2">
+                                                    <div class="bg-[#2C3E50]/10 p-2 rounded-full">
+                                                        <x-icon name="user" class="h-4 w-4 text-[#2C3E50]" />
+                                                    </div>
+                                                    <p class="text-xs font-semibold text-gray-500 ml-2 uppercase tracking-wider">Body Build</p>
+                                                </div>
+                                                <p class="text-sm font-medium text-gray-800">{{ $composite->suspect_body_build ?: 'Not specified' }}</p>
+                                            </div>
                                         </div>
                                         
-                                        <div class="bg-gray-50 p-3 rounded-lg border">
-                                            <p class="text-xs font-medium text-gray-500 mb-1">Height</p>
-                                            <p class="text-sm text-gray-800 font-medium">{{ $composite->suspect_height ?: 'Not specified' }}</p>
-                                        </div>
-                                        
-                                        <div class="bg-gray-50 p-3 rounded-lg border">
-                                            <p class="text-xs font-medium text-gray-500 mb-1">Body Build</p>
-                                            <p class="text-sm text-gray-800 font-medium">{{ $composite->suspect_body_build ?: 'Not specified' }}</p>
-                                        </div>
-                                        
-                                        <div class="bg-gray-50 p-3 rounded-lg border">
-                                            <p class="text-xs font-medium text-gray-500 mb-2 flex items-center">
-                                                <x-icon name="clipboard-document-list" class="h-4 w-4 mr-1 text-[#2C3E50]/70" />
-                                                Additional Notes
-                                            </p>
-                                            <p class="text-sm text-gray-800 leading-relaxed">
+                                        <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm hover:border-[#2C3E50]/30 transition-all duration-200">
+                                            <div class="flex items-center mb-2">
+                                                <div class="bg-[#2C3E50]/10 p-2 rounded-full">
+                                                    <x-icon name="document-text" class="h-4 w-4 text-[#2C3E50]" />
+                                                </div>
+                                                <p class="text-xs font-semibold text-gray-500 ml-2 uppercase tracking-wider">Additional Notes</p>
+                                            </div>
+                                            <p class="text-sm text-gray-700 leading-relaxed">
                                                 {{ $composite->suspect_additional_notes ?: 'No additional notes' }}
                                             </p>
                                         </div>
@@ -215,7 +226,7 @@
                                             label="Ethnicity"
                                             wire:model="suspect_ethnicity"
                                             placeholder="Select ethnicity"
-                                            icon="globe-alt"
+                                            icon="user-group"
                                             :options="[
                                                 ['name' => 'Filipino', 'value' => 'Filipino'],
                                                 ['name' => 'Ilocano', 'value' => 'Ilocano'],
@@ -239,8 +250,8 @@
                                             option-value="value"
                                         />
                                         <x-input label="Age Range" wire:model="suspect_age_range" placeholder="e.g. 25-35" icon="calendar" />
-                                        <x-input label="Height" wire:model="suspect_height" placeholder="e.g. 5'9\" to 6'" icon="arrow-up-down" />
-                                        <x-input label="Body Build" wire:model="suspect_body_build" placeholder="e.g. Slim, Athletic, Muscular" icon="identification" />
+                                        <x-input label="Height" wire:model="suspect_height" placeholder="e.g. 5'9\" to 6'" icon="identification" />
+                                        <x-input label="Body Build" wire:model="suspect_body_build" placeholder="e.g. Slim, Athletic, Muscular" icon="user" />
                                         
                                         <x-textarea 
                                             label="Additional Notes" 
@@ -255,46 +266,63 @@
                         </div>
                     </div>
                 </div>
-
+                
                 <x-slot name="footer">
-                    <div class="flex justify-end gap-x-3">
-                        @if($isEditing)
-                            <x-button 
-                                flat 
-                                label="Cancel" 
-                                wire:click="close" 
-                                icon="x-mark"
-                                class="text-gray-600 hover:text-gray-800 transition-colors duration-150" 
-                            />
-                            <x-button 
-                                secondary 
-                                label="Reset" 
-                                wire:click="resetForm" 
-                                icon="arrow-path"
-                                class="border-gray-300 text-gray-700 hover:bg-gray-100 transition-colors duration-150" 
-                            />
-                            <x-button 
-                                primary 
-                                label="Save Changes" 
-                                wire:click="saveChanges" 
-                                icon="check-circle"
-                                class="bg-[#2C3E50] hover:bg-[#34495E] transition-colors duration-150" 
-                            />
+                    <div class="flex justify-between items-center">
+                        @if(!$isEditing)
+                            <div>
+                                <x-button 
+                                    icon="pencil-square" 
+                                    wire:click="toggleEditMode" 
+                                    class="bg-[#6366F1] hover:bg-[#4F46E5] text-white mr-2"
+                                >
+                                    Edit
+                                </x-button>
+                                <x-button
+                                    href="{{ route('composite.editor', $compositeId) }}"
+                                    icon="pencil-square"
+                                    class="bg-[#2C3E50] hover:bg-[#34495E] text-white"
+                                >
+                                    Edit in Designer
+                                </x-button>
+                            </div>
+                            <div>
+                                <x-button 
+                                    icon="x-mark" 
+                                    wire:click="$set('show', false)"
+                                    flat
+                                >
+                                    Close
+                                </x-button>
+                            </div>
                         @else
-                            <x-button 
-                                flat 
-                                label="Close" 
-                                wire:click="close" 
-                                icon="x-mark"
-                                class="text-gray-600 hover:text-gray-800 transition-colors duration-150" 
-                            />
-                            <x-button 
-                                primary 
-                                label="Edit" 
-                                wire:click="toggleEditMode" 
-                                icon="pencil"
-                                class="bg-[#2C3E50] hover:bg-[#34495E] transition-colors duration-150" 
-                            />
+                            <div>
+                                <x-button 
+                                    icon="arrow-path" 
+                                    wire:click="resetForm" 
+                                    flat
+                                    class="mr-2"
+                                >
+                                    Reset
+                                </x-button>
+                                <x-button 
+                                    icon="x-mark" 
+                                    wire:click="toggleEditMode"
+                                    flat
+                                >
+                                    Cancel
+                                </x-button>
+                            </div>
+                            <div>
+                                <x-button 
+                                    icon="check" 
+                                    wire:click="saveChanges"
+                                    spinner="saveChanges" 
+                                    class="bg-[#2C3E50] hover:bg-[#34495E] text-white"
+                                >
+                                    Save Changes
+                                </x-button>
+                            </div>
                         @endif
                     </div>
                 </x-slot>
