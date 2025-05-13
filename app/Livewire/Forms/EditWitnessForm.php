@@ -6,9 +6,12 @@ use App\Models\Witness;
 use Livewire\Component;
 use Livewire\Attributes\On;
 use Carbon\Carbon;
+use WireUi\Traits\WireUiActions;
 
 class EditWitnessForm extends Component
 {
+    use WireUiActions;
+    
     public $show = false;
     public $witnessId = null;
     public $witness = null;
@@ -92,6 +95,12 @@ class EditWitnessForm extends Component
         $this->dispatch('witness-updated', witnessId: $witness->id, caseId: $witness->case_id);
         $this->show = false;
         $this->resetForm();
+        
+        // Show success notification
+        $this->notification()->success(
+            title: 'Witness Updated',
+            description: 'Witness information has been successfully updated.'
+        );
     }
     
     public function cancel()

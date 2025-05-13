@@ -10,9 +10,12 @@ use Illuminate\Support\Facades\Log;
 use Livewire\Component;
 use Livewire\Attributes\On;
 use Carbon\Carbon;
+use WireUi\Traits\WireUiActions;
 
 class CreateCompositeForm extends Component
 {
+    use WireUiActions;
+    
     public $show = false;
     public $caseId = null;
     public $case = null;
@@ -148,6 +151,12 @@ class CreateCompositeForm extends Component
         
         $this->show = false;
         $this->resetForm();
+        
+        // Show success notification
+        $this->notification()->success(
+            title: 'Composite Created',
+            description: 'Composite has been successfully created.'
+        );
     }
 
     public function cancel()

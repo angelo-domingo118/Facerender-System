@@ -5,9 +5,12 @@ namespace App\Livewire\Forms;
 use App\Models\CaseRecord;
 use Livewire\Component;
 use Livewire\Attributes\On;
+use WireUi\Traits\WireUiActions;
 
 class EditCaseForm extends Component
 {
+    use WireUiActions;
+    
     public $show = false;
     public $case = null;
     public $caseId;
@@ -81,6 +84,12 @@ class EditCaseForm extends Component
         
         $this->show = false;
         $this->reset(['case', 'caseId', 'title', 'incident_type', 'incident_date', 'description', 'status', 'location']);
+        
+        // Show success notification
+        $this->notification()->success(
+            title: 'Case Updated',
+            description: 'Case details have been successfully updated.'
+        );
     }
 
     public function cancel()

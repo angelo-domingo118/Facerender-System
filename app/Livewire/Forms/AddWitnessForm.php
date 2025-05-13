@@ -8,9 +8,12 @@ use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Livewire\Attributes\On;
 use Carbon\Carbon;
+use WireUi\Traits\WireUiActions;
 
 class AddWitnessForm extends Component
 {
+    use WireUiActions;
+    
     public $show = false;
     public $caseId = null;
     public $case = null;
@@ -87,6 +90,12 @@ class AddWitnessForm extends Component
         $this->dispatch('witness-added', witnessId: $witness->id, caseId: (int) $this->caseId);
         $this->show = false;
         $this->resetForm();
+        
+        // Show success notification
+        $this->notification()->success(
+            title: 'Witness Added',
+            description: 'Witness has been successfully added to the case.'
+        );
     }
 
     public function cancel()

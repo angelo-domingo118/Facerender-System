@@ -7,9 +7,12 @@ use App\Models\Witness;
 use Livewire\Component;
 use Livewire\Attributes\On;
 use Carbon\Carbon;
+use WireUi\Traits\WireUiActions;
 
 class CompositeDetailsModal extends Component
 {
+    use WireUiActions;
+    
     public $show = false;
     public $compositeId = null;
     public $isEditing = false;
@@ -134,6 +137,12 @@ class CompositeDetailsModal extends Component
         
         $this->dispatch('composite-updated', ['compositeId' => $composite->id, 'caseId' => $composite->case_id]);
         $this->isEditing = false;
+        
+        // Show success notification
+        $this->notification()->success(
+            title: 'Composite Updated',
+            description: 'Composite details have been successfully updated.'
+        );
     }
     
     public function resetFormData()

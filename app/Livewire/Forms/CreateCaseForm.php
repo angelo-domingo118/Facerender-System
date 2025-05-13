@@ -7,9 +7,12 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Livewire\Attributes\On;
+use WireUi\Traits\WireUiActions;
 
 class CreateCaseForm extends Component
 {
+    use WireUiActions;
+    
     public $show = false;
     public $title = '';
     public $incident_type = '';
@@ -68,6 +71,12 @@ class CreateCaseForm extends Component
         $this->dispatch('case-created', caseId: $case->id);
         $this->show = false;
         $this->resetForm();
+        
+        // Show success notification
+        $this->notification()->success(
+            title: 'Case Created',
+            description: 'Case has been successfully created.'
+        );
     }
 
     public function cancel()
