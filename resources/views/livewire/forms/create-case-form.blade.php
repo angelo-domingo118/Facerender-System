@@ -11,24 +11,30 @@
         <div class="space-y-4">
             <x-input
                 wire:model="title"
-                label="Case Title"
+                label="Case Title *"
                 placeholder="Enter a title for this case"
                 required
+                id="create-case-title"
+                error="{{ $errors->first('title') }}"
             />
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <x-input
                     wire:model="incident_type"
-                    label="Incident Type"
+                    label="Incident Type *"
                     placeholder="Type of incident"
                     required
+                    id="create-case-incident-type"
+                    error="{{ $errors->first('incident_type') }}"
                 />
 
                 <x-datetime-picker
                     wire:model="incident_date"
-                    label="Incident Date"
+                    label="Incident Date *"
                     placeholder="Select date"
                     required
+                    id="create-case-incident-date"
+                    error="{{ $errors->first('incident_date') }}"
                 />
             </div>
 
@@ -36,6 +42,8 @@
                 wire:model="location"
                 label="Location"
                 placeholder="Enter incident location"
+                id="create-case-location"
+                error="{{ $errors->first('location') }}"
             />
 
             <x-textarea
@@ -43,11 +51,13 @@
                 label="Description (Optional)"
                 placeholder="Add any details about this case"
                 rows="3"
+                id="create-case-description"
+                error="{{ $errors->first('description') }}"
             />
 
             <x-select
                 wire:model="status"
-                label="Status"
+                label="Status *"
                 placeholder="Select status"
                 :options="[
                     ['name' => 'Open', 'value' => 'open'],
@@ -57,7 +67,13 @@
                 ]"
                 option-label="name"
                 option-value="value"
+                id="create-case-status"
+                error="{{ $errors->first('status') }}"
             />
+            
+            <div class="mt-2 text-sm text-gray-500">
+                <span class="font-medium">Note:</span> Fields marked with * are required.
+            </div>
         </div>
 
         <x-slot name="footer">

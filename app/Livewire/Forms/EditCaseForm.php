@@ -27,6 +27,15 @@ class EditCaseForm extends Component
         'location' => 'nullable|max:255',
     ];
 
+    protected $messages = [
+        'title.required' => 'Case title is required',
+        'title.min' => 'Case title must be at least 3 characters',
+        'incident_type.required' => 'Incident type is required',
+        'incident_date.required' => 'Incident date is required',
+        'incident_date.date' => 'Please enter a valid date',
+        'status.required' => 'Status is required',
+    ];
+
     #[On('edit-case')]
     public function openModal($caseId)
     {
