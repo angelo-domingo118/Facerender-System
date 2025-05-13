@@ -28,7 +28,7 @@
             });
         });
     </script>
-    <div class="flex-1 overflow-y-auto">
+    <div class="flex-1 overflow-y-auto feature-adjustment-panel-scroll-container">
         <!-- Layer Selector Dropdown -->
         <div class="sticky top-0 z-10 p-3 border-b border-slate-600 bg-slate-700/80 backdrop-blur-sm shadow-md">
             <label for="layer-adjustment-selector" class="block text-xs font-medium text-gray-300 mb-1">Select Layer</label>
@@ -176,25 +176,6 @@
                                 <span>Soft Edge</span>
                                 <span class="font-medium">Medium</span>
                                 <span>Sharp Edge</span>
-                            </div>
-                            
-                            <!-- Feathering visualization -->
-                            <div class="mt-2 h-7 w-full rounded-md overflow-hidden relative bg-slate-600/50">
-                                <!-- Left side - original edge -->
-                                <div class="absolute inset-y-0 left-0 w-1/2 bg-slate-500/50"></div>
-                                
-                                <!-- Right side - transparent part -->
-                                <div class="absolute inset-y-0 right-0 w-1/2 bg-slate-400/30"></div>
-                                
-                                <!-- Feathering visualization -->
-                                <div class="absolute inset-y-0 w-1/3 border-r border-dashed border-slate-500"
-                                    style="
-                                        left: calc(33% + {{ ($feathering / 100) * 10 }}%);
-                                        background: linear-gradient(to right, rgba(100, 116, 139, 0.5) 0%, 
-                                        rgba(100, 116, 139, {{ ($featheringCurve < 3) ? '0.05' : '0.2' }}) 100%);
-                                        transition: all 0.2s ease-in-out;
-                                    "
-                                ></div>
                             </div>
                         </div>
                         </div>
@@ -376,4 +357,21 @@
             </div>
         @endif
     </div>
+    <style>
+        .feature-adjustment-panel-scroll-container::-webkit-scrollbar {
+            width: 8px;
+        }
+        .feature-adjustment-panel-scroll-container::-webkit-scrollbar-track {
+            background-color: #1e293b; /* slate-800 */
+        }
+        .feature-adjustment-panel-scroll-container::-webkit-scrollbar-thumb {
+            background-color: #94a3b8; /* slate-400 */
+            border-radius: 4px;
+        }
+        /* For Firefox */
+        .feature-adjustment-panel-scroll-container {
+            scrollbar-width: thin;
+            scrollbar-color: #94a3b8 #1e293b; /* thumb track */
+        }
+    </style>
 </div>

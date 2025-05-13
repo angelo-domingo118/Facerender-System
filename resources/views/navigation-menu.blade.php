@@ -88,6 +88,12 @@
                                     {{ Auth::user()->name }}
                                 </span>
                                 
+                                @if(Auth::user()->is_admin)
+                                <span class="ml-1.5 px-1.5 py-0.5 text-xs font-semibold bg-[#E74C3C] text-white rounded-sm leading-none">
+                                    Admin
+                                </span>
+                                @endif
+                                
                                 <svg xmlns="http://www.w3.org/2000/svg" class="ms-1 size-4 transition-transform duration-200" :class="{'rotate-180': userOpen}" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                                 </svg>
@@ -111,37 +117,59 @@
                         style="display: none;">
                         <!-- User Info -->
                         <div class="px-4 py-3 border-b border-[#3498DB]/20">
-                            <p class="text-sm font-medium text-white truncate">{{ Auth::user()->email }}</p>
+                            <div class="flex items-center justify-between">
+                                <p class="text-sm font-medium text-white truncate">{{ Auth::user()->email }}</p>
+                                @if(Auth::user()->is_admin)
+                                <span class="px-1.5 py-0.5 text-xs font-semibold bg-[#E74C3C] text-white rounded-sm leading-none">
+                                    Admin
+                                </span>
+                                @endif
+                            </div>
                         </div>
 
-                        <a href="{{ route('profile.show') }}" class="flex items-center px-4 py-2 text-sm text-white hover:bg-[#34495E] transition">
+                        <a href="{{ route('profile.show') }}" class="flex items-center px-4 py-2.5 text-sm text-white hover:bg-[#34495E] transition group">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-3 text-gray-400 group-hover:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                            </svg>
                             {{ __('Profile') }}
                         </a>
 
                         {{-- Add Admin Link --}}
                         @if(Auth::user()->is_admin)
-                        <div class="border-t border-[#3498DB]/20"></div>
-                        <a href="{{ route('admin.users.index') }}" class="flex items-center px-4 py-2 text-sm text-white hover:bg-[#34495E] transition">
+                        <a href="{{ route('admin.users.index') }}" class="flex items-center px-4 py-2.5 text-sm text-white hover:bg-[#34495E] transition group">
+                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-3 text-gray-400 group-hover:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                            </svg>
                             {{ __('User Management') }}
                         </a>
                         @endif
                         {{-- End Admin Link --}}
 
                         @if (Laravel\Jetstream\Jetstream::hasApiFeatures())
-                            <a href="{{ route('api-tokens.index') }}" class="flex items-center px-4 py-2 text-sm text-white hover:bg-[#34495E] transition">
+                            <a href="{{ route('api-tokens.index') }}" class="flex items-center px-4 py-2.5 text-sm text-white hover:bg-[#34495E] transition group">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-3 text-gray-400 group-hover:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z" />
+                                </svg>
                                 {{ __('API Tokens') }}
                             </a>
                         @endif
+                        
+                        <div class="border-t border-[#3498DB]/20"></div>
 
                         <!-- Authentication -->
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf
                             <a href="{{ route('logout') }}" 
-                               class="flex items-center justify-between px-4 py-2 text-sm text-white hover:bg-[#34495E] transition"
+                               class="flex items-center justify-between px-4 py-2.5 text-sm text-white hover:bg-[#34495E] transition group"
                                onclick="event.preventDefault(); this.closest('form').submit();">
-                                {{ __('LOG OUT') }}
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                <span class="flex items-center">
+                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-3 text-gray-400 group-hover:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75" />
+                                    </svg>
+                                    {{ __('LOG OUT') }}
+                                </span>
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400 group-hover:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
                                 </svg>
                             </a>
                         </form>
@@ -179,7 +207,12 @@
                     @endif
 
                     <div>
-                        <div class="font-medium text-base text-white">{{ Auth::user()->name }}</div>
+                        <div class="font-medium text-base text-white flex items-center">
+                            {{ Auth::user()->name }}
+                            @if(Auth::user()->is_admin)
+                            <span class="ml-1.5 px-1.5 py-0.5 text-xs font-semibold bg-[#E74C3C] text-white rounded-sm leading-none">Admin</span>
+                            @endif
+                        </div>
                         <div class="font-medium text-sm text-gray-300">{{ Auth::user()->email }}</div>
                     </div>
                 @else

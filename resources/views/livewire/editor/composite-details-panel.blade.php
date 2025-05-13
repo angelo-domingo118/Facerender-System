@@ -14,11 +14,22 @@
                 <div class="bg-slate-700/50 p-3 rounded-md shadow-lg border border-slate-600 text-gray-300">
                     <div class="space-y-3">
                         <div>
-                            <x-input label="Title" wire:model.live="title" placeholder="Enter composite title" />
+                            <x-input 
+                                label="Title" 
+                                wire:model.live="title" 
+                                placeholder="Enter composite title" 
+                                class="bg-slate-600 border-slate-500 text-gray-200 placeholder-slate-400 focus:ring-[#3498DB] focus:border-[#3498DB]" 
+                            />
                         </div>
                         
                         <div>
-                            <x-textarea label="Description" wire:model.live="description" placeholder="Enter description" rows="3" />
+                            <x-textarea 
+                                label="Description" 
+                                wire:model.live="description" 
+                                placeholder="Enter description" 
+                                rows="3" 
+                                class="bg-slate-600 border-slate-500 text-gray-200 placeholder-slate-400 focus:ring-[#3498DB] focus:border-[#3498DB]" 
+                            />
                         </div>
                     </div>
                 </div>
@@ -45,6 +56,7 @@
                                 option-value="value"
                                 placeholder="Select witness"
                                 wire:model.live="witnessId"
+                                class="bg-slate-600 border-slate-500 text-gray-200 focus:ring-[#3498DB] focus:border-[#3498DB]"
                             />
                         </div>
                     </div>
@@ -75,19 +87,35 @@
                                     option-value="value"
                                     placeholder="Select gender"
                                     wire:model.live="suspectGender"
+                                    class="bg-slate-600 border-slate-500 text-gray-200 focus:ring-[#3498DB] focus:border-[#3498DB]"
                                 />
                             </div>
                             <div>
-                                <x-input label="Ethnicity" wire:model.live="suspectEthnicity" placeholder="Ethnicity" />
+                                <x-input 
+                                    label="Ethnicity" 
+                                    wire:model.live="suspectEthnicity" 
+                                    placeholder="Ethnicity" 
+                                    class="bg-slate-600 border-slate-500 text-gray-200 placeholder-slate-400 focus:ring-[#3498DB] focus:border-[#3498DB]" 
+                                />
                             </div>
                         </div>
                         
                         <div class="grid grid-cols-2 gap-3">
                             <div>
-                                <x-input label="Age Range" wire:model.live="suspectAgeRange" placeholder="25-35" />
+                                <x-input 
+                                    label="Age Range" 
+                                    wire:model.live="suspectAgeRange" 
+                                    placeholder="25-35" 
+                                    class="bg-slate-600 border-slate-500 text-gray-200 placeholder-slate-400 focus:ring-[#3498DB] focus:border-[#3498DB]" 
+                                />
                             </div>
                             <div>
-                                <x-input label="Height" wire:model.live="suspectHeight" placeholder="5'10\"" />
+                                <x-input 
+                                    label="Height" 
+                                    wire:model.live="suspectHeight" 
+                                    placeholder="5\'10\\"" 
+                                    class="bg-slate-600 border-slate-500 text-gray-200 placeholder-slate-400 focus:ring-[#3498DB] focus:border-[#3498DB]" 
+                                />
                             </div>
                         </div>
                         
@@ -105,11 +133,18 @@
                                 option-value="value"
                                 placeholder="Select body build"
                                 wire:model.live="suspectBodyBuild"
+                                class="bg-slate-600 border-slate-500 text-gray-200 focus:ring-[#3498DB] focus:border-[#3498DB]"
                             />
                         </div>
                         
                         <div>
-                            <x-textarea label="Additional Notes" wire:model.live="suspectAdditionalNotes" placeholder="Enter any additional details about the suspect" rows="3" />
+                            <x-textarea 
+                                label="Additional Notes" 
+                                wire:model.live="suspectAdditionalNotes" 
+                                placeholder="Enter any additional details about the suspect" 
+                                rows="3" 
+                                class="bg-slate-600 border-slate-500 text-gray-200 placeholder-slate-400 focus:ring-[#3498DB] focus:border-[#3498DB]" 
+                            />
                         </div>
                     </div>
                 </div>
