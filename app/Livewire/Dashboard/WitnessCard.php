@@ -55,6 +55,16 @@ class WitnessCard extends Component
         }
     }
 
+    #[On('witness-updated')]
+    public function refreshWitness($witnessId)
+    {
+        // Only refresh if this card is for the witness that was updated
+        if ($this->witness->id === $witnessId) {
+            // Refresh the witness model from the database
+            $this->witness->refresh();
+        }
+    }
+
     public function render()
     {
         return view('livewire.dashboard.witness-card');

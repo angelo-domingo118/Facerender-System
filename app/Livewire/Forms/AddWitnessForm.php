@@ -70,19 +70,21 @@ class AddWitnessForm extends Component
     {
         $this->validate();
 
-        $witness = Witness::create([
-            'case_id' => $this->caseId,
-            'name' => $this->name,
-            'age' => $this->age,
-            'gender' => $this->gender,
-            'contact_number' => $this->contact_number,
-            'address' => $this->address,
-            'relationship_to_case' => $this->relationship_to_case,
-            'interview_notes' => $this->notes,
-            'interview_date' => $this->interview_date,
-        ]);
+        $dataToCreate = [
+            'case_id' => (int) $this->caseId,
+            'name' => (string) $this->name,
+            'age' => $this->age !== null && $this->age !== '' ? (int) $this->age : null,
+            'gender' => (string) $this->gender,
+            'contact_number' => $this->contact_number !== null ? (string) $this->contact_number : null,
+            'address' => $this->address !== null ? (string) $this->address : null,
+            'relationship_to_case' => $this->relationship_to_case !== null ? (string) $this->relationship_to_case : null,
+            'interview_notes' => $this->notes !== null ? (string) $this->notes : null,
+            'interview_date' => (string) $this->interview_date, // Assumes Y-m-d format from form
+        ];
 
-        $this->dispatch('witness-added', witnessId: $witness->id);
+        $witness = Witness::create($dataToCreate);
+
+        $this->dispatch('witness-added', witnessId: $witness->id, caseId: (int) $this->caseId);
         $this->show = false;
         $this->resetForm();
     }

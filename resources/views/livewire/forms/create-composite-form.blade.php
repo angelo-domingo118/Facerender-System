@@ -45,7 +45,7 @@
                         flat 
                         icon="plus" 
                         label="Add Witness First" 
-                        wire:click="$dispatch('add-witness', { caseId: {{ $caseId }} })"
+                        wire:click="handleAddWitnessFirstClick" 
                         class="mt-2"
                     />
                 </div>

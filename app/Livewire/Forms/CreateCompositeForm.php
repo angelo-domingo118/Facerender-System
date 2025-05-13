@@ -156,10 +156,17 @@ class CreateCompositeForm extends Component
         $this->resetForm();
     }
 
-    #[On('witness-added')]
-    public function refreshWitnesses($witnessId = null)
+    public function handleAddWitnessFirstClick()
     {
-        if ($this->show && $this->caseId) {
+        $this->show = false; // Close this modal first
+        $this->dispatch('add-witness', caseId: $this->caseId);
+    }
+
+    #[On('witness-added')]
+    public function refreshWitnesses($witnessId = null, $caseId = null)
+    {
+        // If this modal is shown and caseId matches, refresh the witnesses list
+        if ($this->show && $this->caseId == $caseId) {
             $this->loadAvailableWitnesses();
             
             // If a new witness was just added, select it

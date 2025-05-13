@@ -89,7 +89,7 @@ class EditWitnessForm extends Component
             'interview_date' => $this->interview_date,
         ]);
         
-        $this->dispatch('witness-updated', witnessId: $witness->id);
+        $this->dispatch('witness-updated', witnessId: $witness->id, caseId: $witness->case_id);
         $this->show = false;
         $this->resetForm();
     }
