@@ -1,7 +1,7 @@
 <div>
     <form wire:submit="updatePassword">
         <div class="space-y-6">
-            <div>
+            <div x-data="{ showPassword: false }">
                 <x-label for="current_password" value="{{ __('Current Password') }}" class="text-[#34495E] font-medium" />
                 <div class="relative mt-1 rounded-md shadow-sm">
                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
@@ -9,17 +9,33 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                         </svg>
                     </div>
-                    <x-input id="current_password" 
-                        type="password" 
-                        class="pl-10 w-full border border-[#95A5A6] focus:border-[#34495E] focus:ring focus:ring-[#34495E] focus:ring-opacity-20 rounded-md shadow-sm" 
+                    <input 
+                        id="current_password" 
+                        name="current_password"
+                        :type="showPassword ? 'text' : 'password'" 
+                        class="pl-10 w-full border border-[#95A5A6] focus:border-[#34495E] focus:ring focus:ring-[#34495E] focus:ring-opacity-20 rounded-md shadow-sm text-gray-900 dark:text-white" 
                         wire:model.live="state.current_password" 
                         autocomplete="current-password"
                         placeholder="Enter your current password" />
+                    <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
+                        <button 
+                            type="button" 
+                            @click="showPassword = !showPassword" 
+                            class="text-gray-400 hover:text-gray-600 focus:outline-none">
+                            <svg x-show="!showPassword" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                            <svg x-show="showPassword" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                            </svg>
+                        </button>
+                    </div>
                 </div>
                 <x-input-error for="current_password" class="mt-1 text-sm" />
             </div>
 
-            <div x-data="passwordStrengthValidator()" x-init="init($wire.get('state.password'), $wire.get('state.password_confirmation'))">
+            <div x-data="{ showPassword: false }">
                 <x-label for="password" value="{{ __('New Password') }}" class="text-[#34495E] font-medium" />
                 <div class="relative mt-1 rounded-md shadow-sm">
                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
@@ -27,50 +43,33 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
                         </svg>
                     </div>
-                    <x-input id="password" 
-                        type="password" 
-                        class="pl-10 w-full border border-[#95A5A6] focus:border-[#34495E] focus:ring focus:ring-[#34495E] focus:ring-opacity-20 rounded-md shadow-sm" 
+                    <input 
+                        id="password" 
+                        name="password"
+                        :type="showPassword ? 'text' : 'password'" 
+                        class="pl-10 w-full border border-[#95A5A6] focus:border-[#34495E] focus:ring focus:ring-[#34495E] focus:ring-opacity-20 rounded-md shadow-sm text-gray-900 dark:text-white" 
                         wire:model.live="state.password" 
-                        x-model="password"
                         autocomplete="new-password"
                         placeholder="Enter new password" />
-                </div>
-                
-                <!-- Password Strength Meter -->
-                <div class="mt-2">
-                    <div class="bg-gray-200 h-2 rounded-full overflow-hidden">
-                        <div id="password-strength-meter" class="h-2 rounded-full" 
-                             :style="`width: ${strengthPercentage}%; transition: width 0.3s;`"
-                             :class="strengthColor"></div>
+                    <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
+                        <button 
+                            type="button" 
+                            @click="showPassword = !showPassword" 
+                            class="text-gray-400 hover:text-gray-600 focus:outline-none">
+                            <svg x-show="!showPassword" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                            <svg x-show="showPassword" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                            </svg>
+                        </button>
                     </div>
-                    <p id="password-strength-text" class="text-xs text-gray-500 mt-1" x-text="strengthText"></p>
                 </div>
-
-                <!-- Password Requirements -->
-                <div class="mt-2 text-xs text-gray-500 space-y-1">
-                    <p class="font-medium">Password must contain:</p>
-                    <ul class="list-disc pl-5 space-y-1">
-                        <li id="req-length" :class="requirements.length ? 'text-green-500' : 'text-gray-500'">At least 8 characters</li>
-                        <li id="req-uppercase" :class="requirements.uppercase ? 'text-green-500' : 'text-gray-500'">At least one uppercase letter</li>
-                        <li id="req-lowercase" :class="requirements.lowercase ? 'text-green-500' : 'text-gray-500'">At least one lowercase letter</li>
-                        <li id="req-number" :class="requirements.number ? 'text-green-500' : 'text-gray-500'">At least one number</li>
-                        <li id="req-special" :class="requirements.special ? 'text-green-500' : 'text-gray-500'">At least one special character</li>
-                    </ul>
-                </div>
-
                 <x-input-error for="password" class="mt-1 text-sm" />
             </div>
 
-            <div x-data="{ confirmPassword: '', password: '', passwordsMatch: false, showMatchText: false }" 
-                 x-init="password = document.getElementById('password').value; 
-                         confirmPassword = $wire.get('state.password_confirmation') || ''; 
-                         $watch('confirmPassword', value => { checkMatch(); }); 
-                         Livewire.hook('message.processed', (message, component) => { password = document.getElementById('password').value; checkMatch(); });
-                         function checkMatch() { 
-                            passwordsMatch = password && confirmPassword && password === confirmPassword;
-                            showMatchText = confirmPassword.length > 0;
-                         }"
-                 class="mt-4">
+            <div x-data="{ showPassword: false }">
                 <x-label for="password_confirmation" value="{{ __('Confirm Password') }}" class="text-[#34495E] font-medium" />
                 <div class="relative mt-1 rounded-md shadow-sm">
                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
@@ -78,28 +77,29 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                         </svg>
                     </div>
-                    <x-input id="password_confirmation" 
-                        type="password" 
-                        class="pl-10 w-full border border-[#95A5A6] focus:border-[#34495E] focus:ring focus:ring-[#34495E] focus:ring-opacity-20 rounded-md shadow-sm" 
+                    <input 
+                        id="password_confirmation" 
+                        name="password_confirmation"
+                        :type="showPassword ? 'text' : 'password'" 
+                        class="pl-10 w-full border border-[#95A5A6] focus:border-[#34495E] focus:ring focus:ring-[#34495E] focus:ring-opacity-20 rounded-md shadow-sm text-gray-900 dark:text-white" 
                         wire:model.live="state.password_confirmation" 
-                        x-model="confirmPassword"
                         autocomplete="new-password"
                         placeholder="Confirm your new password" />
+                    <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
+                        <button 
+                            type="button" 
+                            @click="showPassword = !showPassword" 
+                            class="text-gray-400 hover:text-gray-600 focus:outline-none">
+                            <svg x-show="!showPassword" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                            <svg x-show="showPassword" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                            </svg>
+                        </button>
+                    </div>
                 </div>
-                <p id="password-match-text" class="text-xs mt-1" 
-                   :class="{ 'hidden': !showMatchText, 'text-green-500': passwordsMatch, 'text-red-500': !passwordsMatch && showMatchText }">
-                    <template x-if="showMatchText">
-                        <span class="inline-flex items-center">
-                            <svg x-show="passwordsMatch" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                            </svg>
-                            <svg x-show="!passwordsMatch" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                            <span x-text="passwordsMatch ? 'Passwords match' : 'Passwords do not match'"></span>
-                        </span>
-                    </template>
-                </p>
                 <x-input-error for="password_confirmation" class="mt-1 text-sm" />
             </div>
 
@@ -124,94 +124,4 @@
             </div>
         </div>
     </form>
-
-    <!-- JavaScript for Password Strength Meter -->
-    <script>
-        function passwordStrengthValidator() {
-            return {
-                password: '',
-                strengthPercentage: 0,
-                strengthColor: 'bg-gray-300',
-                strengthText: 'Password strength: Too weak',
-                requirements: {
-                    length: false,
-                    uppercase: false,
-                    lowercase: false,
-                    number: false,
-                    special: false
-                },
-                init(initialPassword, initialConfirmPassword) {
-                    this.password = initialPassword || '';
-                    // We need a slight delay to ensure wire:model hydrates initial value if present
-                    this.$nextTick(() => {
-                         this.password = document.getElementById('password').value || initialPassword || '';
-                         this.checkStrength();
-
-                         // Initialize confirmation check (handled by a separate x-data for simplicity now)
-                         // This could be combined, but separating concerns might be easier to manage
-                    });
-
-                    this.$watch('password', value => {
-                        this.checkStrength();
-                        // Dispatch event for confirmation watcher
-                        this.$dispatch('password-updated', { password: this.password });
-                    });
-                },
-                checkStrength() {
-                    const pass = this.password;
-                    let strength = 0;
-                    let text = '';
-                    let color = 'bg-gray-300'; // Default
-
-                    // Reset requirements
-                    this.requirements.length = false;
-                    this.requirements.uppercase = false;
-                    this.requirements.lowercase = false;
-                    this.requirements.number = false;
-                    this.requirements.special = false;
-
-                    if (!pass) {
-                        strength = 0;
-                        text = 'Too weak';
-                    } else {
-                        // Check length
-                        if (pass.length >= 8) { strength += 20; this.requirements.length = true; }
-                        // Check uppercase
-                        if (/[A-Z]/.test(pass)) { strength += 20; this.requirements.uppercase = true; }
-                        // Check lowercase
-                        if (/[a-z]/.test(pass)) { strength += 20; this.requirements.lowercase = true; }
-                        // Check numbers
-                        if (/[0-9]/.test(pass)) { strength += 20; this.requirements.number = true; }
-                        // Check special characters
-                        if (/[^A-Za-z0-9]/.test(pass)) { strength += 20; this.requirements.special = true; }
-
-                        // Determine strength text and color
-                        if (strength === 0) { // Should only happen if length < 8 and nothing else matches
-                            text = 'Too weak';
-                            color = 'bg-red-500'; // Make 'too weak' red if some input exists
-                        } else if (strength <= 20) { // Likely only length or one other category
-                             text = 'Weak';
-                             color = 'bg-red-500';
-                         } else if (strength <= 40) {
-                            text = 'Fair';
-                            color = 'bg-orange-500';
-                        } else if (strength <= 60) {
-                            text = 'Good';
-                            color = 'bg-yellow-500';
-                        } else if (strength <= 80) {
-                            text = 'Strong';
-                            color = 'bg-green-400';
-                        } else { // strength = 100
-                            text = 'Very strong';
-                            color = 'bg-green-600';
-                        }
-                    }
-
-                    this.strengthPercentage = strength;
-                    this.strengthColor = color;
-                    this.strengthText = 'Password strength: ' + text;
-                }
-            }
-        }
-    </script>
 </div>

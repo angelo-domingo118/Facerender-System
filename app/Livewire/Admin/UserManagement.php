@@ -86,7 +86,7 @@ class UserManagement extends Component
             ]);
             
             // Create the user
-            User::create([
+            $user = User::create([
                 'name' => $validated['name'],
                 'email' => $validated['email'],
                 'password' => Hash::make($validated['password']),
@@ -96,8 +96,8 @@ class UserManagement extends Component
             
             // Success notification
             $this->notification()->success(
-                title: 'Success',
-                description: 'User created successfully'
+                title: 'User Created',
+                description: "User {$user->name} has been successfully created."
             );
             
             // Reset form and close modal
@@ -106,7 +106,7 @@ class UserManagement extends Component
             
         } catch (Exception $e) {
             $this->notification()->error(
-                title: 'Creation Failed',
+                title: 'User Creation Failed',
                 description: 'Error: ' . $e->getMessage()
             );
         }
@@ -116,7 +116,7 @@ class UserManagement extends Component
     {
         $validated = $this->validate();
         
-        User::create([
+        $user = User::create([
             'name' => $validated['name'],
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
@@ -127,7 +127,7 @@ class UserManagement extends Component
         $this->showCreateModal = false;
         $this->notification()->success(
             title: 'User Created',
-            description: 'The new user was successfully created.'
+            description: "User {$user->name} was successfully created."
         );
         $this->resetCreateForm();
     }
@@ -156,7 +156,7 @@ class UserManagement extends Component
         if (!$this->selectedUser) {
             logger()->warning('updateUser called but selectedUser is null.');
             $this->notification()->error(
-                title: 'Error',
+                title: 'User Update Error',
                 description: 'No user selected for update.'
             );
             return;
@@ -184,7 +184,7 @@ class UserManagement extends Component
             // Success notification
             $this->notification()->success(
                 title: 'User Updated',
-                description: 'User details were successfully updated.'
+                description: "User {$this->selectedUser->name} was successfully updated."
             );
             
             // Reset form and close modal
@@ -194,8 +194,8 @@ class UserManagement extends Component
         catch (Exception $e) {
             logger()->error('Error updating user ID: ' . $this->selectedUser->id . ' - ' . $e->getMessage());
             $this->notification()->error(
-                title: 'Update Failed',
-                description: 'An error occurred while updating the user: ' . $e->getMessage()
+                title: 'User Update Failed',
+                description: 'Error: ' . $e->getMessage()
             );
         }
     }
@@ -214,7 +214,7 @@ class UserManagement extends Component
         // Check for valid user
         if (!$this->selectedUser) {
             $this->notification()->error(
-                title: 'Error',
+                title: 'Password Update Error',
                 description: 'No user selected for password update. Please try again.'
             );
             return;
@@ -231,8 +231,8 @@ class UserManagement extends Component
             
             // Show success notification and close modal
             $this->notification()->success(
-                title: 'Success',
-                description: 'Password was updated successfully.'
+                title: 'Password Updated',
+                description: "Password for {$this->selectedUser->name} was successfully updated."
             );
             
             // Reset form and close modal
@@ -263,8 +263,8 @@ class UserManagement extends Component
         $user = User::find($userId);
         if (!$user) { 
             $this->notification()->error(
-                title: 'Error',
-                description: 'User not found.'
+                title: 'User Not Found',
+                description: 'The selected user could not be found.'
             );
             return;
         }
@@ -280,7 +280,7 @@ class UserManagement extends Component
         // Check if we have a selected user
         if (!$this->selectedUserId) {
             $this->notification()->error(
-                title: 'Error',
+                title: 'User Delete Error',
                 description: 'No user selected for deletion.'
             );
             return;
@@ -300,11 +300,12 @@ class UserManagement extends Component
         
         try {
             $user = User::findOrFail($userId);
+            $userName = $user->name;
             $user->delete();
 
             $this->notification()->success(
                 title: 'User Deleted',
-                description: 'The user was successfully deleted.'
+                description: "User {$userName} was successfully deleted."
             );
             
             // Close the modal and reset
@@ -312,7 +313,7 @@ class UserManagement extends Component
             $this->reset(['selectedUser', 'selectedUserId']);
         } catch (Exception $e) {
             $this->notification()->error(
-                title: 'Delete Failed',
+                title: 'User Delete Failed',
                 description: 'Error: ' . $e->getMessage()
             );
         }
@@ -329,7 +330,7 @@ class UserManagement extends Component
         // Check for valid user ID
         if ($this->selectedUserId === null) {
             $this->notification()->error(
-                title: 'Error',
+                title: 'User Update Error',
                 description: 'No user ID found for update. Please try again.'
             );
             return;
@@ -342,7 +343,7 @@ class UserManagement extends Component
         $user = User::find($userId);
         if (!$user) {
             $this->notification()->error(
-                title: 'Error',
+                title: 'User Not Found',
                 description: "User not found. Please refresh and try again."
             );
             return;
@@ -364,8 +365,8 @@ class UserManagement extends Component
             
             // Notify success and close modal
             $this->notification()->success(
-                title: 'Success',
-                description: "User updated successfully"
+                title: 'User Updated',
+                description: "User {$user->name} was successfully updated."
             );
             
             // Reset and close modal
@@ -375,7 +376,7 @@ class UserManagement extends Component
             
         } catch (Exception $e) {
             $this->notification()->error(
-                title: 'Update Failed',
+                title: 'User Update Failed',
                 description: 'Error: ' . $e->getMessage()
             );
         }
@@ -386,7 +387,7 @@ class UserManagement extends Component
         // Check for valid user ID
         if ($this->selectedUserId === null && $this->selectedUser === null) {
             $this->notification()->error(
-                title: 'Error',
+                title: 'Password Update Error',
                 description: 'No user selected for password update. Please try again.'
             );
             return;
@@ -398,7 +399,7 @@ class UserManagement extends Component
         
         if (!$user) {
             $this->notification()->error(
-                title: 'Error',
+                title: 'User Not Found',
                 description: 'User not found. Please refresh and try again.'
             );
             return;
@@ -416,8 +417,8 @@ class UserManagement extends Component
             
             // Success notification
             $this->notification()->success(
-                title: 'Success',
-                description: 'Password updated successfully'
+                title: 'Password Updated',
+                description: "Password for {$user->name} was successfully updated."
             );
             
             // Reset and close modal

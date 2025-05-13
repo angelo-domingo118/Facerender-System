@@ -82,25 +82,56 @@
         align="center"
     >
         <x-card title="Create New User">
-            <div class="grid grid-cols-1 gap-4">
-                <x-input wire:model.live="name" label="Name" placeholder="Enter user name" id="create-name" />
-                @error('name') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+            <form wire:submit.prevent="manualCreateUser">
+                <div class="grid grid-cols-1 gap-4">
+                    <x-input 
+                        wire:model.live.debounce.500ms="name" 
+                        label="Name" 
+                        placeholder="Enter user name" 
+                        id="create-name"
+                        required
+                        class="{{$errors->has('name') ? 'border-red-500' : ''}}"
+                    />
+                    @error('name') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                    
+                    <x-input 
+                        wire:model.live.debounce.500ms="email" 
+                        label="Email" 
+                        placeholder="Enter user email" 
+                        type="email" 
+                        id="create-email"
+                        required
+                        class="{{$errors->has('email') ? 'border-red-500' : ''}}"
+                    />
+                    @error('email') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                    
+                    <x-input 
+                        wire:model.live.debounce.500ms="password" 
+                        label="Password" 
+                        placeholder="Enter new password" 
+                        type="password" 
+                        id="create-password"
+                        required
+                        class="{{$errors->has('password') ? 'border-red-500' : ''}}"
+                    />
+                    @error('password') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                    
+                    <x-input 
+                        wire:model.live.debounce.500ms="password_confirmation" 
+                        label="Confirm Password" 
+                        placeholder="Confirm new password" 
+                        type="password" 
+                        id="create-password-confirmation"
+                        required
+                        class="{{$errors->has('password_confirmation') ? 'border-red-500' : ''}}"
+                    />
+                    @error('password_confirmation') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                    
+                    <x-checkbox wire:model.live="is_admin" id="create-is-admin" label="Is Admin" />
+                    @error('is_admin') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                </div>
                 
-                <x-input wire:model.live="email" label="Email" placeholder="Enter user email" type="email" id="create-email" />
-                @error('email') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
-                
-                <x-input wire:model.defer="password" label="Password" placeholder="Enter new password" type="password" id="create-password" />
-                @error('password') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
-                
-                <x-input wire:model.defer="password_confirmation" label="Confirm Password" placeholder="Confirm new password" type="password" id="create-password-confirmation" />
-                @error('password_confirmation') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
-                
-                <x-checkbox wire:model.live="is_admin" id="create-is-admin" label="Is Admin" />
-                @error('is_admin') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
-            </div>
-            
-            <x-slot name="footer">
-                <div class="flex justify-between items-center w-full">
+                <div class="flex justify-between items-center w-full mt-6">
                     <div class="text-red-500 text-sm">
                         @if($errors->any())
                             <ul>
@@ -113,17 +144,18 @@
                     <div class="flex gap-x-4">
                         <x-button flat label="Cancel" x-on:click="close" />
                         <x-button 
-                            wire:click="manualCreateUser"
+                            type="submit"
                             primary 
                             label="Save User" 
                             wire:loading.attr="disabled" 
                             wire:loading.class="opacity-75"
                             wire:target="manualCreateUser"
                             icon="check"
+                            :disabled="!$name || !$email || !$password || !$password_confirmation || $errors->any()"
                         />
                     </div>
                 </div>
-            </x-slot>
+            </form>
         </x-card>
     </x-modal>
     
@@ -136,19 +168,34 @@
         x-on:close="$wire.$refresh()"
     >
         <x-card title="Edit User">
-            <div class="grid grid-cols-1 gap-4">
-                <x-input wire:model.live="name" label="Name" placeholder="Enter user name" id="edit-name" />
-                @error('name') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+            <form wire:submit.prevent="manualUpdateUser">
+                <div class="grid grid-cols-1 gap-4">
+                    <x-input 
+                        wire:model.live.debounce.500ms="name" 
+                        label="Name" 
+                        placeholder="Enter user name" 
+                        id="edit-name"
+                        required
+                        class="{{$errors->has('name') ? 'border-red-500' : ''}}"
+                    />
+                    @error('name') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                    
+                    <x-input 
+                        wire:model.live.debounce.500ms="email" 
+                        label="Email" 
+                        placeholder="Enter user email" 
+                        type="email" 
+                        id="edit-email"
+                        required
+                        class="{{$errors->has('email') ? 'border-red-500' : ''}}"
+                    />
+                    @error('email') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                    
+                    <x-checkbox wire:model.live="is_admin" id="edit-is-admin" label="Is Admin" /> 
+                    @error('is_admin') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                </div>
                 
-                <x-input wire:model.live="email" label="Email" placeholder="Enter user email" type="email" id="edit-email" />
-                @error('email') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
-                
-                <x-checkbox wire:model.live="is_admin" id="edit-is-admin" label="Is Admin" /> 
-                @error('is_admin') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
-            </div>
-            
-            <x-slot name="footer">
-                <div class="flex justify-between items-center w-full">
+                <div class="flex justify-between items-center w-full mt-6">
                     <div class="text-red-500 text-sm">
                         @if($errors->any())
                             <ul>
@@ -165,17 +212,18 @@
                             x-on:click="close" 
                         />
                         <x-button 
-                            wire:click="manualUpdateUser"
+                            type="submit"
                             primary 
                             label="Update User" 
                             wire:loading.attr="disabled" 
                             wire:loading.class="opacity-75"
                             wire:target="manualUpdateUser"
                             icon="check"
+                            :disabled="!$name || !$email || $errors->any()"
                         />
                     </div>
                 </div>
-            </x-slot>
+            </form>
         </x-card>
     </x-modal>
 
@@ -188,16 +236,32 @@
         x-on:close="$wire.$refresh()"
     >
         <x-card title="Change Password for {{ $selectedUser?->name }}">
-            <div class="grid grid-cols-1 gap-4">
-                <x-input wire:model.defer="password" label="New Password" placeholder="Enter new password" type="password" id="change-password" />
-                @error('password') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+            <form wire:submit.prevent="manualUpdatePassword">
+                <div class="grid grid-cols-1 gap-4">
+                    <x-input 
+                        wire:model.live.debounce.500ms="password" 
+                        label="New Password" 
+                        placeholder="Enter new password" 
+                        type="password" 
+                        id="change-password"
+                        required
+                        class="{{$errors->has('password') ? 'border-red-500' : ''}}"
+                    />
+                    @error('password') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                    
+                    <x-input 
+                        wire:model.live.debounce.500ms="password_confirmation" 
+                        label="Confirm New Password" 
+                        placeholder="Confirm new password" 
+                        type="password" 
+                        id="change-password-confirmation"
+                        required
+                        class="{{$errors->has('password_confirmation') ? 'border-red-500' : ''}}"
+                    />
+                    @error('password_confirmation') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                </div>
                 
-                <x-input wire:model.defer="password_confirmation" label="Confirm New Password" placeholder="Confirm new password" type="password" id="change-password-confirmation" />
-                @error('password_confirmation') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
-            </div>
-            
-            <x-slot name="footer">
-                <div class="flex justify-between items-center w-full">
+                <div class="flex justify-between items-center w-full mt-6">
                     <div class="text-red-500 text-sm">
                         @if($errors->any())
                             <ul>
@@ -214,17 +278,18 @@
                             x-on:click="close" 
                         />
                         <x-button 
-                            wire:click="manualUpdatePassword"
+                            type="submit"
                             primary 
                             label="Update Password" 
                             wire:loading.attr="disabled" 
                             wire:loading.class="opacity-75"
                             wire:target="manualUpdatePassword"
                             icon="check"
+                            :disabled="!$password || !$password_confirmation || $errors->any()"
                         />
                     </div>
                 </div>
-            </x-slot>
+            </form>
         </x-card>
     </x-modal>
 
