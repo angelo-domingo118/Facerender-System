@@ -88,12 +88,6 @@
                                     {{ Auth::user()->name }}
                                 </span>
                                 
-                                @if(Auth::user()->is_admin)
-                                <span class="ml-1.5 px-1.5 py-0.5 text-xs font-semibold bg-[#E74C3C] text-white rounded-sm leading-none">
-                                    Admin
-                                </span>
-                                @endif
-                                
                                 <svg xmlns="http://www.w3.org/2000/svg" class="ms-1 size-4 transition-transform duration-200" :class="{'rotate-180': userOpen}" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                                 </svg>
@@ -117,12 +111,17 @@
                         style="display: none;">
                         <!-- User Info -->
                         <div class="px-4 py-3 border-b border-[#3498DB]/20">
-                            <div class="flex items-center justify-between">
-                                <p class="text-sm font-medium text-white truncate">{{ Auth::user()->email }}</p>
+                            <div class="flex flex-col">
+                                <div class="flex items-center justify-between mb-1">
+                                    <p class="text-sm font-medium text-white truncate">{{ Auth::user()->email }}</p>
+                                    @if(Auth::user()->is_admin)
+                                    <span class="px-1.5 py-0.5 text-xs font-semibold bg-[#E74C3C] text-white rounded-sm leading-none">
+                                        Admin
+                                    </span>
+                                    @endif
+                                </div>
                                 @if(Auth::user()->is_admin)
-                                <span class="px-1.5 py-0.5 text-xs font-semibold bg-[#E74C3C] text-white rounded-sm leading-none">
-                                    Admin
-                                </span>
+                                <p class="text-xs text-gray-400">Administrator account</p>
                                 @endif
                             </div>
                         </div>
@@ -209,9 +208,6 @@
                     <div>
                         <div class="font-medium text-base text-white flex items-center">
                             {{ Auth::user()->name }}
-                            @if(Auth::user()->is_admin)
-                            <span class="ml-1.5 px-1.5 py-0.5 text-xs font-semibold bg-[#E74C3C] text-white rounded-sm leading-none">Admin</span>
-                            @endif
                         </div>
                         <div class="font-medium text-sm text-gray-300">{{ Auth::user()->email }}</div>
                     </div>
