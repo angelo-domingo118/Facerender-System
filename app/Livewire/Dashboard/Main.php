@@ -216,7 +216,7 @@ class Main extends Component
     
     public function getTotalCasesCountProperty()
     {
-        return CaseRecord::count();
+        return CaseRecord::where('user_id', Auth::id())->count();
     }
     
     public function render()

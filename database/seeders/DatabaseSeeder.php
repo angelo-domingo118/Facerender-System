@@ -123,7 +123,6 @@ class DatabaseSeeder extends Seeder
                     'age' => rand(18, 65),
                     'gender' => ['male', 'female'][array_rand(['male', 'female'])],
                     'address' => 'Address of witness ' . ($j + 1),
-                    'reliability_rating' => rand(1, 5),
                     'interview_date' => now()->subDays(rand(1, 15)),
                     'interview_notes' => 'Interview notes for witness ' . ($j + 1),
                 ]);
