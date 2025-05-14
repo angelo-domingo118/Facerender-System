@@ -39,7 +39,7 @@ class Witness extends Model
     ];
 
     /**
-     * Get the case that owns the witness.
+     * Get the case that this witness belongs to.
      */
     public function caseRecord(): BelongsTo
     {
@@ -47,10 +47,10 @@ class Witness extends Model
     }
 
     /**
-     * Get the composites for the witness.
+     * Get the composites associated with this witness.
      */
     public function composites(): HasMany
     {
-        return $this->hasMany(Composite::class);
+        return $this->hasMany(Composite::class, 'witness_id');
     }
 }
