@@ -306,14 +306,7 @@
                                                 label="Height"
                                                 wire:model="suspect_height"
                                                 placeholder="Select height"
-                                                :options="[
-                                                    ['name' => 'Under 5 feet', 'value' => 'Under 5 feet'],
-                                                    ['name' => '5\' to 5\'4\"', 'value' => '5\' to 5\'4\"'],
-                                                    ['name' => '5\'5\" to 5\'8\"', 'value' => '5\'5\" to 5\'8\"'],
-                                                    ['name' => '5\'9\" to 6\'', 'value' => '5\'9\" to 6\''],
-                                                    ['name' => '6\'1\" to 6\'4\"', 'value' => '6\'1\" to 6\'4\"'],
-                                                    ['name' => 'Over 6\'4\"', 'value' => 'Over 6\'4\"'],
-                                                ]"
+                                                :options="$heightOptions"
                                                 option-label="name"
                                                 option-value="value"
                                                 error="{{ $errors->first('suspect_height') }}"

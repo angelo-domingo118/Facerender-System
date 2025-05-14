@@ -71,15 +71,12 @@ class CaseCard extends Component
     {
         // Only update this case card if it matches the updated case ID
         if ($this->case->id === $updatedCase['id']) {
-            $this->case->title = $updatedCase['title'];
-            $this->case->status = $updatedCase['status'];
-            $this->case->incident_type = $updatedCase['incident_type'];
-            $this->case->incident_date = $updatedCase['incident_date'];
-            $this->case->description = $updatedCase['description'];
-            $this->case->location = $updatedCase['location'];
+            // Refresh the case from the database instead of manual property assignment
+            $this->case->refresh();
             
-            // This will trigger a selective refresh of just this component
-            $this->case->updated_at = now();
+            // Force component re-rendering by touching the updated_at timestamp
+            // This will trigger re-rendering of child components with new keys
+            $this->case->touch();
         }
     }
     

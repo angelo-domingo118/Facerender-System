@@ -180,10 +180,10 @@
                                 </x-button>
                             </div>
                         @else
-                            <div class="space-y-3" wire:key="composites-{{ $case->updated_at->timestamp }}">
+                            <div class="space-y-3" wire:key="composites-container-{{ $case->id }}-{{ $case->updated_at->timestamp }}">
                                 @foreach($case->composites as $composite)
-                                    <div wire:key="composite-wrapper-{{ $composite->id }}">
-                                        @livewire('dashboard.composite-card', ['composite' => $composite], key('composite-'.$composite->id))
+                                    <div wire:key="composite-wrapper-{{ $composite->id }}-{{ $case->updated_at->timestamp }}">
+                                        @livewire('dashboard.composite-card', ['composite' => $composite], key("composite-{$composite->id}-{$case->updated_at->timestamp}"))
                                     </div>
                                 @endforeach
                             </div>
@@ -224,10 +224,10 @@
                                 </x-button>
                             </div>
                         @else
-                            <div class="space-y-3" wire:key="witnesses-{{ $case->updated_at->timestamp }}">
+                            <div class="space-y-3" wire:key="witnesses-container-{{ $case->id }}-{{ $case->updated_at->timestamp }}">
                                 @foreach($case->witnesses as $witness)
-                                    <div wire:key="witness-wrapper-{{ $witness->id }}">
-                                        @livewire('dashboard.witness-card', ['witness' => $witness], key('witness-'.$witness->id))
+                                    <div wire:key="witness-wrapper-{{ $witness->id }}-{{ $case->updated_at->timestamp }}">
+                                        @livewire('dashboard.witness-card', ['witness' => $witness], key("witness-{$witness->id}-{$case->updated_at->timestamp}"))
                                     </div>
                                 @endforeach
                             </div>

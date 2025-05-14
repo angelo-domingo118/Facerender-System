@@ -71,15 +71,13 @@ class EditCaseForm extends Component
             'location' => $this->location ?: 'Unknown',
         ]);
 
+        // Touch the model to ensure updated_at is changed
+        $this->case->touch();
+        
+        // Simplify by just sending the case ID - the receiving component will refresh from DB
         $this->dispatch('case-updated', caseId: $this->case->id);
         $this->dispatch('case-details-updated', [
-            'id' => $this->case->id,
-            'title' => $this->title,
-            'status' => $this->status,
-            'incident_type' => $this->incident_type,
-            'incident_date' => $this->incident_date,
-            'description' => $this->description,
-            'location' => $this->location ?: 'Unknown',
+            'id' => $this->case->id
         ]);
         
         $this->show = false;
