@@ -20,11 +20,18 @@ class CaseRecordSeeder extends Seeder
         }
 
         $baseCaseTitles = [
-            'Property damage report',
-            'Identity theft complaint',
-            'Pickpocketing incident',
-            'Estafa case filed',
-            'Robbery case'
+            'Vandalism at public park',
+            'Shoplifting at retail store',
+            'Theft of unattended backpack',
+            'Commercial break-in reported',
+            'Vehicle parts stolen overnight',
+            'Attempted identity theft online',
+            'Credit card fraud complaint',
+            'Public disturbance call',
+            'Online harassment investigation',
+            'Minor hit and run incident',
+            'Illegal dumping complaint',
+            'Lost property investigation'
         ];
         
         $locations = [
@@ -36,19 +43,27 @@ class CaseRecordSeeder extends Seeder
             'Pasig - C5 Road',
             'Makati - Ayala Avenue',
             'Paranaque - Airport Road',
-            'Caloocan - Monumento'
+            'Caloocan - Monumento',
+            'Mandaluyong - Shaw Boulevard',
+            'Pasay - EDSA Extension',
+            'San Juan - Greenhills Shopping Center'
         ];
         
+        $incident_types = [
+            'vandalism', 'shoplifting', 'theft', 'burglary', 'vehicle crime', 
+            'fraud', 'public order', 'cybercrime', 'traffic incident', 'environmental'
+        ];
+
         $statuses = ['open', 'closed', 'pending', 'archived'];
         $totalCasesCreated = 0;
 
         foreach ($users as $user) {
-            $caseCount = rand(2, 4); // Adjusted from original 3-5 to vary it a bit
+            $caseCount = rand(5, 8); // Increased number of cases
             
             for ($i = 0; $i < $caseCount; $i++) {
                 $baseTitle = $baseCaseTitles[array_rand($baseCaseTitles)];
                 $location = $locations[array_rand($locations)];
-                $title = $baseTitle . ' from ' . $location . ' (' . $user->name . ')';
+                $title = $baseTitle . ' in ' . $location . ' (User: ' . $user->name . ')';
                 
                 $uniqueId = strtoupper(substr(md5($user->name . time() . rand(1000, 9999) . $i), 0, 7));
                 $referenceNumber = 'CASE-' . $uniqueId;
@@ -57,16 +72,16 @@ class CaseRecordSeeder extends Seeder
                     'title' => $title,
                     'reference_number' => $referenceNumber,
                     'status' => $statuses[array_rand($statuses)],
-                    'description' => 'Case description for ' . $title,
-                    'incident_type' => ['theft', 'fraud', 'property damage', 'identity theft'][array_rand(['theft', 'fraud', 'property damage', 'identity theft'])],
-                    'incident_date' => now()->subDays(rand(1, 30)),
-                    'incident_time' => now()->subHours(rand(1, 720))->format('H:i:s'), // Simpler time generation
+                    'description' => 'Details for case: ' . $title,
+                    'incident_type' => $incident_types[array_rand($incident_types)],
+                    'incident_date' => now()->subDays(rand(1, 60)),
+                    'incident_time' => now()->subHours(rand(1, 1440))->format('H:i:s'),
                     'location' => $location,
-                    'notes' => 'Additional notes for ' . $title,
+                    'notes' => 'Initial notes for case: ' . $title,
                     'user_id' => $user->id,
                 ]);
                 $totalCasesCreated++;
-                usleep(10000); // To ensure unique timestamps for reference numbers if generated rapidly
+                usleep(10000); 
             }
         }
         $this->command->info($totalCasesCreated . ' cases seeded for ' . $users->count() . ' users.');

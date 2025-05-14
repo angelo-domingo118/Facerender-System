@@ -30,7 +30,7 @@ class CompositeSeeder extends Seeder
                 continue;
             }
 
-            $compositeCount = rand(1, 2);
+            $compositeCount = rand(2, 3);
             for ($k = 0; $k < $compositeCount; $k++) {
                 Composite::create([
                     'case_id' => $witness->case_id,
