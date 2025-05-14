@@ -55,26 +55,27 @@ class DeleteModalManager extends Component
         
         $this->dispatch('reset-modal-state')->self();
         
-        // Show success notification based on item type
-        $title = 'Item Deleted';
-        $description = 'The item has been successfully deleted.';
-        
-        // Customize notification based on the type of deleted item
-        if ($this->targetType === 'case') {
-            $title = 'Case Deleted';
-            $description = 'The case has been successfully deleted.';
-        } elseif ($this->targetType === 'witness') {
-            $title = 'Witness Deleted';
-            $description = 'The witness has been successfully deleted.';
-        } elseif ($this->targetType === 'composite') {
-            $title = 'Composite Deleted';
-            $description = 'The composite has been successfully deleted.';
+        // Only show notifications for types other than 'case'
+        // (case notifications are handled by the Main component)
+        if ($this->targetType !== 'case') {
+            // Show success notification based on item type
+            $title = 'Item Deleted';
+            $description = 'The item has been successfully deleted.';
+            
+            // Customize notification based on the type of deleted item
+            if ($this->targetType === 'witness') {
+                $title = 'Witness Deleted';
+                $description = 'The witness has been successfully deleted.';
+            } elseif ($this->targetType === 'composite') {
+                $title = 'Composite Deleted';
+                $description = 'The composite has been successfully deleted.';
+            }
+            
+            $this->notification()->success(
+                title: $title,
+                description: $description
+            );
         }
-        
-        $this->notification()->success(
-            title: $title,
-            description: $description
-        );
     }
     
     public function render()

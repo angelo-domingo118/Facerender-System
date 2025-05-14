@@ -7,10 +7,11 @@ use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Livewire\Attributes\On;
+use WireUi\Traits\WireUiActions;
 
 class Main extends Component
 {
-    use WithPagination;
+    use WithPagination, WireUiActions;
     
     public $search = '';
     public $statusFilter = 'all';
@@ -133,6 +134,44 @@ class Main extends Component
     {
         $this->sortBy = $sortBy;
         $this->resetPage();
+    }
+    
+    #[On('delete-case-confirmed')]
+    public function deleteCase($caseId)
+    {
+        try {
+            // Find the case
+            $case = CaseRecord::findOrFail($caseId);
+            
+            // Store case info before deletion for notification
+            $caseTitle = $case->title;
+            
+            // Delete all related witnesses first (to avoid potential issues)
+            // This is important to avoid the 404 error caused by nested components
+            $case->witnesses()->delete();
+            
+            // Delete all related composites
+            $case->composites()->delete();
+            
+            // Finally delete the case itself
+            $case->delete();
+            
+            // Force refresh the component first
+            $this->dispatch('case-deleted');
+            
+            // Show success notification after deletion is complete
+            $this->notification()->success(
+                title: 'Case Deleted',
+                description: "The case has been successfully deleted."
+            );
+            
+        } catch (\Exception $e) {
+            // Show error notification if something goes wrong
+            $this->notification()->error(
+                title: 'Error',
+                description: 'There was a problem deleting the case. Please try again.'
+            );
+        }
     }
     
     public function getCasesProperty()

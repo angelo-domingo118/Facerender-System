@@ -55,9 +55,12 @@ class CaseCard extends Component
     {
         // Only process if this is the target component and it's a case
         if ($data['id'] === $this->getComponentId() && $data['type'] === 'case' && $data['targetId'] === $this->case->id) {
-            $case = $this->case;
-            $case->delete();
-            $this->dispatch('case-deleted');
+            // Don't delete the case directly from this component
+            // Instead, dispatch an event to the parent component to handle deletion
+            $this->dispatch('delete-case-confirmed', caseId: $this->case->id);
+            
+            // Don't emit case-deleted from here - let the parent component do it
+            // after properly handling the deletion
         }
     }
     
