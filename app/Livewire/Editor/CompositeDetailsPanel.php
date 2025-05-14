@@ -61,7 +61,7 @@ class CompositeDetailsPanel extends Component
         ]);
     }
     
-    public function saveComposite()
+    public function updateDetails()
     {
         try {
             // Basic validation
@@ -101,20 +101,21 @@ class CompositeDetailsPanel extends Component
             ]);
             
             $this->dispatch('notify', [
-                'message' => 'Composite details saved successfully!',
+                'message' => 'Composite details updated successfully!',
                 'type' => 'success'
             ]);
             
-            // Emit an event to notify other components
-            $this->dispatch('compositeUpdated', $this->compositeId);
+            // Emit an event to notify other components that ONLY the details were updated
+            // Use a different event name to avoid triggering canvas resets
+            $this->dispatch('detailsUpdated', $this->compositeId);
             
-            // Also trigger the facial features to be saved
-            $this->dispatch('save-composite-features');
+            // No longer trigger canvas-related events
+            // $this->dispatch('save-composite-features');
             
         } catch (\Exception $e) {
-            Log::error('Error saving composite: ' . $e->getMessage());
+            Log::error('Error updating composite details: ' . $e->getMessage());
             $this->dispatch('notify', [
-                'message' => 'Error saving composite: ' . $e->getMessage(),
+                'message' => 'Error updating details: ' . $e->getMessage(),
                 'type' => 'error'
             ]);
         }

@@ -11,7 +11,10 @@ class MainToolbar extends Component
     public $composite;
     
     // Listen for the compositeUpdated event from CompositeDetailsPanel
-    protected $listeners = ['compositeUpdated' => 'refreshComposite'];
+    protected $listeners = [
+        'compositeUpdated' => 'refreshComposite',
+        'detailsUpdated' => 'refreshComposite'
+    ];
     
     public function mount($compositeId)
     {
