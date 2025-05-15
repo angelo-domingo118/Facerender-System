@@ -887,29 +887,37 @@ function setupLivewireHandlers() {
             }
             
             // Handle size updates when width/height are provided
-            if (!isPositionOnlyUpdate && transform.width !== undefined && transform.height !== undefined) {
+            if (!isPositionOnlyUpdate && (transform.width !== undefined || transform.height !== undefined)) {
                 // Get the original width/height (without scaling)
                 const originalWidth = fabricObject.width;
                 const originalHeight = fabricObject.height;
                 
                 if (originalWidth && originalHeight) {
+                    // Check which dimensions are being updated
+                    const widthChanged = transform.width !== undefined;
+                    const heightChanged = transform.height !== undefined;
+                    
                     // Check if we should scale independently (non-proportional)
-                    const scaleIndependently = transform.scaleToWidth === false;
+                    // True if only one dimension is changing or if explicitly requested
+                    const scaleIndependently = transform.scaleToWidth === false || 
+                                               (widthChanged && !heightChanged) || 
+                                               (!widthChanged && heightChanged);
                     
                     if (scaleIndependently) {
-                        // Calculate new scale factors independently
-                        const scaleX = transform.width / originalWidth;
-                        const scaleY = transform.height / originalHeight;
+                        // Calculate and apply new scale factors independently for each dimension
+                        if (widthChanged) {
+                            const scaleX = transform.width / originalWidth;
+                            fabricObject.set('scaleX', scaleX);
+                            log(`Updated only scaleX for layer ${layerId} to ${scaleX}`);
+                        }
                         
-                        // Apply different scale values for each dimension
-                        fabricObject.set({
-                            scaleX: scaleX,
-                            scaleY: scaleY
-                        });
-                        
-                        log(`Updated scale independently for layer ${layerId}: scaleX=${scaleX}, scaleY=${scaleY}`);
+                        if (heightChanged) {
+                            const scaleY = transform.height / originalHeight;
+                            fabricObject.set('scaleY', scaleY);
+                            log(`Updated only scaleY for layer ${layerId} to ${scaleY}`);
+                        }
                     } else {
-                        // Calculate new scale factors
+                        // Both dimensions provided - use proportional scaling if requested
                         const scaleX = transform.width / originalWidth;
                         const scaleY = transform.height / originalHeight;
                         
@@ -1648,14 +1656,18 @@ function setupFabricImageFromElement(imgElement, feature, moveEnabled) {
         const positionX = feature.position?.x || getDefaultPositionForFeature(feature.feature_type).x;
         const positionY = feature.position?.y || getDefaultPositionForFeature(feature.feature_type).y;
         const rotation = feature.position?.rotation || 0;
-        const scale = feature.position?.scale || 1.0;
+        
+        // Support separate scaleX and scaleY values if available, fall back to legacy scale
+        const scaleX = feature.position?.scaleX || feature.position?.scale || 1.0;
+        const scaleY = feature.position?.scaleY || feature.position?.scale || 1.0;
 
         // Log position and scale data for debugging
         console.log(`Feature ${feature.id} position data:`, {
             x: positionX,
             y: positionY,
             rotation: rotation,
-            scale: scale
+            scaleX: scaleX,
+            scaleY: scaleY
         });
 
         const fabricImage = new fabric.Image(imgElement, {
@@ -1690,14 +1702,15 @@ function setupFabricImageFromElement(imgElement, feature, moveEnabled) {
         });
 
         // Apply the position scale explicitly
-        if (scale && scale !== 1) {
-            log(`Applying explicit scale from position data: ${scale}`);
-            fabricImage.scaleX = scale;
-            fabricImage.scaleY = scale;
+        if ((scaleX && scaleX !== 1) || (scaleY && scaleY !== 1)) {
+            log(`Applying explicit scales from position data: scaleX=${scaleX}, scaleY=${scaleY}`);
+            fabricImage.scaleX = scaleX;
+            fabricImage.scaleY = scaleY;
             
-            // Store this scale in the feature's position object
+            // Store these scales in the feature's position object
             if (feature.position) {
-                feature.position.scale = scale;
+                feature.position.scaleX = scaleX;
+                feature.position.scaleY = scaleY;
             }
         } else {
             // Scale the image initially based on feature type if no explicit scale is provided
@@ -1734,7 +1747,8 @@ function setupFabricImageFromElement(imgElement, feature, moveEnabled) {
                             log(`Applied specific width scaling (${scaleFactor.toFixed(2)}) for ears (feature ${feature.id}) to target width ${targetWidth}px`);
                             // Store this scale factor in the feature data if needed
                             if (feature.position) {
-                                feature.position.scale = scaleFactor;
+                                feature.position.scaleX = scaleFactor;
+                                feature.position.scaleY = scaleFactor;
                             }
                         } else {
                             log(`Skipping scaling for ears (feature ${feature.id}) due to invalid initial width: ${fabricImage.width}`);
@@ -1784,7 +1798,8 @@ function setupFabricImageFromElement(imgElement, feature, moveEnabled) {
                 
                 // Store this as the feature's initial scale in the position object if it exists
                 if (feature.position) {
-                    feature.position.scale = fabricImage.scaleX; // Assuming uniform scaling
+                    feature.position.scaleX = fabricImage.scaleX;
+                    feature.position.scaleY = fabricImage.scaleY;
                 }
             }
         }
@@ -1856,8 +1871,9 @@ function setupFabricImageFromElement(imgElement, feature, moveEnabled) {
                             x: Math.round(obj.left),
                             y: Math.round(obj.top),
                             rotation: Math.round(obj.angle),
-                            // Use scaleX assuming uniform scaling
-                            scale: Math.round(obj.scaleX * 100) / 100
+                            // Store separate scale values for X and Y to preserve aspect ratio
+                            scaleX: Math.round(obj.scaleX * 100) / 100,
+                            scaleY: Math.round(obj.scaleY * 100) / 100
                         };
                         log(`Feature ${obj.data.featureId} modified, updating position:`, positionData);
                         component.call('updateFeaturePosition', {
@@ -2265,6 +2281,15 @@ function updateCanvasFeatures(data) {
                     if (feature.position?.scale && feature.position.scale !== 1) {
                         existingObject.scale(feature.position.scale);
                     }
+                    // Apply separate scaling if provided
+                    else if (feature.position?.scaleX || feature.position?.scaleY) {
+                        const newScaleX = feature.position.scaleX || existingObject.scaleX;
+                        const newScaleY = feature.position.scaleY || existingObject.scaleY;
+                        existingObject.set({
+                            scaleX: newScaleX,
+                            scaleY: newScaleY
+                        });
+                    }
                     
                     existingObject.setCoords();
                 } else {
@@ -2313,7 +2338,8 @@ function addImageToCanvas(feature) {
             x: getDefaultPositionForFeature(feature.feature_type).x,
             y: getDefaultPositionForFeature(feature.feature_type).y,
             rotation: 0,
-            scale: 1
+            scaleX: 1,
+            scaleY: 1
         };
         console.log('Created default position for feature:', feature.position);
     }

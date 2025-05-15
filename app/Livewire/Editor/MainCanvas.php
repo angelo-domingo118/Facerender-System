@@ -204,7 +204,36 @@ class MainCanvas extends Component
         // Find and update the position of a feature in the selectedFeatures array
         foreach ($this->selectedFeatures as $key => $feature) {
             if ($feature['id'] == $data['featureId']) {
-                $this->selectedFeatures[$key]['position'] = $data['position'];
+                // Store both scaleX and scaleY separately if provided
+                if (isset($data['position']['scaleX']) || isset($data['position']['scaleY'])) {
+                    // Initialize position object if it doesn't exist
+                    if (!isset($this->selectedFeatures[$key]['position'])) {
+                        $this->selectedFeatures[$key]['position'] = [];
+                    }
+                    
+                    // Update specific scale values if provided, otherwise keep existing values
+                    if (isset($data['position']['scaleX'])) {
+                        $this->selectedFeatures[$key]['position']['scaleX'] = $data['position']['scaleX'];
+                    }
+                    if (isset($data['position']['scaleY'])) {
+                        $this->selectedFeatures[$key]['position']['scaleY'] = $data['position']['scaleY'];
+                    }
+                    
+                    // Remove the old 'scale' property if we're now using separate X/Y scales
+                    if (isset($this->selectedFeatures[$key]['position']['scale'])) {
+                        unset($this->selectedFeatures[$key]['position']['scale']);
+                    }
+                } else if (isset($data['position']['scale'])) {
+                    // If only unified scale is provided, use it
+                    $this->selectedFeatures[$key]['position']['scale'] = $data['position']['scale'];
+                }
+                
+                // Update other position properties
+                $this->selectedFeatures[$key]['position'] = array_merge(
+                    $this->selectedFeatures[$key]['position'] ?? [],
+                    $data['position']
+                );
+                
                 break;
             }
         }
@@ -819,14 +848,15 @@ class MainCanvas extends Component
                 // Convert opacity from UI scale (0-100) to database scale (0-1)
                 $opacityValue = isset($feature['opacity']) ? ($feature['opacity'] / 100) : 1.0;
                 
-                // Extract the position data and ensure both scale_x and scale_y are set correctly
-                $scale = $feature['position']['scale'] ?? 1.0;
+                // Extract the position data and use separate scale_x and scale_y values
+                $scaleX = $feature['position']['scaleX'] ?? $feature['position']['scale'] ?? 1.0;
+                $scaleY = $feature['position']['scaleY'] ?? $feature['position']['scale'] ?? 1.0;
                 
                 $attributes = [
                     'position_x' => $feature['position']['x'] ?? 0,
                     'position_y' => $feature['position']['y'] ?? 0,
-                    'scale_x' => $scale, // Both scale_x and scale_y use the same value from JavaScript
-                    'scale_y' => $scale, // Fabric.js uses uniform scaling in our implementation
+                    'scale_x' => $scaleX, // Use separate scale values for X and Y
+                    'scale_y' => $scaleY, // This preserves aspect ratio
                     'rotation' => $feature['position']['rotation'] ?? 0,
                     'opacity' => $opacityValue, // Now properly scaled for database storage
                     'visible' => $feature['visible'] ?? true,
@@ -835,7 +865,8 @@ class MainCanvas extends Component
                 
                 Log::info('Saving feature with position and scale', [
                     'featureId' => $feature['id'],
-                    'scale' => $scale,
+                    'scaleX' => $scaleX,
+                    'scaleY' => $scaleY,
                     'x' => $attributes['position_x'],
                     'y' => $attributes['position_y']
                 ]);
@@ -921,15 +952,14 @@ class MainCanvas extends Component
                     // Ensure adjustments are properly formatted for the UI
                     $adjustments = $feature->visual_adjustments ?? [];
                     
-                    // Use scale_x as the single scale value for JavaScript
-                    // This ensures consistent scaling between PHP and JavaScript
-                    $scale = $feature->scale_x;
+                    // Use separate scale_x and scale_y values to preserve aspect ratio
+                    $scaleX = $feature->scale_x;
+                    $scaleY = $feature->scale_y;
                     
                     Log::info('Processing feature scale for UI', [
                         'featureId' => $facialFeature->id,
                         'scale_x' => $feature->scale_x,
-                        'scale_y' => $feature->scale_y,
-                        'using_scale' => $scale
+                        'scale_y' => $feature->scale_y
                     ]);
                     
                     // Build the feature data
@@ -941,7 +971,8 @@ class MainCanvas extends Component
                         'position' => [
                             'x' => $feature->position_x,
                             'y' => $feature->position_y,
-                            'scale' => $scale, // Use scale_x for uniform scaling
+                            'scaleX' => $scaleX, // Use separate scale values
+                            'scaleY' => $scaleY, // to preserve aspect ratio
                             'rotation' => $feature->rotation
                         ],
                         'opacity' => $opacity, // Now using the converted value (0-100)
@@ -956,7 +987,8 @@ class MainCanvas extends Component
                     
                     Log::info('Added feature to UI with scale and adjustments', [
                         'featureId' => $facialFeature->id,
-                        'scale' => $scale,
+                        'scaleX' => $scaleX,
+                        'scaleY' => $scaleY,
                         'has_adjustments' => isset($featureData['adjustments'])
                     ]);
                 }
