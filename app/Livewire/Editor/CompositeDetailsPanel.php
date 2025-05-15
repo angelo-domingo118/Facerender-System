@@ -55,6 +55,46 @@ class CompositeDetailsPanel extends Component
         }
     }
     
+    /**
+     * Get composite details for printing, including form data not yet saved.
+     * This allows us to print with the latest form values even if they haven't been saved.
+     *
+     * @return array
+     */
+    public function getCompositeDetailsForPrint()
+    {
+        // We will use the form data directly, not necessarily what's in the database
+        // This ensures we get the latest edits even if not saved yet
+        
+        // Get witness name if we have a valid witnessId
+        $witnessName = null;
+        if ($this->witnessId) {
+            $witness = Witness::find($this->witnessId);
+            $witnessName = $witness ? $witness->name : null;
+        }
+        
+        // Get case title if available
+        $caseTitle = null;
+        if ($this->composite && $this->composite->caseRecord) {
+            $caseTitle = $this->composite->caseRecord->title;
+        }
+        
+        // Return an array with all the details
+        return [
+            'title' => $this->title,
+            'witness_name' => $witnessName,
+            'case_title' => $caseTitle,
+            'created_at' => $this->composite ? $this->composite->created_at?->format('M d, Y H:i') : now()->format('M d, Y H:i'),
+            'description' => $this->description,
+            'suspect_gender' => $this->suspectGender,
+            'suspect_ethnicity' => $this->suspectEthnicity,
+            'suspect_age_range' => $this->suspectAgeRange,
+            'suspect_height' => $this->suspectHeight,
+            'suspect_body_build' => $this->suspectBodyBuild,
+            'suspect_additional_notes' => $this->suspectAdditionalNotes,
+        ];
+    }
+    
     public function resetForm()
     {
         $this->loadCompositeData();

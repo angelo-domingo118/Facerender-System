@@ -274,96 +274,222 @@ async function printCanvas(canvas) {
             return;
         }
         
-        // Find the parent Livewire component (CompositeEditor)
-        const selector = `[wire\\:id][wire\\:initial-data*="App\\\\Livewire\\\\Editor\\\\CompositeEditor"]`;
-        const editorComponentElement = document.querySelector(selector);
         let compositeDetails = {};
         let detailsFound = false;
         
-        // First try with CompositeEditor component
-        if (editorComponentElement && typeof Livewire !== 'undefined') {
-            const editorComponentId = editorComponentElement.getAttribute('wire:id');
-            console.log('Found Livewire component element with ID:', editorComponentId);
-            const component = Livewire.find(editorComponentId);
-            if (component) {
-                console.log('Fetching composite details from Livewire...');
+        // Using Livewire 3 approach to find components and call methods
+        if (typeof Livewire !== 'undefined') {
+            console.log('Searching for CompositeDetailsPanel component...');
+            
+            // First approach - Find by DOM element with specific key pattern for CompositeDetailsPanel
+            const detailsPanelElement = document.querySelector('[wire\\:key^="details-panel-"]');
+            if (detailsPanelElement) {
                 try {
-                    compositeDetails = await component.call('getCompositeDetailsForPrint');
-                    console.log('Fetched details:', compositeDetails);
-                    detailsFound = Object.keys(compositeDetails).length > 0;
+                    const wireId = detailsPanelElement.getAttribute('wire:id');
+                    if (wireId) {
+                        console.log('Found CompositeDetailsPanel with wire:id:', wireId);
+                        
+                        // In Livewire 3, we might need to use the component with the specific ID
+                        const component = Livewire.find(wireId);
+                        if (component) {
+                            console.log('Found Livewire component, attempting to get details from CompositeDetailsPanel');
+                            
+                            try {
+                                // Try with the correct method name
+                                const details = await component.call('getCompositeDetailsForPrint');
+                                console.log('Successfully fetched composite details from CompositeDetailsPanel:', details);
+                                
+                                if (details && Object.keys(details).length > 0) {
+                                    compositeDetails = details;
+                                    detailsFound = true;
+                                }
+                            } catch (error) {
+                                console.error('Error calling getCompositeDetailsForPrint on CompositeDetailsPanel:', error);
+                            }
+                        }
+                    }
                 } catch (error) {
-                    console.error('Error fetching composite details from Livewire:', error);
+                    console.error('Error accessing CompositeDetailsPanel component:', error);
                 }
             }
-        }
-        
-        // If that didn't work, try with MainToolbar component
-        if (!detailsFound && typeof Livewire !== 'undefined') {
-            console.log('Trying to find MainToolbar component...');
-            const toolbarSelector = `[wire\\:id][wire\\:initial-data*="App\\\\Livewire\\\\Editor\\\\MainToolbar"]`;
-            const toolbarElement = document.querySelector(toolbarSelector);
             
-            if (toolbarElement) {
-                const toolbarComponentId = toolbarElement.getAttribute('wire:id');
-                console.log('Found MainToolbar component with ID:', toolbarComponentId);
-                const toolbarComponent = Livewire.find(toolbarComponentId);
-                
-                if (toolbarComponent) {
-                    console.log('Attempting to get details from MainToolbar...');
-                    try {
-                        const toolbarDetails = await toolbarComponent.call('getCompositeDetailsForPrint');
-                        console.log('Got details from MainToolbar:', toolbarDetails);
+            // If we still don't have details (e.g. call failed or component not found by key), try to extract data directly from the form fields
+            if (!detailsFound) {
+                console.log('Attempting to extract form data directly from the DOM as a fallback...');
+                try {
+                    const title = document.querySelector('#title')?.value || 
+                                     document.querySelector('input[wire\\:model\\.live="title"]')?.value;
+                    
+                    const description = document.querySelector('#description')?.value || 
+                                       document.querySelector('textarea[wire\\:model\\.live="description"]')?.value;
+                    
+                    const witnessDropdown = document.querySelector('#witness');
+                    let witnessName = null;
+                    if (witnessDropdown && witnessDropdown.value) {
+                        const selectedOption = witnessDropdown.options[witnessDropdown.selectedIndex];
+                        if (selectedOption) {
+                            witnessName = selectedOption.text;
+                        }
+                    }
+
+                    const suspectGender = document.querySelector('#gender')?.value || 
+                                          document.querySelector('select[wire\\:model\\.live="suspectGender"]')?.value;
+                    
+                    const suspectEthnicity = document.querySelector('#ethnicity')?.value || 
+                                            document.querySelector('input[wire\\:model\\.live="suspectEthnicity"]')?.value;
+                    
+                    const suspectAgeRange = document.querySelector('#age-range')?.value || 
+                                           document.querySelector('input[wire\\:model\\.live="suspectAgeRange"]')?.value;
+                    
+                    const suspectHeight = document.querySelector('#height')?.value || 
+                                         document.querySelector('input[wire\\:model\\.live="suspectHeight"]')?.value;
+                    
+                    const suspectBodyBuild = document.querySelector('#body-build')?.value || 
+                                            document.querySelector('select[wire\\:model\\.live="suspectBodyBuild"]')?.value;
+                    
+                    const suspectAdditionalNotes = document.querySelector('#additional-notes')?.value || 
+                                                  document.querySelector('textarea[wire\\:model\\.live="suspectAdditionalNotes"]')?.value;
+                    
+                    // Fallback for created_at and id if not available from Livewire call
+                    const createdAt = compositeDetails.created_at; // Preserve if already set by a partial success from another method
+                    const compositeId = compositeDetails.id;
+
+                    if (title || description || witnessName) { // Check if any primary detail is found
+                        compositeDetails = {
+                            title: title || compositeDetails.title, // Prioritize new over potentially stale
+                            description: description || compositeDetails.description,
+                            witness_name: witnessName || compositeDetails.witness_name,
+                            suspect_gender: suspectGender || compositeDetails.suspect_gender,
+                            suspect_ethnicity: suspectEthnicity || compositeDetails.suspect_ethnicity,
+                            suspect_age_range: suspectAgeRange || compositeDetails.suspect_age_range,
+                            suspect_height: suspectHeight || compositeDetails.suspect_height,
+                            suspect_body_build: suspectBodyBuild || compositeDetails.suspect_body_build,
+                            suspect_additional_notes: suspectAdditionalNotes || compositeDetails.suspect_additional_notes,
+                            created_at: createdAt, // Carry over
+                            id: compositeId // Carry over
+                        };
                         
-                        if (toolbarDetails && Object.keys(toolbarDetails).length > 0) {
-                            compositeDetails = toolbarDetails;
+                        console.log('Successfully extracted/merged form data from DOM:', compositeDetails);
                             detailsFound = true;
                         }
                     } catch (error) {
-                        console.error('Error getting details from MainToolbar:', error);
-                    }
+                    console.error('Error extracting form data from DOM:', error);
                 }
-            } else {
-                console.warn('MainToolbar component not found');
+            }
+            
+            // Try alternative approach with Livewire.all() if still no details
+            // This approach might be less reliable for getting all formatted data like witness_name
+            if (!detailsFound && typeof Livewire.all === 'function') {
+                console.log('Attempting to find component using Livewire.all() as a further fallback...');
+                try {
+                    const components = Livewire.all();
+                    let detailsComponent = null;
+                    
+                    for (const component of components) {
+                        const componentName = component.name || 
+                                           (component.fingerprint && component.fingerprint.name) || 
+                                           (component.fingerprint && component.fingerprint.method) || 
+                                           '';
+                        if (componentName.includes('composite-details-panel')) {
+                            detailsComponent = component;
+                            break;
+                        }
+                    }
+                    
+                    if (detailsComponent) {
+                        console.log('Found CompositeDetailsPanel via Livewire.all(), attempting to get details via call or properties');
+                        try {
+                             // Attempt to call the method first on this found component
+                            const details = await detailsComponent.call('getCompositeDetailsForPrint');
+                            console.log('Successfully fetched details via Livewire.all() component call:', details);
+                            if (details && Object.keys(details).length > 0) {
+                                compositeDetails = details;
+                                detailsFound = true;
+                            }
+                        } catch (callError) {
+                            console.warn('Call to getCompositeDetailsForPrint failed on component from Livewire.all():', callError);
+                            console.log('Falling back to direct property access from Livewire.all() component.');
+                            // Fallback to accessing properties directly if call fails
+                            if (typeof detailsComponent.$wire !== 'undefined') {
+                                compositeDetails = {
+                                    title: detailsComponent.$wire.get('title') || compositeDetails.title,
+                                    description: detailsComponent.$wire.get('description') || compositeDetails.description,
+                                    // witness_name not directly available, witnessId would be
+                                    suspect_gender: detailsComponent.$wire.get('suspectGender') || compositeDetails.suspect_gender,
+                                    suspect_ethnicity: detailsComponent.$wire.get('suspectEthnicity') || compositeDetails.suspect_ethnicity,
+                                    suspect_age_range: detailsComponent.$wire.get('suspectAgeRange') || compositeDetails.suspect_age_range,
+                                    suspect_height: detailsComponent.$wire.get('suspectHeight') || compositeDetails.suspect_height,
+                                    suspect_body_build: detailsComponent.$wire.get('suspectBodyBuild') || compositeDetails.suspect_body_build,
+                                    suspect_additional_notes: detailsComponent.$wire.get('suspectAdditionalNotes') || compositeDetails.suspect_additional_notes,
+                                    created_at: compositeDetails.created_at, // Preserve if set
+                                    id: compositeDetails.id // Preserve if set
+                                };
+                                detailsFound = Object.values(compositeDetails).some(v => v !== undefined && v !== null);
+                            } else {
+                                // Livewire 2 style direct property access (less likely for recent versions)
+                                compositeDetails = {
+                                    title: detailsComponent.title || compositeDetails.title,
+                                    description: detailsComponent.description || compositeDetails.description,
+                                    suspect_gender: detailsComponent.suspectGender || compositeDetails.suspect_gender,
+                                    // ... and so on for other properties
+                                    created_at: compositeDetails.created_at,
+                                    id: compositeDetails.id
+                                };
+                                detailsFound = Object.values(compositeDetails).some(v => v !== undefined && v !== null);
+                            }
+                            if(detailsFound) console.log('Extracted component data from Livewire.all() properties:', compositeDetails);
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error finding components using Livewire.all():', error);
+                }
             }
         }
         
-        // If we still don't have details, try to get basic information from the DOM
+        // If we still don't have details, get basic info from DOM
         if (!detailsFound) {
             console.warn('Could not find any Livewire components with data. Using DOM fallback.');
-            console.log('Selector used:', selector);
-            console.log('Available Livewire components:', typeof Livewire !== 'undefined' ? Object.keys(Livewire.components || {}) : 'Livewire not defined');
             
             // Try to get basic information from the DOM as fallback
             const titleElement = document.querySelector('h2[title]');
-            if (titleElement) {
+            const idElement = document.querySelector('.text-xs.bg-slate-600.px-2.py-0\\.5.rounded-full.text-slate-400');
+            
                 compositeDetails = {
-                    title: titleElement.textContent || 'Composite Print'
-                };
-                console.log('Using title from DOM:', compositeDetails.title);
-            } else {
-                compositeDetails = {
-                    title: document.title || 'Composite Print'
-                };
-                console.log('Using document title as fallback:', compositeDetails.title);
+                title: titleElement ? titleElement.textContent.trim() : (document.title || 'Composite Print')
+            };
+            
+            if (idElement) {
+                const idText = idElement.textContent.trim();
+                const idMatch = idText.match(/ID:\s*(\d+)/);
+                if (idMatch && idMatch[1]) {
+                    compositeDetails.id = idMatch[1];
+                }
             }
+            
+            console.log('Using basic details from DOM:', compositeDetails);
         }
         
         // --- Temporarily modify canvas for printing --- 
+        
+        // Store original state
         const originalObjects = [...canvas.getObjects()];
-        const gridLines = originalObjects.filter(obj => 
-            obj.type === 'line' && 
-            obj.stroke === '#e5e7eb' && 
-            !obj.selectable && 
-            !obj.evented
-        );
         const originalBackgroundColor = canvas.backgroundColor;
         
-        // Temporarily remove grid lines for printing
-        if (gridLines.length > 0) {
-            console.log(`Temporarily hiding ${gridLines.length} grid lines for printing`);
+        // Identify and remove grid lines for printing
+        // Use a more robust method to identify grid lines
+        const gridLines = originalObjects.filter(obj => {
+            return (obj.type === 'line' && 
+                   !obj.selectable && 
+                   !obj.evented) || 
+                   (obj.gridLine === true);  // Check for custom property if you're using it
+        });
+        
+        console.log(`Found ${gridLines.length} grid lines to hide for printing`);
+        
+        // Remove grid lines temporarily
             gridLines.forEach(line => canvas.remove(line));
-        }
-        // Set background to white for printing (even if original was transparent)
+        
+        // Set background to white for printing
         canvas.backgroundColor = '#ffffff';
         
         // Force canvas re-rendering
@@ -377,15 +503,14 @@ async function printCanvas(canvas) {
         });
         
         // --- Restore canvas state --- 
-        // Restore grid lines 
-        if (gridLines.length > 0) {
-            console.log('Restoring grid lines after generating data URL');
+        
+        // Restore grid lines if needed
             gridLines.forEach(line => canvas.add(line));
-            // Send grid lines to back
             gridLines.forEach(line => canvas.sendObjectToBack(line));
-        }
+        
         // Restore original background color
         canvas.backgroundColor = originalBackgroundColor;
+        
         // Re-render the canvas to its original state
         canvas.renderAll();
         
@@ -403,197 +528,274 @@ async function printCanvas(canvas) {
             return value ? `<div class="detail-item"><span class="label">${label}:</span> <span class="value">${value}</span></div>` : '';
         };
         
-        // If we couldn't find the component using the selector, try using Livewire's getAllsByName method
-        if (Object.keys(compositeDetails).length === 0 && typeof Livewire !== 'undefined' && typeof Livewire.all === 'function') {
-            console.log('Attempting to find CompositeEditor using Livewire.all()');
-            const components = Livewire.all();
-            console.log('Available components:', components);
-            
-            // Try to find the CompositeEditor component
-            const editorComponent = components.find(c => {
-                // The name might be stored in different formats depending on Livewire version
-                return (c.name && c.name.includes('composite-editor')) || 
-                       (c.fingerprint && c.fingerprint.name && c.fingerprint.name.includes('composite-editor'));
-            });
-            
-            if (editorComponent) {
-                console.log('Found editor component via Livewire.all():', editorComponent);
-                try {
-                    compositeDetails = await editorComponent.call('getCompositeDetailsForPrint');
-                    console.log('Successfully fetched details via Livewire.all():', compositeDetails);
-                } catch (error) {
-                    console.error('Error calling getCompositeDetailsForPrint via Livewire.all():', error);
-                }
-            }
-        }
-        
         // Write HTML content to the new window
         printWindow.document.write(`
             <html>
                 <head>
                     <title>Print - ${title}</title>
                     <style>
+                        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Open+Sans:wght@300;400;600&display=swap');
+
+                        @page {
+                            size: auto;
+                            margin: 0.75in; /* Slightly reduced margin */
+                        }
+                        * {
+                            box-sizing: border-box;
+                        }
                         body {
-                            font-family: Arial, sans-serif;
-                            margin: 20px;
-                            color: #333;
+                            font-family: 'Open Sans', sans-serif;
+                            margin: 0;
+                            padding: 0;
+                            color: #212529; /* Darker text for better contrast */
+                            line-height: 1.5;
+                            background-color: white;
                         }
                         .print-container {
-                            display: flex;
-                            flex-direction: column;
-                            align-items: center;
+                            width: 100%;
+                            max-width: 100%;
+                            margin: 0 auto;
                         }
                         .header {
-                            width: 100%;
-                            text-align: center;
-                            margin-bottom: 20px;
-                            border-bottom: 1px solid #ccc;
-                            padding-bottom: 10px;
+                            text-align: left;
+                            margin-bottom: 25px;
+                            padding-bottom: 15px;
+                            border-bottom: 2px solid #007bff; /* Accent color for header */
+                            display: flex;
+                            justify-content: space-between;
+                            align-items: flex-end;
                         }
-                        .header h1 {
+                        .organization {
+                            font-family: 'Roboto', sans-serif;
+                            font-size: 26px;
+                            font-weight: 700;
+                            color: #0056b3; /* Darker blue */
+                            text-transform: uppercase;
+                            letter-spacing: 0.5px;
+                        }
+                        .header-title h1 {
+                            font-family: 'Roboto', sans-serif;
                             margin: 0;
-                            font-size: 24px;
+                            font-size: 22px;
+                            color: #343a40;
+                            font-weight: 500;
+                            text-align: right;
                         }
+                        .document-meta {
+                            font-size: 11px;
+                            color: #495057;
+                            text-align: right;
+                            margin-top: 5px;
+                        }
+                        .image-container {
+                            text-align: center;
+                            margin-bottom: 25px;
+                            border: 1px solid #dee2e6; /* Lighter border */
+                            padding: 15px;
+                            border-radius: 4px;
+                            background-color: #f8f9fa; /* Light background for image area */
+                            page-break-inside: avoid;
+                        }
+                        .image-container img {
+                            max-width: 100%;
+                            height: auto;
+                            display: block;
+                            margin: 0 auto;
+                            border-radius: 3px;
+                            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+                        }
+                        .details-container {
+                            padding: 0;
+                        }
+                        .details-container h2 {
+                            font-family: 'Roboto', sans-serif;
+                            font-size: 18px;
+                            font-weight: 500;
+                            color: #007bff;
+                            padding-bottom: 8px;
+                            border-bottom: 1px solid #ced4da;
+                            margin-top: 0;
+                            margin-bottom: 18px;
+                            letter-spacing: 0.25px;
+                        }
+                        .detail-item {
+                            margin-bottom: 10px;
+                            font-size: 13px; /* Slightly smaller base font for details */
+                            display: flex;
+                        }
+                        .detail-item .label {
+                            font-weight: 600;
+                            color: #495057; /* Subtler label color */
+                            min-width: 140px; /* Adjusted width */
+                            flex-shrink: 0;
+                        }
+                        .detail-item .value {
+                            color: #212529;
+                            word-break: break-word;
+                        }
+                        .description, .notes {
+                            margin-top: 20px;
+                            font-size: 13px;
+                            line-height: 1.6;
+                            background-color: #f8f9fa;
+                            padding: 12px 15px;
+                            border-radius: 4px;
+                            border: 1px solid #e9ecef;
+                            page-break-inside: avoid;
+                        }
+                        .description strong, .notes strong {
+                            font-family: 'Roboto', sans-serif;
+                            font-weight: 500;
+                            color: #343a40;
+                            display: block;
+                            margin-bottom: 6px;
+                        }
+                        .no-details-message {
+                            text-align: center;
+                            color: #6c757d;
+                            font-style: italic;
+                            padding: 15px;
+                            background-color: #f8f9fa;
+                            border: 1px dashed #ced4da;
+                            border-radius: 4px;
+                            margin-top: 15px;
+                        }
+                        .footer {
+                            margin-top: 30px;
+                            padding-top: 15px;
+                            border-top: 1px solid #dee2e6;
+                            text-align: center;
+                            font-size: 10px;
+                            color: #6c757d;
+                        }
+                        .controls {
+                            display: none; /* Hidden by default for print */
+                        }
+
+                        /* Default: Portrait Layout (image above details) */
                         .content {
                             display: flex;
                             flex-direction: column;
                             width: 100%;
-                            margin-bottom: 20px;
-                        }
-                        @media (min-width: 768px) {
-                            .content {
-                                flex-direction: row;
-                                gap: 30px;
-                            }
-                        }
-                        .image-container {
-                            flex: 1;
-                            text-align: center;
-                            margin-bottom: 20px;
-                        }
-                        @media (min-width: 768px) {
-                            .image-container {
-                                margin-bottom: 0;
-                            }
                         }
                         .image-container img {
-                            max-width: 100%;
-                            max-height: 60vh; /* Adjust as needed */
-                            border: 1px solid #eee;
+                           max-height: 45vh; /* Adjusted for portrait aesthetics */
                         }
-                        .details-container {
-                            flex: 1;
-                        }
-                        @media (min-width: 768px) {
-                            .details-container {
-                                border-left: 1px solid #eee;
-                                padding-left: 20px;
-                            }
-                        }
-                        .details-container h2 {
-                            margin-top: 0;
-                            font-size: 18px;
-                            border-bottom: 1px solid #eee;
-                            padding-bottom: 5px;
-                            margin-bottom: 15px;
-                        }
-                        .detail-item {
-                            margin-bottom: 8px;
-                            font-size: 14px;
-                        }
-                        .detail-item .label {
-                            font-weight: bold;
-                            min-width: 120px; /* Adjust as needed */
-                            display: inline-block;
-                        }
-                        .detail-item .value {
-                            color: #555;
-                        }
-                        .description, .notes {
-                            margin-top: 15px;
-                            font-size: 14px;
-                            line-height: 1.5;
-                        }
-                        .description p, .notes p {
-                            margin-top: 5px;
-                            white-space: pre-wrap; /* Preserve line breaks */
-                        }
-                        .controls {
-                            margin-top: 20px;
-                            text-align: center;
-                        }
-                        .controls button {
-                            padding: 8px 16px;
-                            background: #3490dc;
-                            color: white;
-                            border: none;
-                            border-radius: 4px;
-                            cursor: pointer;
-                            margin: 0 5px;
-                        }
-                        .no-details-message {
-                            text-align: center;
-                            color: #888;
-                            font-style: italic;
-                            margin: 10px 0;
-                        }
+
                         @media print {
-                            body { margin: 1cm; }
-                            .controls { display: none; }
-                            .content { page-break-inside: avoid; }
+                            body {
+                                background-color: white;
+                            }
+                            .print-container {
+                                box-shadow: none;
+                                border: none;
+                            }
+                            .controls { display: none !important; }
+                            .footer {
+                                position: fixed;
+                                bottom: 0.25in;
+                                left: 0.75in;
+                                right: 0.75in;
+                                font-size: 9px;
+                            }
+                            
+                            @media (orientation: portrait) {
+                                .image-container img {
+                                    max-height: 40vh; /* Fine-tune for print portrait */
+                                }
+                                .details-container {
+                                    margin-top: 20px;
+                                }
+                            }
+
+                            @media (orientation: landscape) {
+                                .content {
+                                    flex-direction: row;
+                                    gap: 25px; /* Slightly more gap */
+                                }
+                                .image-container {
+                                    flex: 0 0 45%; /* Slightly less for image to give more to text */
+                                    max-width: 45%;
+                                    margin-bottom: 0;
+                                    align-self: flex-start;
+                                }
+                                .image-container img {
+                                    max-height: 70vh; /* Adjusted for landscape print */
+                                }
+                                .details-container {
+                                    flex: 1;
+                                    padding-left: 20px;
+                                    border-left: 1px solid #dee2e6;
+                                }
+                                .details-container h2 {
+                                    margin-top: 0;
+                                }
+                            }
                         }
                     </style>
                 </head>
                 <body>
                     <div class="print-container">
                         <div class="header">
-                            <h1>${title}</h1>
-                            ${renderDetail('Created', compositeDetails.created_at)}
+                            <div class="organization">FaceRender</div>
+                            <div>
+                                <div class="header-title"><h1>${title}</h1></div>
+                                <div class="document-meta">
+                                    Generated: ${compositeDetails.created_at || new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                                </div>
+                            </div>
                         </div>
                         
                         <div class="content">
                             <div class="image-container">
-                                <img src="${dataUrl}" alt="Canvas Image">
+                                <img src="${dataUrl}" alt="Composite Image">
                             </div>
                             <div class="details-container">
                                 <h2>Composite Information</h2>
                                 ${compositeDetails.witness_name || compositeDetails.case_title || compositeDetails.description ? 
                                     `
                                     ${renderDetail('Witness', compositeDetails.witness_name)}
-                                    ${renderDetail('Case', compositeDetails.case_title)}
+                                    ${renderDetail('Case Title', compositeDetails.case_title)}
                                     ${compositeDetails.description ? 
-                                        `<div class="description"><strong>Description:</strong><p>${compositeDetails.description}</p></div>` : ''}
+                                        `<div class="description"><strong>Narrative Description:</strong><p>${compositeDetails.description}</p></div>` : ''}
                                     ` : 
-                                    `<div class="no-details-message">No composite information available</div>`
+                                    `<div class="no-details-message">No specific composite information available.</div>`
                                 }
                                 
-                                <h2 style="margin-top: 20px;">Suspect Description</h2>
+                                <h2 style="margin-top: 25px;">Suspect Profile</h2>
                                 ${compositeDetails.suspect_gender || compositeDetails.suspect_ethnicity || 
                                   compositeDetails.suspect_age_range || compositeDetails.suspect_height || 
                                   compositeDetails.suspect_body_build || compositeDetails.suspect_additional_notes ? 
                                     `
                                     ${renderDetail('Gender', compositeDetails.suspect_gender)}
                                     ${renderDetail('Ethnicity', compositeDetails.suspect_ethnicity)}
-                                    ${renderDetail('Age Range', compositeDetails.suspect_age_range)}
-                                    ${renderDetail('Height', compositeDetails.suspect_height)}
+                                    ${renderDetail('Est. Age Range', compositeDetails.suspect_age_range)}
+                                    ${renderDetail('Est. Height', compositeDetails.suspect_height)}
                                     ${renderDetail('Body Build', compositeDetails.suspect_body_build)}
                                     ${compositeDetails.suspect_additional_notes ? 
-                                        `<div class="notes"><strong>Additional Notes:</strong><p>${compositeDetails.suspect_additional_notes}</p></div>` : ''}
+                                        `<div class="notes"><strong>Additional Characteristics:</strong><p>${compositeDetails.suspect_additional_notes}</p></div>` : ''}
                                     ` : 
-                                    `<div class="no-details-message">No suspect description available</div>`
+                                    `<div class="no-details-message">No specific suspect profile details available.</div>`
                                 }
                             </div>
                         </div>
                         
+                        <div class="footer">
+                            CONFIDENTIAL DOCUMENT &bull; Property of FaceRender &bull; Generated on ${new Date().toLocaleString('en-US', { dateStyle: 'full', timeStyle: 'short' })}
+                        </div>
+                        
                         <div class="controls">
-                            <button onclick="window.print()">Print</button>
+                            <button onclick="window.print()">Print Document</button>
                             <button onclick="window.close()">Close</button>
                         </div>
                     </div>
                     <script>
-                        // Optional: Auto print when loaded
+                        // Auto print when loaded
                         window.onload = function() {
-                            console.log('Print window loaded');
+                            // Give a moment for the page to render fully
+                            setTimeout(function() {
+                                window.print();
+                            }, 500);
                         };
                     </script>
                 </body>
