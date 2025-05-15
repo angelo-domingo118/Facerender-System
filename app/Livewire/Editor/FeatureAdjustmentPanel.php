@@ -380,6 +380,8 @@ class FeatureAdjustmentPanel extends Component
             $this->selectedLayer['adjustments'] = $adjustmentData['adjustments'];
         }
         
+        // Comment out the toast notification that appears on every adjustment
+        /*
         // Show a small toast notification that adjustments are being applied
         $this->js('$wireui.notify({
             title: "Adjustments Applied",
@@ -388,6 +390,7 @@ class FeatureAdjustmentPanel extends Component
             timeout: 1500,
             position: "bottom-right"
         })');
+        */
     }
     
     /**
@@ -416,6 +419,8 @@ class FeatureAdjustmentPanel extends Component
             ]
         ]);
         
+        // Comment out the reset notification
+        /*
         // Show notification
         $this->js('$wireui.notify({
             title: "Adjustments Reset",
@@ -424,6 +429,7 @@ class FeatureAdjustmentPanel extends Component
             timeout: 1500,
             position: "bottom-right"
         })');
+        */
     }
     
     /**

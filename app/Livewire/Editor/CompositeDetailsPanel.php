@@ -6,9 +6,12 @@ use Livewire\Component;
 use App\Models\Composite;
 use App\Models\Witness;
 use Illuminate\Support\Facades\Log;
+use WireUi\Traits\WireUiActions;
 
 class CompositeDetailsPanel extends Component
 {
+    use WireUiActions;
+    
     public $compositeId;
     public $composite;
     
@@ -55,10 +58,12 @@ class CompositeDetailsPanel extends Component
     public function resetForm()
     {
         $this->loadCompositeData();
-        $this->dispatch('notify', [
-            'message' => 'Form has been reset',
-            'type' => 'info'
-        ]);
+        
+        // Use WireUI notification here too for consistency
+        $this->notification()->info(
+            'Info',
+            'Form has been reset'
+        );
     }
     
     public function updateDetails()
@@ -100,10 +105,11 @@ class CompositeDetailsPanel extends Component
                 'canvas_height' => $this->canvasHeight,
             ]);
             
-            $this->dispatch('notify', [
-                'message' => 'Composite details updated successfully!',
-                'type' => 'success'
-            ]);
+            // Use WireUI notification instead of dispatch
+            $this->notification()->success(
+                'Success',
+                'Composite details updated successfully!'
+            );
             
             // Emit an event to notify other components that ONLY the details were updated
             // Use a different event name to avoid triggering canvas resets
@@ -114,10 +120,12 @@ class CompositeDetailsPanel extends Component
             
         } catch (\Exception $e) {
             Log::error('Error updating composite details: ' . $e->getMessage());
-            $this->dispatch('notify', [
-                'message' => 'Error updating details: ' . $e->getMessage(),
-                'type' => 'error'
-            ]);
+            
+            // Use WireUI notification for error message
+            $this->notification()->error(
+                'Error',
+                'Error updating details: ' . $e->getMessage()
+            );
         }
     }
     
